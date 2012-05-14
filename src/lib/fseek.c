@@ -4,7 +4,7 @@
  */
 
 #include <stdio.h>
-#include <syscall.h>
+#include <unistd.h>
 #include <errno.h>
 
 int fseek(FILE *f, int pos, int how) {

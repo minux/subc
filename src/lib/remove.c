@@ -3,7 +3,7 @@
  *	remove()
  */
 
-#include <syscall.h>
+#include <unistd.h>
 
 int remove(char *path) {
 	return _unlink(path);

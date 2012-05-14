@@ -3,7 +3,7 @@
  *	rename()
  */
 
-#include <syscall.h>
+#include <unistd.h>
 
 int rename(char *old, char *new) {
 	return _rename(old, new);

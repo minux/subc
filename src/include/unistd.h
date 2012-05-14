@@ -1,6 +1,6 @@
 /*
  *	NMH's Simple C Compiler, 2011,2012
- *	syscall.h
+ *	unistd.h
  */
 
 int	_close(int fd);

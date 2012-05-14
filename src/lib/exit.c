@@ -5,7 +5,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <syscall.h>
+#include <unistd.h>
 
 extern int	(*_exitfn)();
 extern FILE	*_files[];

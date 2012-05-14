@@ -1,5 +1,3 @@
-CC=	./scc0
-CFLAGS=
 OBJS=	lib/init.o	\
 	lib/abort.o	\
 	lib/abs.o	\
@@ -80,6 +78,9 @@ OBJS=	lib/init.o	\
 	lib/ungetc.o	\
 	lib/vformat.o	\
 	lib/vscan.o
+
+.c.o:
+	./scc0 -c $<
 
 libscc.a:	$(OBJS)
 	ar -rc lib/libscc.a $(OBJS)

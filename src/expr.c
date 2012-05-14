@@ -667,7 +667,7 @@ static int cond3(int *lv) {
 		genbrfalse(l1);
 		clear();
 		Token = scan();
-		if (cond2(lv, LOGOR))
+		if (expr(lv))
 			rvalue(lv);
 		if (!p) p = lv[LVPRIM];
 		if (!typematch(p, lv[LVPRIM]))

@@ -3,7 +3,7 @@
  *	kprintf()
  */
 
-#include <syscall.h>
+#include <unistd.h>
 
 extern int _vformat(int mode, int max, void *dest, char *fmt, void **varg);
 

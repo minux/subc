@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <syscall.h>
+#include <unistd.h>
 
 int system(char *cmd) {
 	int	pid, rc;

@@ -32,3 +32,8 @@
 2012-04-18 Added a configure script.
 2012-04-25 Added the Linux/386 crt0 module (crt0-linux-386.s).
 2012-04-26 Removed all GNU libc dependencies from Linux crt0.
+2012-04-27 Renamed syscall.h to unistd.h for portability.
+2012-05-07 Fix: middle argument of ?: is an expr (not a logic op).
+2012-05-14 Fix: reporting non-existent source files without .[sc] suffix.
+2012-05-14 Added -vvv option (also lists remove commands).
+2012-05-14 Made the compiler clean up *.o files after linking.

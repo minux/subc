@@ -4,7 +4,7 @@
  */
 
 #include <stdio.h>
-#include <syscall.h>
+#include <unistd.h>
 
 int ungetc(int c, FILE *f) {
 	if (f->ch != EOF) return EOF;

@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <syscall.h>
+#include <unistd.h>
 #include <errno.h>
 
 int _openfd(char *path, char *mode) {

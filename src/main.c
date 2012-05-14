@@ -48,6 +48,14 @@ static int filetype(char *file) {
 	return 0;
 }
 
+static int exists(char *file) {
+	FILE	*f;
+
+	if ((f = fopen(file, "r")) == NULL) return 0;
+	fclose(f);
+	return 1;
+}
+
 static void defarg(char *s) {
 	char	*p;
 
@@ -89,9 +97,12 @@ static void compile(char *file, char *def) {
 	if (O_testonly) Outfile = NULL;
 	if (O_verbose) {
 		if (O_testonly)
-			printf("testing %s\n", file);
+			printf("cc -t %s\n", file);
 		else
-			printf("compiling %s\n", file);
+			if (O_verbose > 1)
+				printf("cc -S -o %s %s\n", ofile, file);
+			else
+				printf("compiling %s\n", file);
 	}
 	genprelude();
 	Token = scan();
@@ -125,7 +136,10 @@ static void assemble(char *file, int delete) {
 	if (O_verbose > 1) printf("%s\n", cmd);
 	if (system(cmd))
 		cmderror("assembler invocation failed", NULL);
-	if (delete) remove(file);
+	if (delete) {
+		if (O_verbose > 2) printf("rm %s\n", file);
+		remove(file);
+	}
 }
 
 static int concat(int k, char *buf, char *s) {
@@ -156,6 +170,12 @@ static void link(void) {
 	if (O_verbose > 1) printf("%s\n", cmd2);
 	if (system(cmd2))
 		cmderror("linker invocation failed", NULL);
+	if (O_verbose > 2) printf("rm ");
+	for (i=0; i<Nf; i++) {
+		if (O_verbose > 2) printf(" %s", Files[i]);
+		remove(Files[i]);
+	}
+	if (O_verbose > 2) printf("\n");
 }
 
 static void usage(void) {
@@ -273,6 +293,8 @@ int main(int argc, char *argv[]) {
 			if (!O_testonly) assemble(argv[i++], 0);
 		}
 		else {
+			if (!exists(argv[i])) cmderror("no such file: %s",
+							argv[i]);
 			collect(argv[i++]);
 		}
 	}
