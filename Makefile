@@ -1,5 +1,5 @@
-SNAP=	20120415
-REL=	20120514
+SNAP=	20130227
+REL=	20130228
 ARC=	subc-$(SNAP).tgz
 DIST=	subc-$(REL).tgz
 
@@ -11,10 +11,10 @@ sums:	clean
 
 clean:
 	cd src && make clean
-	rm -f $(ARC) $(DIST)
+	rm -f ptest.c $(ARC) $(DIST)
 
 arc:	clean
 	tar cvfz $(ARC) *
 
 dist:	clean
-	tar cvfz $(DIST) *
+	(cd .. && tar cvfz $(DIST) subc) && mv ../$(DIST) .

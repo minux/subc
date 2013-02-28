@@ -1,8 +1,12 @@
 
-	- add a code synthesizer and optimizer
+	- clean up sym.c
+
 	- add parameterized macros
 		- add assert()
-		- add stdio macros: getc(), putchar(), etc
+		- fix & in setjmp() and longjmp()
+		? add stdio macros: getc(), putchar(), etc
+
 	? add dynamic local initializers
+
 	? add GOTO and labels
 

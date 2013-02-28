@@ -1,25 +1,7 @@
 #
-#	NMH's Simple C Compiler, 2012--2013
-#	C runtime module for FreeBSD/x86-64
+#	NMH's Simple C Compiler, 2011--2013
+#	C runtime module for Linux/amd64
 #
-
-# FreeBSD voodoo stuff
-
-	.section .note.ABI-tag,"a",@note
-	.align	4
-abitag: .long	8, 4, 1
-	.string	"FreeBSD"
-	.long	802000
-	.p2align 2
-	.data
-	.globl	__progname
-	.globl	environ
-environ:
-	.quad	0
-__progname:
-	.quad   0
-
-# End of voodoo stuff
 
 	.data
 	.globl	Cenviron
@@ -28,11 +10,10 @@ Cenviron:
 
 	.text
 	.globl	_start
-_start:	pushq	%rdi
+_start:
 	call	C_init
-	popq	%rdi
-	leaq	8(%rdi),%rsi	# argv
-	movq	(%rdi),%rcx	# argc
+	leaq	8(%rsp),%rsi	# argv
+	movq	0(%rsp),%rcx	# argc
 	movq	%rcx,%rax	# environ = &argv[argc+1]
 	incq	%rax
 	shlq	$3,%rax
@@ -42,10 +23,11 @@ _start:	pushq	%rdi
 	pushq	%rsi
 	pushq	$2		# __argc
 	call	Cmain
-	addq	$24,%rsp
+	addq	$12,%rsp
 	pushq	%rax
 	pushq	$1
-x:	call	Cexit
+x:
+	call	Cexit
 	xorq	%rbx,%rbx
 	divq	%rbx
 	jmp	x
@@ -54,20 +36,23 @@ x:	call	Cexit
 # %rsi = switch table, %rax = expr
 
 	.globl	switch
-switch:	pushq	%rsi
+switch:
+	pushq	%rsi
 	movq	%rdx,%rsi
 	movq	%rax,%rbx
 	cld
 	lodsq
 	movq	%rax,%rcx
-next:	lodsq
+next:
+	lodsq
 	movq	%rax,%rdx
 	lodsq
 	cmpq	%rdx,%rbx
 	jnz	no
 	popq	%rsi
 	jmp	*%rax
-no:	loop	next
+no:
+	loop	next
 	lodsq
 	popq	%rsi
 	jmp	*%rax
@@ -99,16 +84,45 @@ Clongjmp:
 # int _exit(int rc);
 
 	.globl	C_exit
-C_exit:	movq	16(%rsp),%rdi
-	call	_exit
+C_exit:
+	movq	16(%rsp),%rdi
+	movq	$231,%rax
+	syscall
 	ret
 
 # int _sbrk(int size);
 
+	.data
+curbrk:
+	.quad	0
+
+	.text
 	.globl	C_sbrk
-C_sbrk:	movq	16(%rsp),%rdi
-	xorq	%rax,%rax
-	call	sbrk
+C_sbrk:
+	cmpq	$0,curbrk
+	jnz	sbrk
+	xorq	%rdi,%rdi	# get break
+	movq	$12,%rax	# brk
+	syscall
+	movq	%rax,curbrk
+sbrk:
+	cmpq	$0,16(%rsp)
+	jnz	setbrk
+	mov	curbrk,%rax	# size==0, return break
+	ret
+setbrk:
+	movq	curbrk,%rdi	# set new break
+	addq	16(%rsp),%rdi
+	movq	$12,%rax	# brk
+	syscall
+	cmpq	%rax,curbrk	# brk(x)==curbrk -> error
+	jnz	sbrkok
+	movq	$-1,%rax
+	ret
+sbrkok:
+	movq	curbrk,%rbx	# update curr. break
+	movq	%rax,curbrk
+	movq	%rbx,%rax
 	ret
 
 # int _write(int fd, char *buf, int len);
@@ -118,18 +132,19 @@ C_write:
 	movq	16(%rsp),%rdx
 	movq	24(%rsp),%rsi
 	movq	32(%rsp),%rdi
-	xorq	%rax,%rax
-	call	write
+	movq	$1,%rax
+	syscall
 	ret
 
 # int _read(int fd, char *buf, int len);
 
 	.globl	C_read
-C_read:	movq	16(%rsp),%rdx
+C_read:
+	movq	16(%rsp),%rdx
 	movq	24(%rsp),%rsi
 	movq	32(%rsp),%rdi
-	xorq	%rax,%rax
-	call	read
+	movq	$0,%rax
+	syscall
 	ret
 
 # int _lseek(int fd, int pos, int how);
@@ -139,8 +154,8 @@ C_lseek:
 	movq	16(%rsp),%rdx
 	movq	24(%rsp),%rsi
 	movq	32(%rsp),%rdi
-	xorq	%rax,%rax
-	call	lseek
+	movq	$8,%rax
+	syscall
 	ret
 
 # int _creat(char *path, int mode);
@@ -149,17 +164,18 @@ C_lseek:
 C_creat:
 	movq	16(%rsp),%rsi
 	movq	24(%rsp),%rdi
-	xorq	%rax,%rax
-	call	creat
+	movq	$85,%rax
+	syscall
 	ret
 
 # int _open(char *path, int flags);
 
 	.globl	C_open
-C_open: movq	16(%rsp),%rsi
+C_open:
+	movq	16(%rsp),%rsi
 	movq	24(%rsp),%rdi
-	xorq	%rax,%rax
-	call	open
+	movq	$2,%rax
+	syscall
 	ret
 
 # int _close(int fd);
@@ -167,8 +183,8 @@ C_open: movq	16(%rsp),%rsi
 	.globl	C_close
 C_close:
 	movq	16(%rsp),%rdi
-	xorq	%rax,%rax
-	call	close
+	movq	$3,%rax
+	syscall
 	ret
 
 # int _unlink(char *path);
@@ -176,8 +192,8 @@ C_close:
 	.globl	C_unlink
 C_unlink:
 	movq	16(%rsp),%rdi
-	xorq	%rax,%rax
-	call	unlink
+	movq	$87,%rax
+	syscall
 	ret
 
 # int _rename(char *old, char *new);
@@ -186,29 +202,29 @@ C_unlink:
 C_rename:
 	movq	16(%rsp),%rsi
 	movq	24(%rsp),%rdi
-	xorq	%rax,%rax
-	call	rename
+	mov	$82,%rax
+	syscall
 	ret
 
 # int _fork(void);
 
 	.globl	C_fork
-C_fork:	call	fork
+C_fork:
+	movq	$57,%rax
+	syscall
 	ret
 
 # int _wait(int *rc);
 
-	.data
-w:	.long	0
-	.text
 	.globl	C_wait
-C_wait:	movq	$w,%rdi
-	xorq	%rax,%rax
-	call	wait
-	movl	w,%eax
-	cdq
-	movq	16(%rsp),%rdx
-	movq	%rax,(%rdx)
+C_wait:
+	movq	$-1,%rdi
+	movq	16(%rsp),%rsi
+	movq	$0, (%rsi)
+	xorq	%rdx,%rdx
+	xorq	%r10,%r10
+	movq	$61,%rax	# wait4
+	syscall
 	ret
 
 # int _execve(char *path, char *argv[], char *envp[]);
@@ -218,36 +234,55 @@ C_execve:
 	movq	16(%rsp),%rdx
 	movq	24(%rsp),%rsi
 	movq	32(%rsp),%rdi
-	xorq	%rax,%rax
-	call	execve
+	movq	$59,%rax
+	syscall
 	ret
 
 # int _time(void);
 
 	.globl	C_time
-C_time:	xorq	%rdi,%rdi
-	xorq	%rax,%rax
-	call	time
+C_time:
+	leaq	-16(%rsp),%rdi
+	xorq	%rsi,%rsi
+	movq	$96,%rax	# gettimeofday
+	syscall
+	movq	-16(%rsp),%rax
 	ret
 
 # int raise(int sig);
 
 	.globl	Craise
 Craise:
-	xorq	%rax,%rax
-	call	getpid
+	movq	$39,%rax	# getpid
+	syscall
 	movq	%rax,%rdi
 	movq	16(%rsp),%rsi
-	xorq	%rax,%rax
-	call	kill
+	movq	$62,%rax
+	syscall
 	ret
 
 # int signal(int sig, int (*fn)());
 
 	.globl	Csignal
 Csignal:
-	movq	16(%rsp),%rsi
-	movq	24(%rsp),%rdi
+	# prepare a struct sigaction
+	movq	16(%rsp),%rax
+	movq	%rax,-32(%rsp)
+	movq	$0x10000000,-24(%rsp)	# SA_RESTART
 	xorq	%rax,%rax
-	call	signal
+	movq	%rax,-16(%rsp)
+	movq	%rax,-8(%rsp)
+	movq	24(%rsp),%rdi
+	leaq	-32(%rsp),%rsi
+	leaq	-64(%rsp),%rdx
+	movq	$8,%r10
+	movq	$13,%rax
+	syscall
+	cmpq	$0,%rax
+	jz	1f
+	movq	$2,%rax	# SIG_ERR
 	ret
+1:
+	movq	-64(%rsp),%rax
+	ret
+

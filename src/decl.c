@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011,2012
+ *	NMH's Simple C Compiler, 2011--2013
  *	Declaration parser
  */
 
@@ -528,7 +528,7 @@ void decl(int clss, int prim) {
  */
 
 void structdecl(int clss, int uniondecl) {
-	int	prim, size, dummy, type, addr = 0;
+	int	base, prim, size, dummy, type, addr = 0;
 	char	name[NAMELEN+1], sname[NAMELEN+1];
 	int	y, usize = 0;
 
@@ -546,11 +546,12 @@ void structdecl(int clss, int uniondecl) {
 	while (	INT == Token || CHAR == Token || VOID == Token ||
 		STRUCT == Token || UNION == Token
 	) {
-		prim = primtype(Token, NULL);
+		base = primtype(Token, NULL);
 		size = 0;
 		Token = scan();
 		for (;;) {
 			if (eofcheck()) return;
+			prim = base;
 			type = declarator(1, clss, name, &prim, &size,
 						&dummy, &dummy);
 			addglob(name, prim, type, CMEMBER, size, addr,

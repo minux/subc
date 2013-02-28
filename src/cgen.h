@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011,2012
+ *	NMH's Simple C Compiler, 2011--2013
  *	Code generator interface
  */
 
@@ -7,7 +7,13 @@ void cgadd(void);
 void cgand(void);
 void cgargc(void);
 void cgbool(void);
+void cgbreq(int n);
 void cgbrfalse(int n);
+void cgbrge(int n);
+void cgbrgt(int n);
+void cgbrle(int n);
+void cgbrlt(int n);
+void cgbrne(int n);
 void cgbrtrue(int n);
 void cgbss(char *s, int z);
 void cgcall(char *s);
@@ -15,6 +21,7 @@ void cgcalr(void);
 void cgcalswtch(void);
 void cgcase(int v, int l);
 void cgclear(void);
+void cgclear2(void);
 void cgdata(void);
 void cgdec1ib(void);
 void cgdec1iw(void);
@@ -76,6 +83,7 @@ void cgldsw(int n);
 void cgldswtch(int n);
 void cgle(void);
 void cglit(int v);
+int cgload(void);
 void cglognot(void);
 void cglt(void);
 void cgmod(void);
@@ -107,6 +115,10 @@ void cgstorsb(int n);
 void cgstorsw(int n);
 void cgsub(void);
 void cgswap(void);
+void cgsynand(void);
+void cgsynor(void);
+void cgsynth(char *op);
+void cgsynxor(void);
 void cgtext(void);
 void cgunscale(void);
 void cgunscaleby(int v);

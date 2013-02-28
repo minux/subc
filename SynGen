@@ -1,0 +1,55 @@
+
+	THE SYNTHESIZING BACK-END
+
+	As of version 2013-02-19, the SubC compiler includes a new
+	'synthesizing' back-end, which creates (synthesizes) machine
+	instructions instead of using pre-existing static templates.
+
+	The technique is described in Practical Compiler Construction,
+	but only at a rather abstract level. The current version of
+	SubC contains an implementation of this approach.
+
+	Basically, the old (stack-based) back-end would generate
+	programs whose execution model is a virtual stack machine.
+	E.g. the expression
+
+		a+b-c
+
+	would generate following code for a 386-based target:
+
+        	movl    Ca,%eax
+        	pushl   %eax
+        	movl    Cb,%eax
+        	popl    %ecx
+        	addl    %ecx,%eax
+        	pushl   %eax
+        	movl    Cc,%eax
+        	popl    %ecx
+        	xchgl   %eax,%ecx
+        	subl    %ecx,%eax
+
+	The new back-end will emit the following fragment instead:
+
+        	movl    Ca,%eax
+        	movl    Cb,%ecx
+        	addl    %ecx,%eax
+        	movl    Cc,%ecx
+        	subl    %ecx,%eax
+
+	Due to this new approach, the compiler itself has become smaller
+	and faster while still emitting better code. The size of the
+	text segment was reduced by about 11% and the code is running
+	about 12% faster.
+
+	 text    data     bss   total    time   file   back-end
+	79504   11036   41072  131612   0.74s   scc    stkgen
+	71360   11036   41072  123468   0.65s   scc    syngen
+
+	(Run times were measured with 'scc -t *.c' in the compiler source
+	directory to exclude the times spent in external programs, like
+	the assembler and linker.)
+
+	The new back-end can be enabled by running 'configure -syn' in
+	the root directory of the SubC source tree before compiling the
+	compiler.
+

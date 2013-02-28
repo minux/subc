@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011,2012
+ *	NMH's Simple C Compiler, 2011--2013
  *	Main program
  */
 
@@ -25,6 +25,8 @@ static void init(void) {
 	Ntop = POOLSIZE;
 	Bsp = 0;
 	Csp = 0;
+	Q_type = empty;
+	Q_cmp = none;
 	addglob("", 0, 0, 0, 0, 0, NULL, 0);
 	addglob("__SUBC__", 0, TMACRO, 0, 0, 0, globname(""), 0);
 	Infile = stdin;

@@ -1,5 +1,5 @@
 #
-#	NMH's Simple C Compiler, 2012
+#	NMH's Simple C Compiler, 2012--2013
 #	C runtime module for NetBSD/x86-64
 #
 
@@ -76,8 +76,10 @@ no:	loop	next
 Csetjmp:
 	movq	16(%rsp),%rdx
 	movq	%rsp,(%rdx)
+	addq	$8,(%rdx)
+	movq	%rbp,8(%rdx)
 	movq	(%rsp),%rax
-	movq	%rax,8(%rdx)
+	movq	%rax,16(%rdx)
 	xorq	%rax,%rax
 	ret
 
@@ -88,7 +90,8 @@ Clongjmp:
 	movq	16(%rsp),%rax
 	movq	24(%rsp),%rdx
 	movq	(%rdx),%rsp
-	movq	8(%rdx),%rdx
+	movq	8(%rdx),%rbp
+	movq	16(%rdx),%rdx
 	jmp	*%rdx
 
 # int _exit(int rc);

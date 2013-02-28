@@ -4,7 +4,7 @@
  */
 
 struct _jmp_buf {
-	void	*sp, *ip;
+	void	*sp, *fp, *ip;
 };
 
 #define jmp_buf	struct _jmp_buf

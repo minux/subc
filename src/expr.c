@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011,2012
+ *	NMH's Simple C Compiler, 2011--2013
  *	Expression parser
  */
 
@@ -230,7 +230,7 @@ static int stc_access(int *pprim, int ptr) {
 		error("struct/union has no such member: %s", Text);
 	if ((PSTRUCT == p || STCPTR == p) && Vals[y]) {
 		genlit(Vals[y]);
-		genadd(PINT, PINT);
+		genadd(PINT, PINT, 1);
 	}
 	Token = scan();
 	p = Prims[y];
@@ -274,7 +274,7 @@ static int postfix(int *lv) {
 					UNIPTR == (p & STCMASK)
 				)
 					genscale();
-				genadd(PINT, PINT);
+				genadd(PINT, PINT, 1);
 				rbrack();
 				lv[LVSYM] = 0;
 				a = 1;
@@ -291,7 +291,7 @@ static int postfix(int *lv) {
 			}
 			else {
 				if (lv[LVPRIM] != FUNPTR) badcall(lv);
-				clear();
+				clear(0);
 				rvalue(lv);
 				gencalr();
 				lv[LVPRIM] = PINT;
@@ -629,17 +629,19 @@ static int cond2(int *lv, int op) {
 		if (!lab) lab = label();
 		if (a) rvalue(lv);
 		if (a2) rvalue(lv2);
+		commit();
 		if (op == LOGOR)
 			genbrtrue(lab);
 		else
 			genbrfalse(lab);
-		clear();
+		clear(0);
 		Token = scan();
 		a2 = op == LOGOR? cond2(lv2, LOGAND): binexpr(lv2);
 		a = 0;
 	}
 	if (lab) {
 		if (a2) rvalue(lv2);
+		commit();
 		genlab(lab);
 		genbool();
 		load();
@@ -665,7 +667,7 @@ static int cond3(int *lv) {
 		if (a) rvalue(lv);
 		a = 0;
 		genbrfalse(l1);
-		clear();
+		clear(0);
 		Token = scan();
 		if (expr(lv))
 			rvalue(lv);
@@ -674,7 +676,7 @@ static int cond3(int *lv) {
 			error("incompatible types in '?:'", NULL);
 		genjump(l2);
 		genlab(l1);
-		clear();
+		clear(0);
 		colon();
 		if (cond2(lv2, LOGOR))
 			rvalue(lv2);
@@ -683,6 +685,7 @@ static int cond3(int *lv) {
 				error("incompatible types in '?:'", NULL);
 	}
 	if (l2) {
+		commit();
 		genlab(l2);
 		load();
 	}
@@ -746,7 +749,7 @@ int expr(int *lv) {
 	a = asgmnt(lv);
 	while (COMMA == Token) {
 		Token = scan();
-		clear();
+		clear(0);
 		a2 = asgmnt(lv2);
 		a = 0;
 	}
@@ -754,10 +757,10 @@ int expr(int *lv) {
 	return a;
 }
 
-int rexpr(void) {
+int rexpr(int com) {
 	int	lv[LV];
 
-	if (expr(lv))
-		rvalue(lv);
+	if (expr(lv)) rvalue(lv);
+	if (com) commit();
 	return lv[LVPRIM];
 }

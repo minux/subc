@@ -1,4 +1,4 @@
-LINT=	gcc -c -o /dev/null -ansi -pedantic -Wall 
+LINT=	gcc -c -o /dev/null -ansi -pedantic -Wall
 
 FILES=	cexpr.c cg.c decl.c error.c expr.c gen.c \
 	main.c misc.c prep.c scan.c stmt.c sym.c
@@ -7,11 +7,21 @@ HDRS=	data.h decl.h defs.h prec.h
 SCCDIR=	/u/scc
 BINDIR=	/u/bin
 
-all:	scc0 lib/crt0.o lib/libscc.a
+all:	scc0 crt0 lib
+
+lib:	lib/libscc.a
+
+crt0:	lib/crt0.o
 
 test:	scc $(FILES)
 	./scc -o scc2 $(FILES)
 	cmp scc scc2 && rm -f scc2
+
+ptest:	scc0 ../ptest.src ../ptest.awk
+	awk -f ../ptest.awk <../ptest.src >../ptest.c
+	./scc0 -o ptest ../ptest.c
+	./ptest
+	rm ptest
 
 install:	all
 	./scc0 -o scc -D 'SCCDIR="$(SCCDIR)"' *.c
@@ -42,8 +52,7 @@ gen.c:		cgen.h
 
 lint:
 	$(LINT) cexpr.c
-	$(LINT) cg386.c
-	$(LINT) cgx86_64.c
+	$(LINT) cg.c
 	$(LINT) decl.c
 	$(LINT) error.c
 	$(LINT) expr.c

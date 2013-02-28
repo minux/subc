@@ -11,13 +11,25 @@
 	emitted by the code generator. Also copy the corresponding
 	cg*.h file. For example, to create an FOO back-end:
 
-		cp src/targets/cg386.c src/targets/cgxFOO.c
-		cp src/targets/cg386.h src/targets/cgxFOO-64.h
+		cp src/targets/cg386-stk.c src/targets/cgxFOO.c
+		cp src/targets/cg386.h src/targets/cgxFOO.h
+
+	For some targets, there may be two different descriptions,
+	one ending in '-stk.c' and one ending in '-syn.c'. They
+	contain the 'stack-based' and 'synthesizing' back-end,
+	respectively. When in doubt, use the stack-based one. While
+	it generates larger and slower code than the synthesizing
+	back-end, it is easier to understand and covered in greater
+	detail by the book.
+
+	Make sure to use the proper generator with your new target
+	description. Use targets/stkgen.c for stack-based back-ends
+	and targets/syngen.c for synthesizing ones.
 
 
 	(2) Select the proper machine word size
 
-	Edit the newly created header file (e.g.: cgFOO-64.h) and
+	Edit the newly created header file (e.g.: cgFOO.h) and
 	change its BPW constant to the *natural* machine word size
 	on the new target. This would be 32 bits for a 32-bit
 	processor, 64 bits for a 64-bit processor, etc. Note that
@@ -30,23 +42,23 @@
 
 	This is one of the hard parts. You will have to replace the
 	code emitted by each function in the new target description
-	file to generate code for your new platform. If you are and
+	file to generate code for your new platform. If you are an
 	experienced compiler writer and you are familiar with one of
 	the existing targets, you may be able to guess the proper
 	sequences. Otherwise, you probably need a copy of the book
 	"Practical Compiler Construction"[1] now, which explains the
 	target description format in detail.
 
-	[1] See the README.
+	[1] See the README file.
 
-	For adapting the 386 target to the x86-64 processor, this
-	step basically involved (a) replacing register names (%eax
+	For instance, to adapt the 386 target to the x86-64 processor,
+	this step basically involves (a) replacing register names (%eax
 	to %rax, etc), (b) replacing instruction suffixes (movl->movq,
 	etc), (c) replacing ".long" by ".quad", and (d) adjusting all
-	values that deal with word sized, i.e. adding multiples of 8
-	in stead of 4 to a register in pointer arithmetics, etc.
+	values that deal with word size, i.e. adding multiples of 8
+	instead of 4 to registers in pointer arithmetics, etc.
 
-	Of course, other processors will differ from the 386 by a
+	Of course, other processors will differ from the 386 by a far
 	greater margin, so this step will be quite a piece of work.
 	The conclusion part of the book contains some practical tips
 	for approaching this task.
@@ -70,21 +82,37 @@
 
 	Again, if you are really familiar with one of the supported
 	platforms, you may be able to rewrite the individual functions.
-	Otherwise, it is time to get a copy of "Practical Compiler
-	Construction", which explains this part in depth.
+	Otherwise, this is a good time to pick up a copy of "Practical
+	Compiler Construction", which also explains this part in depth.
 
-	You may run into a lot of trouble at this point. For example,
-	the author needed quite a while to figure out that NetBSD needs
-	a PT_NOTE section now, or the executable ejected by ld will not
-	be executable. What a mess!
+	You may run into a lot of trouble at this point. Be patient,
+	this is to be expected.
 
 
-	(6) Compile, Test, Repeat
+	(6) Compile, test, repeat
 
-	A lot of things will go wrong. Do not get discouraged. This
+	A lot of things *will* go wrong. Do not get discouraged! This
 	is normal. First make the compiler emit syntactically correct
 	assembler code. Then make it compile the library. Then test
 	some small programs. Then compile the compiler with itself.
 	Once it passes the triple test (make test), the compiler can
 	be considered stable.
+
+	Pointer arithmetics can be particularly nasty, so there is an
+	ad-hoc pointer arithmetics test suite included in the SubC
+	archive. Just run 'make ptest' in src/. When it does not print
+	anything, fine!
+
+
+	(7) Add your back-end to the configure script
+
+	Have a look at the configure script in the root of the SubC
+	source tree and add your configuration. It is just a simple,
+	human readable script containing no magic whatsoever, so this
+	should be a piece of cake.
+
+
+	(8) Optionally: send your patches to the author
+
+	Thank you!
 

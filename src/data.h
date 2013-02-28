@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011,2012
+ *	NMH's Simple C Compiler, 2011--2013
  *	Global variables
  */
 
@@ -55,6 +55,12 @@ _extern int	Retlab;
 _extern int	LIaddr[MAXLOCINIT];
 _extern int	LIval[MAXLOCINIT];
 _extern int	Nli;
+
+/* synthesizer operand queue */
+_extern int	Q_type;
+_extern int	Q_val;
+_extern char	Q_name[NAMELEN+1];
+_extern int	Q_cmp;
 
 _extern char	*Files[MAXFILES];
 _extern int	Nf;

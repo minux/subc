@@ -11,11 +11,12 @@
 int findglob(char *s) {
 	int	i;
 
-	for (i=0; i<Globs; i++)
+	for (i=0; i<Globs; i++) {
 		if (	Types[i] != TMACRO && Stcls[i] != CMEMBER &&
 			*s == *Names[i] && !strcmp(s, Names[i])
 		)
 			return i;
+	}
 	return 0;
 }
 
@@ -202,7 +203,7 @@ int addglob(char *name, int prim, int type, int scls, int size, int val,
 		if (TFUNCTION == Types[y])
 			mtext = Mtext[y];
 	}
-	if (y == 0) {
+	if (0 == y) {
  		y = newglob();
 		Names[y] = globname(name);
 	}

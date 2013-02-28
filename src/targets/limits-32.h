@@ -1,6 +1,6 @@
 /*
  *	NMH's Simple C Compiler, 2012
- *	limits.h
+ *	limits.h on 32-bit systems
  */
 
 #define CHAR_BIT	8

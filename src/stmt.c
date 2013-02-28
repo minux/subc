@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011,2012
+ *	NMH's Simple C Compiler, 2011--2013
  *	Statement parser
  */
 
@@ -78,8 +78,9 @@ static void do_stmt(void) {
 	match(WHILE, "'while'");
 	lparen();
 	genlab(lc);
-	rexpr();
+	rexpr(0);
 	genbrtrue(ls);
+	clear(1);
 	genlab(lb);
 	rparen();
 	semi();
@@ -105,23 +106,22 @@ static void for_stmt(void) {
 	pushcont(lc = label());
 	lparen();
 	if (Token != SEMI) {
-		rexpr();
-		clear();
+		rexpr(0);
+		clear(1);
 	}
 	semi();
 	genlab(ls);
 	if (Token != SEMI) {
-		rexpr();
-		clear();
+		rexpr(0);
 		genbrfalse(lb);
+		clear(1);
 	}
 	genjump(lbody);
 	semi();
 	genlab(lc);
-	if (Token != RPAREN) {
-		rexpr();
-		clear();
-	}
+	if (Token != RPAREN)
+		rexpr(0);
+	clear(1);
 	genjump(ls);
 	rparen();
 	genlab(lbody);
@@ -143,11 +143,11 @@ static void if_stmt(void) {
 
 	Token = scan();
 	lparen();
-	rexpr();
-	clear();
-	rparen();
+	rexpr(0);
 	l1 = label();
 	genbrfalse(l1);
+	clear(1);
+	rparen();
 	stmt();
 	if (ELSE == Token) {
 		l2 = label();
@@ -249,8 +249,8 @@ static void switch_block(void) {
 static void switch_stmt(void) {
 	Token = scan();
 	lparen();
-	rexpr();
-	clear();
+	rexpr(1);
+	clear(0);
 	rparen();
 	if (Token != LBRACE)
 		error("'{' expected after 'switch'", NULL);
@@ -269,9 +269,9 @@ static void while_stmt(void) {
 	pushcont(lc = label());
 	genlab(lc);
 	lparen();
-	rexpr();
-	clear();
+	rexpr(0);
 	genbrfalse(lb);
+	clear(1);
 	rparen();
 	stmt();
 	genjump(lc);
@@ -323,7 +323,7 @@ static void stmt(void) {
 	case SEMI:	Token = scan(); break;
 	case DEFAULT:	wrong_ctx(DEFAULT); break;
 	case CASE:	wrong_ctx(CASE); break;
-	default:	rexpr(); semi(); break;
+	default:	rexpr(0); semi(); break;
 	}
-	clear();
+	clear(1);
 }

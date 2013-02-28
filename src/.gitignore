@@ -1,8 +1,0 @@
-*.o
-/scc
-/scc0
-/scc1
-/lib/libscc.a
-/cg.c
-/cg.h
-/lib/crt0.s

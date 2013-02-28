@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011,2012
+ *	NMH's Simple C Compiler, 2012--2013
  *	C runtime initialization
  */
 
@@ -12,6 +12,23 @@ FILE	*_files[FOPEN_MAX];
 
 FILE	*stdin, *stdout, *stderr;
 
+#ifdef debug
+pra(x) {
+	char	*d;
+
+	d = "0123456789abcdef";
+	_write(1, d+((x>>28)&15), 1);
+	_write(1, d+((x>>24)&15), 1);
+	_write(1, d+((x>>20)&15), 1);
+	_write(1, d+((x>>16)&15), 1);
+	_write(1, d+((x>>12)&15), 1);
+	_write(1, d+((x>> 8)&15), 1);
+	_write(1, d+((x>> 4)&15), 1);
+	_write(1, d+((x>> 0)&15), 1);
+	_write(1, "\n", 1);
+}
+#endif
+
 void _init(void) {
 	int	i;
 
@@ -21,5 +38,6 @@ void _init(void) {
 	stdout = fdopen(1, "w");
 	stderr = fdopen(2, "w");
 	stdin->mode = _IOLBF;
+	stdout->mode = _IOLBF;
 	stderr->mode = _IOLBF;
 }

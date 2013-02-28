@@ -1,6 +1,6 @@
 /*
- *	NMH's Simple C Compiler, 2011,2012
- *	Code generator (emitter)
+ *	NMH's Simple C Compiler, 2011--2013
+ *	Synthesizing code generator (emitter)
  */
 
 #include "defs.h"
@@ -10,8 +10,9 @@
 
 int	Acc = 0;
 
-void clear(void) {
+void clear(int q) {
 	Acc = 0;
+	if (q) Q_type = empty;
 }
 
 void load(void) {
@@ -25,7 +26,10 @@ int label(void) {
 }
 
 void spill(void) {
-	if (Acc) genpush();
+	if (Acc) {
+		gentext();
+		cgpush();
+	}
 }
 
 void genraw(char *s) {
@@ -134,70 +138,91 @@ void genpublic(char *name) {
 
 /* loading values */
 
+void commit(void) {
+	if (Q_cmp != none) {
+		commit_cmp();
+		return;
+	}
+	if (empty == Q_type) return;
+	spill();
+	switch (Q_type) {
+	case addr_auto:		cgldla(Q_val); break;
+	case addr_static:	cgldsa(Q_val); break;
+	case addr_globl:	cgldga(gsym(Q_name)); break;
+	case addr_label:	cgldlab(Q_val); break;
+	case literal:		cglit(Q_val); break;
+	case arg_count:		cgargc(); break;
+	case auto_byte:		cgclear(); cgldlb(Q_val); break;
+	case auto_word:		cgldlw(Q_val); break;
+	case static_byte:	cgclear(); cgldsb(Q_val); break;
+	case static_word:	cgldsw(Q_val); break;
+	case globl_byte:	cgclear(); cgldgb(gsym(Q_name)); break;
+	case globl_word:	cgldgw(gsym(Q_name)); break;
+	default:		fatal("internal: unknown Q_type");
+	}
+	load();
+	Q_type = empty;
+}
+
+void queue(int type, int val, char *name) {
+	commit();
+	Q_type = type;
+	Q_val = val;
+	if (name) copyname(Q_name, name);
+	Q_cmp = none;
+}
+
 void genaddr(int y) {
 	gentext();
-	spill();
 	if (CAUTO == Stcls[y])
-		cgldla(Vals[y]);
+		queue(addr_auto, Vals[y], NULL);
 	else if (CLSTATC == Stcls[y])
-		cgldsa(Vals[y]);
+		queue(addr_static, Vals[y], NULL);
 	else
-		cgldga(gsym(Names[y]));
-	load();
+		queue(addr_globl, 0, Names[y]);
 }
 
 void genldlab(int id) {
 	gentext();
-	spill();
-	cgldlab(id);
-	load();
+	queue(addr_label, id, NULL);
 }
 
 void genlit(int v) {
 	gentext();
-	spill();
-	cglit(v);
-	load();
+	queue(literal, v, NULL);
 }
 
 void genargc(void) {
 	gentext();
-	spill();
-	cgargc();
-	load();
+	queue(arg_count, 0, NULL);
 }
 
 /* binary ops */
 
 void genand(void) {
 	gentext();
-	cgpop2();
-	cgand();
+	cgsynand();
 }
 
 void genior(void) {
 	gentext();
-	cgpop2();
-	cgior();
+	cgsynor();
 }
 
 void genxor(void) {
 	gentext();
-	cgpop2();
-	cgxor();
+	cgsynxor();
 }
 
-void genshl(int swap) {
+void genshl(int swapped) {
 	gentext();
-	cgpop2();
-	if (swap) cgswap();
+	if (cgload() || !swapped) cgswap();
 	cgshl();
 }
 
-void genshr(int swap) {
+void genshr(int swapped) {
 	gentext();
-	cgpop2();
-	if (swap) cgswap();
+	if (cgload() || !swapped) cgswap();
 	cgshr();
 }
 
@@ -221,47 +246,46 @@ static int needscale(int p) {
 		STCPTR == sp || STCPP == sp || UNIPTR == sp || UNIPP == sp;
 }
 
-int genadd(int p1, int p2) {
-	int	rp = PINT;
+int genadd(int p1, int p2, int swapped) {
+	int	rp = PINT, t;
 
 	gentext();
+	if (cgload() || !swapped) {
+		t = p1;
+		p1 = p2;
+		p2 = t;
+	}
 	if (ptr(p1)) {
 		if (needscale(p1)) {
 			if (	(p1 & STCMASK) == STCPTR ||
 				(p1 & STCMASK) == UNIPTR
 			)
-				cgscaleby(objsize(deref(p1), TVARIABLE, 1));
+				cgscale2by(objsize(deref(p1), TVARIABLE, 1));
 			else
-				cgscale();
+				cgscale2();
 		}
-		cgpop2();
 		rp = p1;
 	}
 	else if (ptr(p2)) {
-		cgpop2();
 		if (needscale(p2)) {
 			if (	(p2 & STCMASK) == STCPTR ||
 				(p2 & STCMASK) == UNIPTR
 			)
-				cgscale2by(objsize(deref(p2), TVARIABLE, 1));
+				cgscaleby(objsize(deref(p2), TVARIABLE, 1));
 			else
-				cgscale2();
+				cgscale();
 		}
 		rp = p2;
-	}
-	else {
-		cgpop2();
 	}
 	cgadd();
 	return rp;
 }
 
-int gensub(int p1, int p2, int swap) {
+int gensub(int p1, int p2, int swapped) {
 	int	rp = PINT;
 
 	gentext();
-	cgpop2();
-	if (swap) cgswap();
+	if (cgload() || !swapped) cgswap();
 	if (!inttype(p1) && !inttype(p2) && p1 != p2)
 		error("incompatible pointer types in binary '-'", NULL);
 	if (ptr(p1) && !ptr(p2)) {
@@ -289,21 +313,19 @@ int gensub(int p1, int p2, int swap) {
 
 void genmul(void) {
 	gentext();
-	cgpop2();
+	cgload();
 	cgmul();
 }
 
-void gendiv(int swap) {
+void gendiv(int swapped) {
 	gentext();
-	cgpop2();
-	if (swap) cgswap();
+	if (cgload() || !swapped) cgswap();
 	cgdiv();
 }
 
-void genmod(int swap) {
+void genmod(int swapped) {
 	gentext();
-	cgpop2();
-	if (swap) cgswap();
+	if (cgload() || !swapped) cgswap();
 	cgmod();
 }
 
@@ -331,10 +353,26 @@ static void binopchk(int op, int p1, int p2) {
 	error("invalid operands to binary operator", NULL);
 }
 
+void commit_cmp(void) {
+	switch (Q_cmp) {
+	case equal:		cgeq(); break;
+	case not_equal:		cgne(); break;
+	case less:		cglt(); break;
+	case greater:		cggt(); break;
+	case less_equal:	cgle(); break;
+	case greater_equal:	cgge(); break;
+	}
+	Q_cmp = none;
+}
+
+void queue_cmp(int op) {
+	Q_cmp = op;
+}
+
 int genbinop(int op, int p1, int p2) {
 	binopchk(op, p1, p2);
 	switch (op) {
-	case PLUS:	return genadd(p1, p2);
+	case PLUS:	return genadd(p1, p2, 1);
 	case MINUS:	return gensub(p1, p2, 1);
 	case STAR:	genmul(); break;
 	case SLASH:	gendiv(1); break;
@@ -344,12 +382,12 @@ int genbinop(int op, int p1, int p2) {
 	case AMPER:	genand(); break;
 	case CARET:	genxor(); break;
 	case PIPE:	genior(); break;
-	case EQUAL:	cgeq(); break;
-	case NOTEQ:	cgne(); break;
-	case LESS:	cglt(); break;
-	case GREATER:	cggt(); break;
-	case LTEQ:	cgle(); break;
-	case GTEQ:	cgge(); break;
+	case EQUAL:	queue_cmp(equal); break;
+	case NOTEQ:	queue_cmp(not_equal); break;
+	case LESS:	queue_cmp(less); break;
+	case GREATER:	queue_cmp(greater); break;
+	case LTEQ:	queue_cmp(less_equal); break;
+	case GTEQ:	queue_cmp(greater_equal); break;
 	}
 	return PINT;
 }
@@ -358,11 +396,13 @@ int genbinop(int op, int p1, int p2) {
 
 void genbool(void) {
 	gentext();
+	commit();
 	cgbool();
 }
 
 void genind(int p) {
 	gentext();
+	commit();
 	if (PCHAR == p)
 		cgindb();
 	else
@@ -371,26 +411,31 @@ void genind(int p) {
 
 void genlognot(void) {
 	gentext();
+	commit();
 	cglognot();
 }
 
 void genneg(void) {
 	gentext();
+	commit();
 	cgneg();
 }
 
 void gennot(void) {
 	gentext();
+	commit();
 	cgnot();
 }
 
 void genscale(void) {
 	gentext();
+	commit();
 	cgscale();
 }
 
 void genscale2(void) {
 	gentext();
+	commit();
 	cgscale2();
 }
 
@@ -398,27 +443,64 @@ void genscale2(void) {
 
 void genjump(int dest) {
 	gentext();
+	commit();
 	cgjump(dest);
+}
+
+void genbranch(int dest, int inv) {
+	if (inv) {
+		switch (Q_cmp) {
+		case equal:		cgbrne(dest); break;
+		case not_equal:		cgbreq(dest); break;
+		case less:		cgbrge(dest); break;
+		case greater:		cgbrle(dest); break;
+		case less_equal:	cgbrgt(dest); break;
+		case greater_equal:	cgbrlt(dest); break;
+		}
+	}
+	else {
+		switch (Q_cmp) {
+		case equal:		cgbreq(dest); break;
+		case not_equal:		cgbrne(dest); break;
+		case less:		cgbrlt(dest); break;
+		case greater:		cgbrgt(dest); break;
+		case less_equal:	cgbrle(dest); break;
+		case greater_equal:	cgbrge(dest); break;
+		}
+	}
+	Q_cmp = none;
 }
 
 void genbrfalse(int dest) {
 	gentext();
+	if (Q_cmp != none) {
+		genbranch(dest, 0);
+		return;
+	}
+	commit();
 	cgbrfalse(dest);
 }
 
 void genbrtrue(int dest) {
 	gentext();
+	if (Q_cmp != none) {
+		genbranch(dest, 1);
+		return;
+	}
+	commit();
 	cgbrtrue(dest);
 }
 
 void gencall(int y) {
 	gentext();
+	commit();
 	cgcall(gsym(Names[y]));
 	load();
 }
 
 void gencalr(void) {
 	gentext();
+	commit();
 	cgcalr();
 	load();
 }
@@ -435,11 +517,13 @@ void genexit(void) {
 
 void genpush(void) {
 	gentext();
+	commit();
 	cgpush();
 }
 
 void genpushlit(int n) {
 	gentext();
+	commit();
 	spill();
 	cgpushlit(n);
 }
@@ -512,8 +596,12 @@ static void genincptr(int *lv, int inc, int pre) {
 	size = objsize(deref(lv[LVPRIM]), TVARIABLE, 1);
 	gentext();
 	y = lv[LVSYM];
+	commit();
 	if (!y && !pre) cgldinc();
-	if (!pre) rvalue(lv);
+	if (!pre) {
+		rvalue(lv);
+		commit();
+	}
 	if (!y) {
 		if (pre)
 			if (inc)
@@ -558,8 +646,12 @@ void geninc(int *lv, int inc, int pre) {
 	}
 	b = PCHAR == lv[LVPRIM];
 	/* will duplicate move to aux register in (*char)++ */
+	commit();
 	if (!y && !pre) cgldinc();
-	if (!pre) rvalue(lv);
+	if (!pre) {
+		rvalue(lv);
+		commit();
+	}
 	if (!y) {
 		if (pre)
 			if (inc)
@@ -614,16 +706,16 @@ void genswitch(int *vals, int *labs, int nc, int dflt) {
 
 /* assigments */
 
-void genasop(int op, int p1, int p2) {
+void genasop(int op, int p1, int p2, int swapped) {
 	binopchk(op, p1, p2);
 	switch (op) {
-	case ASDIV:	gendiv(0); break;
+	case ASDIV:	gendiv(swapped); break;
 	case ASMUL:	genmul(); break;
-	case ASMOD:	genmod(0); break;
-	case ASPLUS:	genadd(p2, p1); break;
-	case ASMINUS:	gensub(p2, p1, 0); break;
-	case ASLSHIFT:	genshl(0); break;
-	case ASRSHIFT:	genshr(0); break;
+	case ASMOD:	genmod(swapped); break;
+	case ASPLUS:	genadd(p1, p2, swapped); break;
+	case ASMINUS:	gensub(p1, p2, swapped); break;
+	case ASLSHIFT:	genshl(swapped); break;
+	case ASRSHIFT:	genshr(swapped); break;
 	case ASAND:	genand(); break;
 	case ASXOR:	genxor(); break;
 	case ASOR:	genior(); break;
@@ -631,12 +723,18 @@ void genasop(int op, int p1, int p2) {
 }
 
 void genstore(int op, int *lv, int *lv2) {
+	int	swapped = 1;
+
 	if (NULL == lv) return;
 	gentext();
 	if (ASSIGN != op) {
-		if (lv[LVSYM]) rvalue(lv);
-		genasop(op, lv[LVPRIM], lv2[LVPRIM]);
+		if (lv[LVSYM]) {
+			rvalue(lv);
+			swapped = 0;
+		}
+		genasop(op, lv[LVPRIM], lv2[LVPRIM], swapped);
 	}
+	commit();
 	if (!lv[LVSYM]) {
 		cgpopptr();
 		if (PCHAR == lv[LVPRIM])
@@ -674,32 +772,21 @@ void rvalue(int *lv) {
 		genind(lv[LVPRIM]);
 	}
 	else if (CAUTO == Stcls[lv[LVSYM]]) {
-		spill();
-		if (PCHAR == lv[LVPRIM]) {
-			cgclear();
-			cgldlb(Vals[lv[LVSYM]]);
-		}
-		else {
-			cgldlw(Vals[lv[LVSYM]]);
-		}
+		if (PCHAR == lv[LVPRIM])
+			queue(auto_byte, Vals[lv[LVSYM]], NULL);
+		else
+			queue(auto_word, Vals[lv[LVSYM]], NULL);
 	}
 	else if (CLSTATC == Stcls[lv[LVSYM]]) {
-		spill();
-		if (PCHAR == lv[LVPRIM]) {
-			cgclear();
-			cgldsb(Vals[lv[LVSYM]]);
-		}
+		if (PCHAR == lv[LVPRIM])
+			queue(static_byte, Vals[lv[LVSYM]], NULL);
 		else
-			cgldsw(Vals[lv[LVSYM]]);
+			queue(static_word, Vals[lv[LVSYM]], NULL);
 	}
 	else {
-		spill();
-		if (PCHAR == lv[LVPRIM]) {
-			cgclear();
-			cgldgb(gsym(Names[lv[LVSYM]]));
-		}
+		if (PCHAR == lv[LVPRIM])
+			queue(globl_byte, 0, Names[lv[LVSYM]]);
 		else
-			cgldgw(gsym(Names[lv[LVSYM]]));
+			queue(globl_word, 0, Names[lv[LVSYM]]);
 	}
-	load();
 }

@@ -1,6 +1,6 @@
 
-	SubC Compiler, Version 2012-04-15
-	By Nils M Holm, 2011--2012
+	SubC Compiler, Version 2013-02-21
+	By Nils M Holm, 2011--2013
 	Placed in the public domain
 
 
@@ -12,8 +12,8 @@
 
 	A previous version of the compiler is described in great detail
 	in the book "Practical Compiler Construction", which can be
-	purchased at Lulu.com. See the end of this text for ordering
-	information.
+	purchased at Lulu.com. See  http://www.t3x.org/reload/  for
+	ordering information.
 
 	The SubC compiler can compile itself. Unlike many other small C
 	compilers, it does not bend the rules, though. Its code passes
@@ -28,6 +28,7 @@
 		FreeBSD/x86-64
 		NetBSD/x86-64
 		Linux/386
+		Linux/x86-64
 
 	Porting it to other 32-bit or 64-bit platforms should be quite
 	straight-forward. See the file "Porting" and/or the book for a
@@ -35,17 +36,22 @@
 
 	SubC is fast and simple. Its output is typically small (due
 	to a non-bloated library), but not very runtime efficient,
-	because it employs none of the code synthesis or optimization
-	strategies explained in the book.
+	because it employs none of the optimization strategies
+	explained in the book.
+
+	There is now an experimental synthesizing back-end (as described
+	in the book), which generates much better code than the original
+	stack-based back-end. However, is has not been tested on all
+	platforms. See "selecting a target platform" below for details.
 
 
 	CHANGES TO THE BOOK VERSION
 
 	Note: The book version runs on FreeBSD/386 exclusively.
 
-	This version of the SubC compiler supports the following
-	parts of C language that were not supported by the SubC
-	version described in "Practical Compiler Construction":
+	This version of the SubC compiler adds support for the
+	following parts of C language to the version described in
+	"Practical Compiler Construction":
 
 	o  &array is now valid syntax (you no longer have to write
 	   &array[0]).
@@ -58,7 +64,7 @@
 
 	o  Prototypes may have the static storage class.
 
-	o  There is experimental support for structs and unions.
+	o  There is support for structs and unions.
 
 	o  jmp_buf is now a struct; setjmp() and longjmp() must be
 	   called with &jmp_buf.
@@ -147,7 +153,7 @@
 	   even be covered by TCPL2).
 
 	o  The setjmp()/longjmp() functions must be called with &jmp_buf
-	   due to the lack of typedef.
+	   due to the lack of typedef. This is a bug!
 
 	o  The signal() function returns int due to the lack of a more
 	   sophisticated type system; the return value must be casted to
@@ -165,18 +171,31 @@
 	SELECTING A TARGET PLATFORM
 
 	The easiest way to prepare a build is to run the configure
-	script in this directiry. Don't worry, it is just a simple
+	script in this directory. Don't worry, it is just a simple
 	script that will figure out the host platform via uname and
 	link a few machine-dependent files into place.
 
-	If you want to do this manually: select one of the cg*.c
-	files in src/targets and symlink it to src/cg.c. Also link
-	the corresponding header file. E.g.:
+	To enable the synthesizing code generator, run
 
-		(cd src && ln -fs targets/cg386.c cg.c)
+		./configure -syn
+
+	If the build should fail the triple test, make clean, re-run
+	configure without the '-syn' option, and retry.
+
+	If you want to configure the compiler manually: select one of
+	the target descriptions (cg*.c) files in src/targets and symlink
+	it to src/cg.c. Also link the corresponding header file and
+	code generator into place:
+
+		(cd src && ln -fs targets/cg386-stk.c cg.c)
 		(cd src && ln -fs targets/cg386.h cg.h)
+		(cd src && ln -fs targets/stkgen.c gen.c)
 
-	Select the C startup (crt0) file for your OS and CPU type
+	Use stkgen.c (the stack-based generator) for *-stk.c target
+	descriptions and syngen.c (the synthesizing generator) for
+	*-syn.c descriptions.
+
+	Also select the C startup (crt0) file for your OS and CPU type
 	from src/targets and link it to src/lib/crt0.s, e.g.:
 
 		(cd src/lib && \
@@ -184,6 +203,12 @@
 
 	If your OS/CPU combination is not supported, you might try
 	to port the compiler. See the file "Porting" for details.
+
+	Finally, select limits-*.h file from targets/ that reflects the
+	machine word size of your target and link it to include/limits.h:
+
+		(cd src/include && \
+		 ln -fs ../targets/limits-32.h limits.h)
 
 
 	COMPILING THE COMPILER
@@ -222,7 +247,9 @@
 	INSTALLING THE COMPILER
 
 	The easy way would be to set up the SCCDIR and BINDIR variables
-	in src/Makefile to suit your taste and then run "make install".
+	in src/Makefile to suit your taste and then run
+
+		make clean install
 
 	If you want to install the SubC compiler manually, you will
 	have to change the SCCDIR variable in the compiler itself.
@@ -230,33 +257,19 @@
 	headers and runtime library. SCCDIR defaults to "." and can
 	be overridden on the command line:
 
-		./scc1 -o scc -D 'SCCDIR="$INSTALLDIR"' *.c
+		./scc1 -o scc -D 'SCCDIR="INSTALLDIR"' *.c
 
-	(where $INSTALLDIR is where the compiler will be installed.)
+	(where INSTALLDIR is where the compiler will be installed.)
 
 	You can place the 'scc' executable wherever you want, as long
 	as its location is covered by the PATH environment variable.
-	The headers (include/*) go to $INSTALLDIR/include, the library
+	The headers (include/*) go to INSTALLDIR/include, the library
 	'lib/libscc.a' and the startup module 'lib/crt0.o' go to
-	$INSTALLDIR/lib.
+	INSTALLDIR/lib.
 
 	To test the installation just re-compile the compiler:
 
 		rm scc && scc -o scc *.c
-
-
-	FURTHER INFORMATION
-
-	For a thorough explanation of the internals of (an earlier
-	version of) the compiler, including theoretical backgrounds,
-	see my book
-
-	"Practical Compiler Construction"
-
-	which can be bought at Lulu.com:
-
-	http://www.lulu.com/content/12610903     (Paperback)
-	http://www.lulu.com/content/12685672     (PDF)
 
 
 	THANKS
@@ -266,6 +279,8 @@
 
 	To Bakul Shah for granting me remote access to a 64-bit
 	FreeBSD system and a Linux VM.
+
+	To "minux" for porting the runtime module to Linux/x86-64.
 
 
 	CONTACT

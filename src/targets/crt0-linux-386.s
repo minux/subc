@@ -1,5 +1,5 @@
 #
-#	NMH's Simple C Compiler, 2011,2012
+#	NMH's Simple C Compiler, 2011--2013
 #	C runtime module for Linux/386
 #
 
@@ -58,8 +58,10 @@ no:	loop	next
 Csetjmp:
 	movl	8(%esp),%edx
 	movl	%esp,(%edx)
+	addl	$4,(%edx)
+	movl	%ebp,4(%edx)
 	movl	(%esp),%eax
-	movl	%eax,4(%edx)
+	movl	%eax,8(%edx)
 	xorl	%eax,%eax
 	ret
 
@@ -70,7 +72,8 @@ Clongjmp:
 	movl	8(%esp),%eax
 	movl	12(%esp),%edx
 	movl	(%edx),%esp
-	movl	4(%edx),%edx
+	movl	4(%edx),%ebp
+	movl	8(%edx),%edx
 	jmp	*%edx
 
 # int _exit(int rc);

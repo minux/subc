@@ -55,10 +55,10 @@ int _fread(void *p, int size, FILE *f) {
 	size -= k;
 	len = f->size;
 	while (size > len) {
-		if (_read(f->fd, p, len) != len) {
+		if ((k = _read(f->fd, p, len)) != len) {
 			f->iom |= _FERROR;
 			errno = EIO;
-			return total-size;
+			return total-size+k;
 		}
 		p += len;
 		size -= len;

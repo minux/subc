@@ -1,11 +1,12 @@
 /*
- *	NMH's Simple C Compiler, 2011,2012
+ *	NMH's Simple C Compiler, 2011--2013
  *	_vformat()
  */
 
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include "cg.h"
 
 int _fwrite(void *buf, int len, FILE *f);
 
@@ -19,10 +20,12 @@ static int	err;
 /*
  * Convert integer N to string. Write the string to P.
  * P must point to the *end* of the buffer initially;
- * the output is written backward!
+ * the output is written backwards!
  * BASE is the numeric base (8,10,16). SGNCH points
  * to a buffer to which ITOA writes the sign of N. The
  * sign is *not* included in the buffer P.
+ * When BASE is negative, upper case letters will be
+ * used in hexa-decimal formatting.
  */
 
 static char *itoa(char *p, int n, int base, char *sgnch) {
@@ -32,18 +35,42 @@ static char *itoa(char *p, int n, int base, char *sgnch) {
 	if (n < 0) s = 1, n = -n;
 	*--p = 0;
 	while (n || 0 == *p) {
-		*--p = n % base + '0';
+		*--p = abs(n % base) + '0';
 		if (n % base > 9) *p += a-10-'0';
-		n /= base;
+		n = abs(n/base);
 	}
 	if (s) *sgnch = '-';
 	return p;
 }
 
+/*
+ * Jump through some hoops to make output unsigned
+ * using a compiler w/o unsigned int.
+ */
+static char *ptoa(char *p, int n) {
+	char	dummy[1], *q, *r;
+	int	x;
+
+	x = (n & 0xf) + '0';
+	if (x-'0' > 9) x += 'a'-10-'0';
+	*--p = 0;
+	q = p-1;
+	n >>= 4;
+	if (n)
+		r = itoa(p, n, 16, dummy);
+	else
+		r = p-1;
+	*q = x;
+	return r;
+}
+
 static void append(char *what, int len) {
 	int	k;
 
-	if (ofd >= 0) {
+	if (0 == len) {
+		return;
+	}
+	else if (ofd >= 0) {
 		if (_write(ofd, what, len) != len)
 			err = 1;
 		olen += len;
@@ -73,6 +100,8 @@ static void append(char *what, int len) {
  * that DEST is a CHAR*).
  * When MODE==1, assume that DEST is a FILE* and
  * write the output to that stream.
+ * When MODE==-1, assume that DEST is a unix file
+ * descriptor and write the output to that fd.
  * In MODE==0, write at most MAX characters to DEST
  * where MAX==0 means unlimited).
  */
@@ -168,6 +197,12 @@ int _vformat(int mode, int max, void *dest, char *fmt, void **varg) {
 				na++;
 				break;
 			case 'p':
+				p = ptoa(end, (int) *varg--);
+				pfx = "0x";
+				len = BPW*2+2;
+				*pad = '0';
+				na++;
+				break;
 			case 'x':
 			case 'X':
 				k = 'X' == fmt[-1]? -16: 16;

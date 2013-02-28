@@ -36,7 +36,7 @@ void suspend(void) {
 
 void resume(void) {
 	Outfile = suspended;
-	clear();
+	clear(1);
 }
 
 void match(int t, char *what) {

@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011,2012
+ *	NMH's Simple C Compiler, 2011--2013
  *	Definitions
  */
 
@@ -98,6 +98,35 @@ enum {
 	D_STAT = 4
 };
 
+/* addressing modes */
+enum {
+	empty,
+	addr_auto,
+	addr_static,
+	addr_globl,
+	addr_label,
+	literal,
+	arg_count,
+	auto_byte,
+	auto_word,
+	static_byte,
+	static_word,
+	globl_byte,
+	globl_word
+};
+
+/* compare instructions */
+enum {
+	none,
+	equal,
+	not_equal,
+	less,
+	greater,
+	less_equal,
+	greater_equal
+};
+
+/* tokens */
 enum {
 	SLASH, STAR, MOD, PLUS, MINUS, LSHIFT, RSHIFT,
 	GREATER, GTEQ, LESS, LTEQ, EQUAL, NOTEQ, AMPER,

@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011,2012
+ *	NMH's Simple C Compiler, 2011--2013
  *	Function declarations
  */
 
@@ -9,9 +9,11 @@ int	addloc(char *name, int prim, int type, int scls, int size, int val,
 		int init);
 void	cerror(char *s, int c);
 int	chrpos(char *s, int c);
-void	clear(void);
+void	clear(int q);
 void	clrlocs(void);
 void	colon(void);
+void	commit(void);
+void	commit_cmp(void);
 void	compound(int lbr);
 int	comptype(int p);
 int	constexpr(void);
@@ -31,11 +33,12 @@ int	findmac(char *s);
 int	frozen(int depth);
 char	*galloc(int k);
 void	gen(char *s);
-int	genadd(int p1, int p2);
+int	genadd(int p1, int p2, int swap);
 void	genaddr(int y);
+void	genalign(int k);
 void	genand(void);
 void	genargc(void);
-void	genasop(int op, int p1, int p2);
+void	genasop(int op, int p1, int p2, int swap);
 int	genbinop(int op, int p1, int p2);
 void	genbool(void);
 void	genbrfalse(int dest);
@@ -110,7 +113,7 @@ void	rbrace(void);
 void	rbrack(void);
 void	reject(void);
 void	resume(void);
-int	rexpr(void);
+int	rexpr(int com);
 void	rparen(void);
 void	rvalue(int *lv);
 int	scan(void);
