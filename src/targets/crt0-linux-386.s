@@ -76,7 +76,7 @@ Clongjmp:
 	movl	8(%edx),%edx
 	jmp	*%edx
 
-# int _exit(int rc);
+# void _exit(int rc);
 
 	.globl	C_exit
 C_exit:	movl	8(%esp),%ebx
@@ -119,7 +119,7 @@ sbrkok:	movl	curbrk,%ebx	# update curr. break
 	movl	%ebx,%eax
 	ret
 
-# int _write(int fd, char *buf, int len);
+# int _write(int fd, void *buf, int len);
 
 	.globl	C_write
 C_write:
@@ -130,7 +130,7 @@ C_write:
 	int	$0x80
 	ret
 
-# int _read(int fd, char *buf, int len);
+# int _read(int fd, void *buf, int len);
 
 	.globl	C_read
 C_read:	movl	8(%esp),%edx

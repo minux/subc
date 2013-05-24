@@ -6,5 +6,5 @@
 #define CHAR_BIT	8
 #define CHAR_MAX	255
 
-#define INT_MIN		-9223372036854775808
-#define INT_MAX		9223372036854775807
+#define INT_MIN		-0x8000000000000000
+#define INT_MAX		 0x7fffffffffffffff

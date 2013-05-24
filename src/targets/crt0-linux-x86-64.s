@@ -81,7 +81,7 @@ Clongjmp:
 	movq	16(%rdx),%rdx
 	jmp	*%rdx
 
-# int _exit(int rc);
+# void _exit(int rc);
 
 	.globl	C_exit
 C_exit:
@@ -125,7 +125,7 @@ sbrkok:
 	movq	%rbx,%rax
 	ret
 
-# int _write(int fd, char *buf, int len);
+# int _write(int fd, void *buf, int len);
 
 	.globl	C_write
 C_write:
@@ -136,7 +136,7 @@ C_write:
 	syscall
 	ret
 
-# int _read(int fd, char *buf, int len);
+# int _read(int fd, void *buf, int len);
 
 	.globl	C_read
 C_read:

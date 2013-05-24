@@ -8,18 +8,16 @@
 #include <string.h>
 #include <ctype.h>
 #include "cg.h"
+#include "sys.h"
 
 #ifndef SCCDIR
  #define SCCDIR		"."
 #endif
 
+#define SCCLIBC		"%s/lib/libscc.a"
+
 #define PREFIX		'C'
 #define LPREFIX		'L'
-
-#define ASCMD		"as -o %s %s"
-#define LDCMD		"ld -o %s %s/lib/crt0.o"
-#define SCCLIBC		"%s/lib/libscc.a"
-#define SYSLIBC		"/usr/lib/libc.a"
 
 #define INTSIZE		BPW
 #define PTRSIZE		INTSIZE

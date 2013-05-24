@@ -1,5 +1,5 @@
 
-	SubC Compiler, Version 2013-02-21
+	SubC Compiler, Version 2013-05-24
 	By Nils M Holm, 2011--2013
 	Placed in the public domain
 
@@ -29,20 +29,26 @@
 		NetBSD/x86-64
 		Linux/386
 		Linux/x86-64
+		Windows/386 (MinGW)
 
 	Porting it to other 32-bit or 64-bit platforms should be quite
 	straight-forward. See the file "Porting" and/or the book for a
 	general road map.
+
+	There is also an in-progress port to DOS on 8086-based
+	processors, but it does not emit working code at this point
+	and has not been touched in months. Feel free to improve it,
+	though!
 
 	SubC is fast and simple. Its output is typically small (due
 	to a non-bloated library), but not very runtime efficient,
 	because it employs none of the optimization strategies
 	explained in the book.
 
-	There is now an experimental synthesizing back-end (as described
-	in the book), which generates much better code than the original
-	stack-based back-end. However, is has not been tested on all
-	platforms. See "selecting a target platform" below for details.
+	There is now a new synthesizing back-end (as described in
+	the book), which generates much better code than the original
+	stack-based back-end. It is considered to be stable and
+	enabled by default.
 
 
 	CHANGES TO THE BOOK VERSION
@@ -72,7 +78,7 @@
 	o  FILEs are now structs and can no longer be mistaken for
 	   ints by the type checker.
 
-	o  The #error, #line, and #pragma command have been added.
+	o  The #error, #line, and #pragma commands have been added.
 
 	o  There is a (non-standard) kprintf() function, which is
 	   like fprintf(), but uses a file descriptor.
@@ -97,13 +103,12 @@
 	   declarations between the parameter list and function body)
 	   are not accepted.
 
-	o  There are no ``volatile'', or ``const'' variables. No
-	   register allocation takes place, so all variables are
-	   implicitly ``volatile''.
+	o  There are no ``volatile'' or ``const'' variables.
 
 	o  There is no typedef.
 
-	o  There are no unsigned integers and no long integers.
+	o  There are no unsigned integers, long integers, or signed
+	   chars.
 
 	o  Struct/union declarations must be separate from the
 	   declarations of struct/union objects, i.e.
@@ -111,6 +116,8 @@
 
 	o  Struct/union declarations must be global (struct and union
 	   objects may be declared locally, though).
+
+	o  There is no support for bit fields.
 
 	o  Only ints, chars and arrays of int and char can be
 	   initialized in their declarations; pointers can be
@@ -175,12 +182,14 @@
 	script that will figure out the host platform via uname and
 	link a few machine-dependent files into place.
 
-	To enable the synthesizing code generator, run
-
-		./configure -syn
-
 	If the build should fail the triple test, make clean, re-run
-	configure without the '-syn' option, and retry.
+	configure with the '-old' option, and retry. Running
+
+		./configure -old
+
+	will select the naive, stack-based back-end, which generates
+	worse code, but but may be worth a try in case you have run
+	into a compiler bug.
 
 	If you want to configure the compiler manually: select one of
 	the target descriptions (cg*.c) files in src/targets and symlink
@@ -204,7 +213,13 @@
 	If your OS/CPU combination is not supported, you might try
 	to port the compiler. See the file "Porting" for details.
 
-	Finally, select limits-*.h file from targets/ that reflects the
+	You will also need some operating system-dependent definitions,
+	which are kept in files named "your-os.h" in src/targets/. Just
+	symlink the appropriate file to sys.h:
+
+		(cd src && ln -fs targets/freebsd.h sys.h)
+
+	Finally, select a limits-*.h file from targets/ that reflects the
 	machine word size of your target and link it to include/limits.h:
 
 		(cd src/include && \
@@ -272,6 +287,34 @@
 		rm scc && scc -o scc *.c
 
 
+	WINDOWS SUPPORT
+
+	All Windows-related code in the runtime system has been
+	generously supplied by Jean-Marc Lienher (http://cod5.org).
+	I am afraid I am not able to answer any questions about it,
+	because I know nothing about Windows.
+
+	The Windows version of SubC requires the MinGW infrastructure,
+	but, like the Linux version, does not use the GNU libc. To
+	compile SubC on Windows, just run configure and make, like
+	on a Unix system.
+
+	In case you have to configure it manually, you also have to
+	do the following:
+
+	Replace or symlink following files:
+
+		ln -fs targets/init-windows.c lib/init.c
+		ln -fs targets/system-windows.c lib/system.c
+
+	Also use the Windows Makefile instead of its Unix cousin:
+
+		cp src/Makefile.windows src/Makefile
+
+	After installing these files, the compiler should bootstrap
+	as usual and pass the triple test.
+
+
 	THANKS
 
 	To the Super Dimension Fortress (SDF.ORG) for providing
@@ -281,6 +324,9 @@
 	FreeBSD system and a Linux VM.
 
 	To "minux" for porting the runtime module to Linux/x86-64.
+
+	To Jean-Marc Lienher (cod5.org) for porting the runtime module
+	to MinGW Windows/386.
 
 
 	CONTACT

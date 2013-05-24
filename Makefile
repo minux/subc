@@ -1,5 +1,5 @@
-SNAP=	20130227
-REL=	20130228
+SNAP=	20130518
+REL=	20130524
 ARC=	subc-$(SNAP).tgz
 DIST=	subc-$(REL).tgz
 
@@ -10,7 +10,8 @@ sums:	clean
 	find . -type f | grep -v _sums | csum >_sums
 
 clean:
-	cd src && make clean
+	cd src && make -f Makefile.unix clean
+	cd bin86 && make clean
 	rm -f ptest.c $(ARC) $(DIST)
 
 arc:	clean

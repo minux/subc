@@ -49,7 +49,8 @@
 	directory to exclude the times spent in external programs, like
 	the assembler and linker.)
 
-	The new back-end can be enabled by running 'configure -syn' in
-	the root directory of the SubC source tree before compiling the
+	The new back-end is enabled by default. The old, stack-based
+	back-end can be selected by running 'configure -old' in the
+	root directory of the SubC source tree before compiling the
 	compiler.
 

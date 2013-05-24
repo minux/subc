@@ -1,6 +1,6 @@
 /*
  *	NMH's Simple C Compiler, 2012
- *	x86-64 target description
+ *	x86-64 target description (stack-based generator)
  */
 
 #include "defs.h"

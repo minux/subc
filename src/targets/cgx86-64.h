@@ -1,6 +1,6 @@
 /*
  *	NMH's Simple C Compiler, 2012
- *	386 target description
+ *	x86-64 target description
  */
 
 #define BPW	8

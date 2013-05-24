@@ -1,6 +1,6 @@
 /*
  *	NMH's Simple C Compiler, 2011,2012
- *	system()
+ *	system() for Unix systems
  */
 
 #include <stdio.h>

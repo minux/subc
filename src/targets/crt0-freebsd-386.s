@@ -3,6 +3,24 @@
 #	C runtime module for FreeBSD/386
 #
 
+# FreeBSD voodoo stuff, mostly copied from the x86-64 port, good luck!
+
+	.section .note.ABI-tag,"a",@note
+	.align	4
+abitag: .long	8, 4, 1
+	.string	"FreeBSD"
+	.long	802000
+	.p2align 2
+	.data
+	.globl	__progname
+	.globl	environ
+environ:
+	.long	0
+__progname:
+	.long   0
+
+# End of voodoo stuff
+
 	.data
 	.globl	Cenviron
 Cenviron:
@@ -76,7 +94,7 @@ Clongjmp:
 	movl	8(%edx),%edx
 	jmp	*%edx
 
-# int _exit(int rc);
+# void _exit(int rc);
 
 	.globl	C_exit
 C_exit:	pushl	8(%esp)
@@ -92,7 +110,7 @@ C_sbrk:	pushl	8(%esp)
 	addl	$4,%esp
 	ret
 
-# int _write(int fd, char *buf, int len);
+# int _write(int fd, void *buf, int len);
 
 	.globl	C_write
 C_write:
@@ -103,7 +121,7 @@ C_write:
 	addl	$12,%esp
 	ret
 
-# int _read(int fd, char *buf, int len);
+# int _read(int fd, void *buf, int len);
 
 	.globl	C_read
 C_read:	pushl	8(%esp)

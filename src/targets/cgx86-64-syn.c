@@ -1,6 +1,6 @@
 /*
  *	NMH's Simple C Compiler, 2012-2013
- *	x86-64 target description
+ *	x86-64 target description (synthesizing generator)
  */
 
 #include "defs.h"
@@ -28,7 +28,7 @@ void cgsynth(char *op) {
 	case addr_globl:	sgen("%s\t$%s,%%rax", op, s); break;
 	case addr_label:	lgen("%s\t$%c%d,%%rax", op, n); break;
 	case literal: 		ngen("%s\t$%d,%%rax", op, n); break;
-	case arg_count:		ngen("%s\t%d(%rbp),%rax", op, 8); break;
+	case arg_count:		ngen("%s\t%d(%%rbp),%%rax", op, 8); break;
 	case auto_word:		ngen("%s\t%d(%%rbp),%%rax", op, n); break;
 	case static_word:	lgen("%s\t%c%d,%%rax", op, n); break;
 	case globl_word:	sgen("%s\t%s,%%rax", op, s); break;

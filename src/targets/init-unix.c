@@ -1,6 +1,6 @@
 /*
  *	NMH's Simple C Compiler, 2012--2013
- *	C runtime initialization
+ *	C runtime initialization for Unix systems
  */
 
 #include <stdio.h>

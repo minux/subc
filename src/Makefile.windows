@@ -1,0 +1,98 @@
+LINT=	gcc -c -o /dev/null -ansi -pedantic -Wall
+
+SRC=	cexpr.c cg.c decl.c error.c expr.c gen.c \
+	main.c misc.c prep.c scan.c stmt.c sym.c
+
+HDRS=	cgen.h data.h decl.h defs.h prec.h sys.h
+
+LIBOBJS=lib/init.o lib/abort.o lib/abs.o lib/atexit.o lib/atoi.o \
+	lib/bsearch.o lib/calloc.o lib/clearerr.o lib/ctime.o \
+	lib/ctype.o lib/difftime.o lib/exit.o lib/fclose.o \
+	lib/fdopen.o lib/feof.o lib/ferror.o lib/fflush.o lib/fgetc.o \
+	lib/fgetpos.o lib/fgets.o lib/fileno.o lib/fopen.o \
+	lib/fprintf.o lib/fputc.o lib/fputs.o lib/fread.o lib/free.o \
+	lib/freopen.o lib/fscanf.o lib/fseek.o lib/fsetpos.o \
+	lib/ftell.o lib/fwrite.o lib/getchar.o lib/getenv.o \
+	lib/kprintf.o lib/malloc.o lib/memchr.o lib/memcmp.o \
+	lib/memcpy.o lib/memmove.o lib/memset.o lib/perror.o \
+	lib/printf.o lib/putchar.o lib/puts.o lib/qsort.o lib/rand.o \
+	lib/realloc.o lib/remove.o lib/rename.o lib/rewind.o \
+	lib/scanf.o lib/setbuf.o lib/setvbuf.o lib/sprintf.o \
+	lib/sscanf.o lib/strcat.o lib/strchr.o lib/strcmp.o \
+	lib/strcpy.o lib/strcspn.o lib/strdup.o lib/strerror.o \
+	lib/strlen.o lib/strncat.o lib/strncmp.o lib/strncpy.o \
+	lib/strpbrk.o lib/strrchr.o lib/strspn.o lib/strtok.o \
+	lib/strtol.o lib/system.o lib/time.o lib/tmpfile.o \
+	lib/tmpnam.o lib/ungetc.o lib/vformat.o lib/vscan.o
+
+AS=	as
+AR=	ar -rc
+RANLIB=	ranlib
+
+SCCDIR=	c:/mingw/scc
+BINDIR=	c:/mingw/bin
+
+all:	scc0 crt0 lib
+
+lib:	lib/libscc.a
+
+crt0:	lib/crt0.o
+
+test:	scc $(SRC)
+	./scc -o scc2 $(SRC)
+	cmp scc scc2 && rm -f scc2
+
+ptest:	scc0 ../ptest.src ../ptest.awk
+	awk -f ../ptest.awk <../ptest.src >../ptest.c
+	./scc0 -o ptest ../ptest.c
+	./ptest
+	rm ptest
+
+install:	all
+	./scc0 -o scc -D 'SCCDIR="$(SCCDIR)"' *.c
+	cp scc $(BINDIR)/scc.exe
+	mkdir -p $(SCCDIR)/include
+	cp include/* $(SCCDIR)/include
+	mkdir -p $(SCCDIR)/lib
+	cp lib/libscc.a lib/crt0.o $(SCCDIR)/lib
+
+scc:	scc1 $(SRC)
+	./scc1 -o scc $(SRC)
+
+scc1:	scc0 lib/crt0.o lib/libscc.a $(SRC)
+	./scc0 -o scc1 $(SRC)
+
+scc0:	$(SRC)
+	$(CC) -o scc0 $(SRC)
+
+lib/libscc.a:	$(LIBOBJS)
+	$(AR) lib/libscc.a $(LIBOBJS)
+	$(RANLIB) lib/libscc.a
+
+lib/crt0.o:	lib/crt0.s
+	$(AS) -o lib/crt0.o lib/crt0.s
+
+libscc.a:	$(OBJS)
+
+$(SRC):	$(HDRS)
+
+.c.o:
+	./scc0 -c $<
+
+lint:
+	$(LINT) cexpr.c
+	$(LINT) cg.c
+	$(LINT) decl.c
+	$(LINT) error.c
+	$(LINT) expr.c
+	$(LINT) gen.c
+	$(LINT) main.c
+	$(LINT) misc.c
+	$(LINT) prep.c
+	$(LINT) scan.c
+	$(LINT) stmt.c
+	$(LINT) sym.c
+
+clean:
+	rm -f *.exe scc0 scc1 scc2 scc test.s *.o *.core core a.out lib/crt0.o \
+		*.tmp lib/*.o lib/libscc.a

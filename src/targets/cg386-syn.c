@@ -1,6 +1,6 @@
 /*
  *	NMH's Simple C Compiler, 2011--2013
- *	386 target description
+ *	386 target description (synthesizing generator)
  */
 
 #include "defs.h"
@@ -28,7 +28,7 @@ void cgsynth(char *op) {
 	case addr_globl:	sgen("%s\t$%s,%%eax", op, s); break;
 	case addr_label:	lgen("%s\t$%c%d,%%eax", op, n); break;
 	case literal: 		ngen("%s\t$%d,%%eax", op, n); break;
-	case arg_count:		ngen("%s\t%d(%ebp),%eax", op, 8); break;
+	case arg_count:		ngen("%s\t%d(%%ebp),%%eax", op, 8); break;
 	case auto_word:		ngen("%s\t%d(%%ebp),%%eax", op, n); break;
 	case static_word:	lgen("%s\t%c%d,%%eax", op, n); break;
 	case globl_word:	sgen("%s\t%s,%%eax", op, s); break;
@@ -66,15 +66,15 @@ int cgload(void) {
 	case literal: 		ngen("%s\t$%d,%%ecx", op, n); break;
 	case arg_count:		ngen("%s\t%d(%ebp),%ecx", op, 8); break;
 	case auto_byte:		cgclear2();
-				ngen("%s\t%d(%%ebp),%%ecl", opb, n);
+				ngen("%s\t%d(%%ebp),%%cl", opb, n);
 				break;
 	case auto_word:		ngen("%s\t%d(%%ebp),%%ecx", op, n); break;
 	case static_byte:	cgclear2();
-				lgen("%s\t%c%d,%%ecl", opb, n); break;
+				lgen("%s\t%c%d,%%cl", opb, n); break;
 				break;
 	case static_word:	lgen("%s\t%c%d,%%ecx", op, n); break;
 	case globl_byte:	cgclear2();
-				sgen("%s\t%s,%%ecl", opb, s); break;
+				sgen("%s\t%s,%%cl", opb, s); break;
 				break;
 	case globl_word:	sgen("%s\t%s,%%ecx", op, s); break;
 	case empty:		cgpop2();
@@ -180,7 +180,7 @@ void cgscale2by(int v)	{ gen("pushl\t%eax");
 			  gen("popl\t%eax"); }
 void cgunscaleby(int v)	{ ngen("%s\t$%d,%%ecx", "movl", v);
 			  gen("xorl\t%edx,%edx");
-			  gen("div\t%ecx"); }
+			  gen("divl\t%ecx"); }
 void cgbool(void)	{ gen("negl\t%eax");
 			  gen("sbbl\t%eax,%eax");
 			  gen("negl\t%eax"); }

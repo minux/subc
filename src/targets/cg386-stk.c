@@ -1,6 +1,6 @@
 /*
  *	NMH's Simple C Compiler, 2011,2012
- *	386 target description
+ *	386 target description (stack-based generator)
  */
 
 #include "defs.h"
@@ -82,7 +82,7 @@ void cgscale2by(int v)	{ gen("pushl\t%eax");
 			  gen("popl\t%eax"); }
 void cgunscaleby(int v)	{ ngen("%s\t$%d,%%ecx", "movl", v);
 			  gen("xorl\t%edx,%edx");
-			  gen("div\t%ecx"); }
+			  gen("divl\t%ecx"); }
 void cgbool(void)	{ gen("negl\t%eax");
 			  gen("sbbl\t%eax,%eax");
 			  gen("negl\t%eax"); }

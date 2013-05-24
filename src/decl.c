@@ -444,7 +444,7 @@ static void signature(int fn, int from, int to) {
 		memcpy(Mtext[fn], types, (i+1) * sizeof(int));
 	}
 	else if (Sizes[fn] >= 0 && intcmp((int *) Mtext[fn], types))
-		error("redeclaration finition does not match prior type: %s",
+		error("redeclaration does not match prior type: %s",
 			Names[fn]);
 }
 

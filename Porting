@@ -38,7 +38,17 @@
 	the selected size will be sizeof(int) in the new back-end.
 
 
-	(3) Create a target description
+	(3) Create en environment desscription for your OS
+
+	The SubC compiler uses some external resources that are part
+	of your operating system, like the assembler, linker, and
+	maybe the system's C library. The environment file should be
+	named after the OS (e.g.: linux.h) and contain the full paths
+	or templates for accessing any external resources. Best use
+	one of the existing files for a template.
+
+
+	(4) Create a target description
 
 	This is one of the hard parts. You will have to replace the
 	code emitted by each function in the new target description
@@ -64,7 +74,7 @@
 	for approaching this task.
 
 
-	(4) Create an OS-specific C startup file
+	(5) Create an OS-specific C startup file
 
 	Copy one of the existing crt0-*.s files in the src/targets
 	directory to create a new startup file. For example, to create
@@ -74,7 +84,7 @@
 		   src/targets/crt0-netbsd-foo.s
 
 
-	(5) Create the OS interface
+	(6) Create the OS interface
 
 	This step is a mess and requires some decent in-depth knowledge
 	of the target platform, i.e. its internal command line argument
@@ -89,7 +99,7 @@
 	this is to be expected.
 
 
-	(6) Compile, test, repeat
+	(7) Compile, test, repeat
 
 	A lot of things *will* go wrong. Do not get discouraged! This
 	is normal. First make the compiler emit syntactically correct
@@ -104,7 +114,7 @@
 	anything, fine!
 
 
-	(7) Add your back-end to the configure script
+	(8) Add your back-end to the configure script
 
 	Have a look at the configure script in the root of the SubC
 	source tree and add your configuration. It is just a simple,
@@ -112,7 +122,7 @@
 	should be a piece of cake.
 
 
-	(8) Optionally: send your patches to the author
+	(9) Optionally: send your patches to the author
 
 	Thank you!
 

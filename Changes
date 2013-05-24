@@ -1,3 +1,8 @@
+2013-05-24 Fixed a potential bug in the SYN/386 generator. Thanks, JM Lienher!
+2013-05-21 Cleaned up the Windows code a bit (purely stylistic).
+2013-05-18 Updated README, described Windows/MinGW port.
+2013-05-18 Added FreeBSD voodoo section to 386 port. Thanks, Bakul Shah!
+2013-05-17 Added Windows/386 support supplied by Jean-Marc Lienher. Thanks!
 2013-02-28 Fix: fread() returned wrong length for partially filled buffers.
 2013-02-27 Fix: setjmp()/longjmp() did not work properly.
 2013-02-26 Fix: struct x { int *a, *b; }; generated int **b.
