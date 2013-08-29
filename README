@@ -1,5 +1,5 @@
 
-	SubC Compiler, Version 2013-05-24
+	SubC Compiler, Version 2013-08-29
 	By Nils M Holm, 2011--2013
 	Placed in the public domain
 
@@ -37,11 +37,11 @@
 
 	There is also an in-progress port to DOS on 8086-based
 	processors, but it does not emit working code at this point
-	and has not been touched in months. Feel free to improve it,
-	though!
+	and has not been touched in a long time. Feel free to improve
+	it, though!
 
 	SubC is fast and simple. Its output is typically small (due
-	to a non-bloated library), but not very runtime efficient,
+	to a non-bloated library), but not very runtime-efficient,
 	because it employs none of the optimization strategies
 	explained in the book.
 
@@ -288,6 +288,9 @@
 
 
 	WINDOWS SUPPORT
+
+	There is a build script (build.bat) in the base directory
+	of the package, but I have never tried it. Caveat utilitor!
 
 	All Windows-related code in the runtime system has been
 	generously supplied by Jean-Marc Lienher (http://cod5.org).
