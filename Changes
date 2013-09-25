@@ -1,3 +1,4 @@
+2013-09-25 Fixed missing error messge in linker invocation.
 2013-08-29 Added BUILD.BAT script for Windows by Jean-Marc Lienher. Thanks!
 2013-05-24 Fixed a potential bug in the SYN/386 generator. Thanks, JM Lienher!
 2013-05-21 Cleaned up the Windows code a bit (purely stylistic).

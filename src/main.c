@@ -157,11 +157,11 @@ static int concat(int k, char *buf, char *s) {
 
 static void link(void) {
 	int	i, k;
-	char	cmd[TEXTLEN+1], *msg;
+	char	cmd[TEXTLEN+1];
 	char	cmd2[TEXTLEN+1];
 
 	if (strlen(O_outfile) + strlen(LDCMD) + strlen(SCCDIR)*2 >= TEXTLEN)
-		cmderror(msg, NULL);
+		cmderror("linker command too long", NULL);
 	sprintf(cmd, LDCMD, O_outfile, SCCDIR);
 	k = strlen(cmd);
 	for (i=0; i<Nf; i++)

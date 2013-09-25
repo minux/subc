@@ -652,7 +652,7 @@ static int cond2(int *lv, int op) {
 /*
  * condexpr :=
  *	  logor
- *	| logor ? logor : condexpr
+ *	| logor ? expr : condexpr
  */
 
 static int cond3(int *lv) {
