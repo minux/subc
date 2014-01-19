@@ -2,6 +2,7 @@
 
 os=`uname`
 mac=`uname -m`
+opt=""
 as=""
 
 usage() {
@@ -15,7 +16,7 @@ longusage() {
 	usage
 	echo
 	sed -e 's/^.//' <<EOT
-	-m mac   select target machine
+	-m cpu   select target machine
 	-s os    select target operating system
 
 EOT
@@ -46,33 +47,31 @@ case $os/$mac in
 FreeBSD/i386)		os=freebsd ; mac=386    ; int=32 ;;
 FreeBSD/amd64)		os=freebsd ; mac=x86-64 ; int=64 ;;
 NetBSD/amd64)		os=netbsd  ; mac=x86-64 ; int=64 ;;
+OpenBSD/i386)		os=openbsd ; mac=386    ; int=32 ;;
 Linux/i386)		os=linux   ; mac=386    ; int=32 ;;
 Linux/i686)		os=linux   ; mac=386    ; int=32 ;;
 Linux/x86_64)		os=linux   ; mac=x86-64 ; int=64 ;;
 MINGW32_NT-6.1/i686)	os=windows ; mac=386    ; int=32 ;;
 MINGW32_NT-5.1/i686)	os=windows ; mac=386    ; int=32 ;;
 windows/386)		os=windows ; mac=386    ; int=32 ;;
+Darwin/x86_64)		os=darwin  ; mac=x86-64 ; int=64
+			opt="-darwin"
+			echo
+			echo "Warning: this back-end is experimental!"
+			echo
+			;;
 DOS/8086)		os=dos     ; mac=8086   ; int=16
 			as=s86
 			ar="sar -c"
 			ranlib="sar -r"
 			echo
-			echo "WARNING: this port is not yet finished!"
+			echo "WARNING: this back-end is unfinished!"
 			echo
 			;;
 *)			echo "Sorry, $os/$mac is currently not supported."
 			exit 1
 			;;
 esac
-
-if [ -f src/targets/cg$mac-syn.c ]; then
-	gen=syn
-elif [ -f src/targets/cg$mac-stk.c ]; then
-	gen=stk
-else
-	echo "oops, no back-end available for $mac/$os?"
-	exit 1
-fi
 
 if [ $os = windows ]; then
 	cp src/Makefile.windows src/Makefile
@@ -91,9 +90,8 @@ else
 	(cd src; ln -fs ../targets/system-unix.c lib/system.c)
 fi
 
-(cd src && ln -fs targets/cg$mac-$gen.c cg.c)
+(cd src && ln -fs targets/cg$mac$opt.c cg.c)
 (cd src && ln -fs targets/cg$mac.h cg.h)
-(cd src && ln -fs targets/${gen}gen.c gen.c)
 (cd src && ln -fs targets/$os.h sys.h)
 (cd src/lib && ln -fs ../targets/crt0-$os-$mac.s crt0.s)
 (cd src/include && ln -fs ../targets/limits-$int.h limits.h)

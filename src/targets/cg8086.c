@@ -298,6 +298,7 @@ void cgdefw(int v)	{ ngen("%s\t%d", "dw", v); }
 void cgdefp(int v)	{ ngen("%s\t%d", "dw", v); }
 void cgdefl(int v)	{ lgen("%s\toffset %c%d", "dw", v); }
 void cgdefc(int c)	{ ngen("%s\t'%c'", "db", c); }
-void cgbss(char *s, int z)	{ genraw(s);
+void cggbss(char *s, int z)	{ genraw(s);
 				  genraw(":");
 				  ngen("%s\t0 dup %d", "db", z); }
+void cglbss(char *s, int z)	{ cggbss(s, z); }

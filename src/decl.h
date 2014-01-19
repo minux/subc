@@ -43,7 +43,7 @@ int	genbinop(int op, int p1, int p2);
 void	genbool(void);
 void	genbrfalse(int dest);
 void	genbrtrue(int dest);
-void	genbss(char *name, int len);
+void	genbss(char *name, int len, int statc);
 void	gencall(int y);
 void	gencalr(void);
 void	gencmp(char *inst);

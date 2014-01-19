@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011--2013
+ *	NMH's Simple C Compiler, 2011--2014
  *	Code generator interface
  */
 
@@ -15,7 +15,6 @@ void cgbrle(int n);
 void cgbrlt(int n);
 void cgbrne(int n);
 void cgbrtrue(int n);
-void cgbss(char *s, int z);
 void cgcall(char *s);
 void cgcalr(void);
 void cgcalswtch(void);
@@ -47,6 +46,7 @@ void cgdiv(void);
 void cgentry(void);
 void cgeq(void);
 void cgexit(void);
+void cggbss(char *s, int z);
 void cgge(void);
 void cggt(void);
 void cginc1ib(void);
@@ -69,6 +69,7 @@ void cgindw(void);
 void cginitlw(int v, int a);
 void cgior(void);
 void cgjump(int n);
+void cglbss(char *s, int z);
 void cgldga(char *s);
 void cgldgb(char *s);
 void cgldgw(char *s);

@@ -1,7 +1,11 @@
 
+	- fix time() on NetBSD (linker warning)
+
+	- test Darwin port
+
 	- clean up sym.c
 
-	- add parameterized macros
+	? add parameterized macros
 		- add assert()
 		- fix & in setjmp() and longjmp()
 		? add stdio macros: getc(), putchar(), etc

@@ -544,9 +544,12 @@ void genlocinit(void) {
 
 /* data definitions */
 
-void genbss(char *name, int len) {
+void genbss(char *name, int len, int statc) {
 	gendata();
-	cgbss(name, (len + INTSIZE-1) / INTSIZE * INTSIZE);
+	if (statc)
+		cglbss(name, (len + INTSIZE-1) / INTSIZE * INTSIZE);
+	else
+		cggbss(name, (len + INTSIZE-1) / INTSIZE * INTSIZE);
 }
 
 void genalign(int k) {

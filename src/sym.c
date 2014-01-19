@@ -128,21 +128,24 @@ char *locname(char *s) {
 static void defglob(char *name, int prim, int type, int size, int val,
 			int scls, int init)
 {
+	int	st;
+
 	if (TCONSTANT == type || TFUNCTION == type) return;
 	gendata();
+	st = scls == CSTATIC;
 	if (CPUBLIC == scls) genpublic(name);
 	if (init && TARRAY == type)
 		return;
 	if (TARRAY != type && !(prim & STCMASK)) genname(name);
 	if (prim & STCMASK) {
 		if (TARRAY == type)
-			genbss(gsym(name), objsize(prim, TARRAY, size));
+			genbss(gsym(name), objsize(prim, TARRAY, size), st);
 		else
-			genbss(gsym(name), objsize(prim, TVARIABLE, size));
+			genbss(gsym(name), objsize(prim, TVARIABLE, size), st);
 	}
 	else if (PCHAR == prim) {
 		if (TARRAY == type)
-			genbss(gsym(name), size);
+			genbss(gsym(name), size, st);
 		else {
 			gendefb(val);
 			genalign(1);
@@ -150,13 +153,13 @@ static void defglob(char *name, int prim, int type, int size, int val,
 	}
 	else if (PINT == prim) {
 		if (TARRAY == type)
-			genbss(gsym(name), size*INTSIZE);
+			genbss(gsym(name), size*INTSIZE, st);
 		else
 			gendefw(val);
 	}
 	else {
 		if (TARRAY == type)
-			genbss(gsym(name), size*PTRSIZE);
+			genbss(gsym(name), size*PTRSIZE, st);
 		else
 			gendefp(val);
 	}
@@ -228,13 +231,13 @@ static void defloc(int prim, int type, int size, int val, int init) {
 	if (type != TARRAY && !(prim &STCMASK)) genlab(val);
 	if (prim & STCMASK) {
 		if (TARRAY == type)
-			genbss(labname(val), objsize(prim, TARRAY, size));
+			genbss(labname(val), objsize(prim, TARRAY, size), 1);
 		else
-			genbss(labname(val), objsize(prim, TVARIABLE, size));
+			genbss(labname(val), objsize(prim, TVARIABLE, size),1);
 	}
 	else if (PCHAR == prim) {
 		if (TARRAY == type)
-			genbss(labname(val), size);
+			genbss(labname(val), size, 1);
 		else {
 			gendefb(init);
 			genalign(1);
@@ -242,13 +245,13 @@ static void defloc(int prim, int type, int size, int val, int init) {
 	}
 	else if (PINT == prim) {
 		if (TARRAY == type)
-			genbss(labname(val), size*INTSIZE);
+			genbss(labname(val), size*INTSIZE, 1);
 		else
 			gendefw(init);
 	}
 	else {
 		if (TARRAY == type)
-			genbss(labname(val), size*PTRSIZE);
+			genbss(labname(val), size*PTRSIZE, 1);
 		else
 			gendefp(init);
 	}

@@ -10,8 +10,8 @@
 	.ascii "NetBSD\0"
 	.p2align 2
 	.long   400000003
-	.p2align 2
 	.data
+	.p2align 3
 	.globl	__progname
 	.globl	environ
 __progname:

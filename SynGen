@@ -1,9 +1,9 @@
 
 	THE SYNTHESIZING BACK-END
 
-	As of version 2013-02-19, the SubC compiler includes a new
-	'synthesizing' back-end, which creates (synthesizes) machine
-	instructions instead of using pre-existing static templates.
+	As of version 2013-02-19, the SubC compiler uses an improved
+	back-end which creates (synthesizes) machine instructions
+	instead of using pre-existing static templates.
 
 	The technique is described in Practical Compiler Construction,
 	but only at a rather abstract level. The current version of
@@ -49,8 +49,6 @@
 	directory to exclude the times spent in external programs, like
 	the assembler and linker.)
 
-	The new back-end is enabled by default. The old, stack-based
-	back-end can be selected by running 'configure -old' in the
-	root directory of the SubC source tree before compiling the
-	compiler.
+	As of 2014-01-15, the old, stack-based back-end has been removed,
+	and the new back-end is used exclusively.
 

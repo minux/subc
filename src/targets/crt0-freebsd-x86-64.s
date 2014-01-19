@@ -10,8 +10,8 @@
 abitag: .long	8, 4, 1
 	.string	"FreeBSD"
 	.long	802000
-	.p2align 2
 	.data
+	.p2align 3
 	.globl	__progname
 	.globl	environ
 environ:

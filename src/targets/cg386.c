@@ -1,6 +1,6 @@
 /*
- *	NMH's Simple C Compiler, 2011,2012
- *	386 target description (stack-based generator)
+ *	NMH's Simple C Compiler, 2011--2013
+ *	386 target description (synthesizing generator)
  */
 
 #include "defs.h"
@@ -14,8 +14,81 @@ void cgprelude(void)	{ }
 void cgpostlude(void)	{ }
 void cgpublic(char *s)	{ ngen(".globl\t%s", s, 0); }
 
+void cgsynth(char *op) {
+	int	n;
+	char	*s;
+
+	n = Q_val;
+	s = gsym(Q_name);
+	switch (Q_type) {
+	case addr_auto:		ngen("%s\t%d(%%ebp),%%ecx", "leal", n);
+				sgen("%s\t%s,%%eax", op, "%ecx");
+				break;
+	case addr_static:	lgen("%s\t$%c%d,%%eax", op, n); break;
+	case addr_globl:	sgen("%s\t$%s,%%eax", op, s); break;
+	case addr_label:	lgen("%s\t$%c%d,%%eax", op, n); break;
+	case literal: 		ngen("%s\t$%d,%%eax", op, n); break;
+	case arg_count:		ngen("%s\t%d(%%ebp),%%eax", op, 8); break;
+	case auto_word:		ngen("%s\t%d(%%ebp),%%eax", op, n); break;
+	case static_word:	lgen("%s\t%c%d,%%eax", op, n); break;
+	case globl_word:	sgen("%s\t%s,%%eax", op, s); break;
+	case auto_byte:
+	case static_byte:
+	case globl_byte:	cgload();
+				ngen("%s\t%%ecx,%%eax", op, 0);
+				break;
+	case empty:		cgpop2();
+				sgen("%s\t%s,%%eax", op, "%ecx");
+				break;
+	default:		fatal("internal: bad type in cgsynth()");
+	}
+	Q_type = empty;
+}
+
+void cgsynand(void)	{ cgsynth("andl"); }
+void cgsynor(void)	{ cgsynth("orl"); }
+void cgsynxor(void)	{ cgsynth("xorl"); }
+
+int cgload(void) {
+	int	n, q;
+	char	*s, *op, *opb;
+
+	op = "movl";
+	opb = "movb";
+	n = Q_val;
+	s = gsym(Q_name);
+	switch (Q_type) {
+	case addr_auto:		ngen("%s\t%d(%%ebp),%%ecx", "leal", n);
+				break;
+	case addr_static:	lgen("%s\t$%c%d,%%ecx", op, n); break;
+	case addr_globl:	sgen("%s\t$%s,%%ecx", op, s); break;
+	case addr_label:	lgen("%s\t$%c%d,%%ecx", op, n); break;
+	case literal: 		ngen("%s\t$%d,%%ecx", op, n); break;
+	case arg_count:		ngen("%s\t%d(%ebp),%ecx", op, 8); break;
+	case auto_byte:		cgclear2();
+				ngen("%s\t%d(%%ebp),%%cl", opb, n);
+				break;
+	case auto_word:		ngen("%s\t%d(%%ebp),%%ecx", op, n); break;
+	case static_byte:	cgclear2();
+				lgen("%s\t%c%d,%%cl", opb, n); break;
+				break;
+	case static_word:	lgen("%s\t%c%d,%%ecx", op, n); break;
+	case globl_byte:	cgclear2();
+				sgen("%s\t%s,%%cl", opb, s); break;
+				break;
+	case globl_word:	sgen("%s\t%s,%%ecx", op, s); break;
+	case empty:		cgpop2();
+				break;
+	default:		fatal("internal: bad type in cgsynth()");
+	}
+	q = Q_type;
+	Q_type = empty;
+	return empty == q;
+}
+
 void cglit(int v)	{ ngen("%s\t$%d,%%eax", "movl", v); }
 void cgclear(void)	{ gen("xorl\t%eax,%eax"); }
+void cgclear2(void)	{ gen("xorl\t%ecx,%ecx"); }
 void cgldgb(char *s)	{ sgen("%s\t%s,%%al", "movb", s); }
 void cgldgw(char *s)	{ sgen("%s\t%s,%%eax", "movl", s); }
 void cgldlb(int n)	{ ngen("%s\t%d(%%ebp),%%al", "movb", n); }
@@ -49,11 +122,17 @@ void cgmod(void)	{ cgdiv();
 			  gen("movl\t%edx,%eax"); }
 void cgshl(void)	{ gen("shll\t%cl,%eax"); }
 void cgshr(void)	{ gen("sarl\t%cl,%eax"); }
+
 void cgcmp(char *inst)	{ int lab;
 			  lab = label();
 			  gen("xorl\t%edx,%edx");
-			  cgpop2();
-			  gen("cmpl\t%eax,%ecx");
+			  if (empty == Q_type) {
+				cgpop2();
+				gen("cmpl\t%eax,%ecx");
+			  }
+			  else {
+				cgsynth("cmpl");
+			  }
 			  lgen("%s\t%c%d", inst, lab);
 			  gen("incl\t%edx");
 			  genlab(lab);
@@ -64,6 +143,25 @@ void cglt()		{ cgcmp("jge"); }
 void cggt()		{ cgcmp("jle"); }
 void cgle()		{ cgcmp("jg"); }
 void cgge()		{ cgcmp("jl"); }
+
+void cgbrcond(char *i, int n)	{ int lab;
+				  lab = label();
+				  if (empty == Q_type) {
+					cgpop2();
+					gen("cmpl\t%eax,%ecx");
+				  }
+				  else {
+					cgsynth("cmpl");
+				  }
+				  lgen("%s\t%c%d", i, lab);
+				  lgen("%s\t%c%d", "jmp", n);
+				  genlab(lab); }
+void cgbreq(int n)		{ cgbrcond("je", n); }
+void cgbrne(int n)		{ cgbrcond("jne", n); }
+void cgbrlt(int n)		{ cgbrcond("jl", n); }
+void cgbrgt(int n)		{ cgbrcond("jg", n); }
+void cgbrle(int n)		{ cgbrcond("jle", n); }
+void cgbrge(int n)		{ cgbrcond("jge", n); }
 
 void cgneg(void)	{ gen("negl\t%eax"); }
 void cgnot(void)	{ gen("notl\t%eax"); }
@@ -156,4 +254,5 @@ void cgdefw(int v)	{ ngen("%s\t%d", ".long", v); }
 void cgdefp(int v)	{ ngen("%s\t%d", ".long", v); }
 void cgdefl(int v)	{ lgen("%s\t%c%d", ".long", v); }
 void cgdefc(int c)	{ ngen("%s\t'%c'", ".byte", c); }
-void cgbss(char *s, int z)	{ ngen(".lcomm\t%s,%d", s, z); }
+void cggbss(char *s, int z)	{ ngen(".comm\t%s,%d", s, z); }
+void cglbss(char *s, int z)	{ ngen(".lcomm\t%s,%d", s, z); }

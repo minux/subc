@@ -1,3 +1,10 @@
+2014-01-19 Rewrote configure script.
+2014-01-19 Removed old, stack-based back-end.
+2014-01-15 Fixed alignment of environ and __progname in x86-64 crt0's.
+2014-01-15 Added experimental support for Darwin OS. Thanks, Romain LWPB!
+2014-01-15 Made CG emit ".comm" instead of ".lcomm/.globl" for globals.
+2014-01-14 Added OpenBSD/386 crt0 module (crt0-openbsd-386.s). Thanks, Romain!
+2014-01-05 Removed superfluous system libc from linux sys.h.
 2013-09-25 Fixed missing error messge in linker invocation.
 2013-08-29 Added BUILD.BAT script for Windows by Jean-Marc Lienher. Thanks!
 2013-05-24 Fixed a potential bug in the SYN/386 generator. Thanks, JM Lienher!

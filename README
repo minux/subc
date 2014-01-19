@@ -1,6 +1,6 @@
 
-	SubC Compiler, Version 2013-08-29
-	By Nils M Holm, 2011--2013
+	SubC Compiler, Version 2014-01-19
+	By Nils M Holm, 2011--2014
 	Placed in the public domain
 
 
@@ -26,10 +26,12 @@
 
 		FreeBSD/386
 		FreeBSD/x86-64
-		NetBSD/x86-64
 		Linux/386
 		Linux/x86-64
+		NetBSD/x86-64
+		OpenBSD/386
 		Windows/386 (MinGW)
+		Darwin/x86-64 (experimental)
 
 	Porting it to other 32-bit or 64-bit platforms should be quite
 	straight-forward. See the file "Porting" and/or the book for a
@@ -45,10 +47,9 @@
 	because it employs none of the optimization strategies
 	explained in the book.
 
-	There is now a new synthesizing back-end (as described in
+	The compiler now uses a synthesizing back-end (as described in
 	the book), which generates much better code than the original
-	stack-based back-end. It is considered to be stable and
-	enabled by default.
+	stack-based back-end.
 
 
 	CHANGES TO THE BOOK VERSION
@@ -182,27 +183,13 @@
 	script that will figure out the host platform via uname and
 	link a few machine-dependent files into place.
 
-	If the build should fail the triple test, make clean, re-run
-	configure with the '-old' option, and retry. Running
-
-		./configure -old
-
-	will select the naive, stack-based back-end, which generates
-	worse code, but but may be worth a try in case you have run
-	into a compiler bug.
-
 	If you want to configure the compiler manually: select one of
 	the target descriptions (cg*.c) files in src/targets and symlink
-	it to src/cg.c. Also link the corresponding header file and
-	code generator into place:
+	it to src/cg.c. Also link the corresponding header file into
+	place:
 
 		(cd src && ln -fs targets/cg386-stk.c cg.c)
 		(cd src && ln -fs targets/cg386.h cg.h)
-		(cd src && ln -fs targets/stkgen.c gen.c)
-
-	Use stkgen.c (the stack-based generator) for *-stk.c target
-	descriptions and syngen.c (the synthesizing generator) for
-	*-syn.c descriptions.
 
 	Also select the C startup (crt0) file for your OS and CPU type
 	from src/targets and link it to src/lib/crt0.s, e.g.:
@@ -264,7 +251,7 @@
 	The easy way would be to set up the SCCDIR and BINDIR variables
 	in src/Makefile to suit your taste and then run
 
-		make clean install
+		make install
 
 	If you want to install the SubC compiler manually, you will
 	have to change the SCCDIR variable in the compiler itself.
@@ -305,7 +292,7 @@
 	In case you have to configure it manually, you also have to
 	do the following:
 
-	Replace or symlink following files:
+	Replace or symlink the following files:
 
 		ln -fs targets/init-windows.c lib/init.c
 		ln -fs targets/system-windows.c lib/system.c
@@ -330,6 +317,10 @@
 
 	To Jean-Marc Lienher (cod5.org) for porting the runtime module
 	to MinGW Windows/386.
+
+	To Romain LWPB for porting the runtime module to OpenBSD/386
+	and Darwin/x86-64 as well as for modifying the x86-64 code
+	generator to emit proper code for Darwin.
 
 
 	CONTACT
