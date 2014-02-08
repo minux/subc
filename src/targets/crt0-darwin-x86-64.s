@@ -332,9 +332,9 @@ C_wait:
 	xorq	%rbx,%rbx
 	movb	%ah,%bl
 	test	%al,%al
-	jz	C_wait_bye
+	jz	wait_bye
 	movq	ww(%rip),%rbx
-C_wait_bye:
+wait_bye:
 	movq	%rbx,(%rdx)
 	popq	%rbx
 	popq	%rax

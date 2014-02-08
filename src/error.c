@@ -32,7 +32,7 @@ void fatal(char *s) {
 	exit(EXIT_FAILURE);
 }
 
-void cerror(char *s, int c) {
+void scnerror(char *s, int c) {
 	char	buf[32];
 
 	if (isprint(c))

@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011--2013
+ *	NMH's Simple C Compiler, 2011--2014
  *	Synthesizing code generator (emitter)
  */
 
@@ -86,7 +86,7 @@ void sgen2(char *s, char *inst, int v, char *s2) {
 
 void genlab(int id) {
 	if (NULL == Outfile) return;
-	fprintf(Outfile, "%c%d:\n", LPREFIX, id);
+	fprintf(Outfile, "%c%d:", LPREFIX, id);
 }
 
 char *labname(int id) {
@@ -200,28 +200,28 @@ void genargc(void) {
 
 void genand(void) {
 	gentext();
-	cgsynand();
+	cgand();
 }
 
 void genior(void) {
 	gentext();
-	cgsynor();
+	cgior();
 }
 
 void genxor(void) {
 	gentext();
-	cgsynxor();
+	cgxor();
 }
 
 void genshl(int swapped) {
 	gentext();
-	if (cgload() || !swapped) cgswap();
+	if (cgload2() || !swapped) cgswap();
 	cgshl();
 }
 
 void genshr(int swapped) {
 	gentext();
-	if (cgload() || !swapped) cgswap();
+	if (cgload2() || !swapped) cgswap();
 	cgshr();
 }
 
@@ -249,7 +249,7 @@ int genadd(int p1, int p2, int swapped) {
 	int	rp = PINT, t;
 
 	gentext();
-	if (cgload() || !swapped) {
+	if (cgload2() || !swapped) {
 		t = p1;
 		p1 = p2;
 		p2 = t;
@@ -284,7 +284,7 @@ int gensub(int p1, int p2, int swapped) {
 	int	rp = PINT;
 
 	gentext();
-	if (cgload() || !swapped) cgswap();
+	if (cgload2() || !swapped) cgswap();
 	if (!inttype(p1) && !inttype(p2) && p1 != p2)
 		error("incompatible pointer types in binary '-'", NULL);
 	if (ptr(p1) && !ptr(p2)) {
@@ -312,19 +312,19 @@ int gensub(int p1, int p2, int swapped) {
 
 void genmul(void) {
 	gentext();
-	cgload();
+	cgload2();
 	cgmul();
 }
 
 void gendiv(int swapped) {
 	gentext();
-	if (cgload() || !swapped) cgswap();
+	if (cgload2() || !swapped) cgswap();
 	cgdiv();
 }
 
 void genmod(int swapped) {
 	gentext();
-	if (cgload() || !swapped) cgswap();
+	if (cgload2() || !swapped) cgswap();
 	cgmod();
 }
 
@@ -345,8 +345,8 @@ static void binopchk(int op, int p1, int p2) {
 		 GREATER == op || LTEQ == op || GTEQ == op)
 		&&
 		(p1 == p2 ||
-		 VOIDPTR == p1 && !inttype(p2) ||
-		 VOIDPTR == p2 && !inttype(p1))
+		 (VOIDPTR == p1 && !inttype(p2)) ||
+		 (VOIDPTR == p2 && !inttype(p1)))
 	)
 		return;
 	error("invalid operands to binary operator", NULL);
@@ -556,6 +556,10 @@ void genalign(int k) {
 	gendata();
 	while (k++ % INTSIZE)
 		cgdefb(0);
+}
+
+void genaligntext() {
+	cgalign();
 }
 
 void gendefb(int v) {

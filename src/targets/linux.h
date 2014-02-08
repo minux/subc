@@ -3,6 +3,7 @@
  *	Linux environment
  */
 
+#define OS		"Linux"
 #define ASCMD		"as -o %s %s"
 #define LDCMD		"ld -o %s %s/lib/crt0.o"
 #define SYSLIBC		""

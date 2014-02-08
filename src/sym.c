@@ -68,8 +68,8 @@ int findstruct(char *s) {
 
 int findmem(int y, char *s) {
 	y++;
-	while (	y < Globs || y >= Locs &&
-		y < NSYMBOLS &&
+	while (	(y < Globs ||
+		 (y >= Locs && y < NSYMBOLS)) &&
 		CMEMBER ==  Stcls[y]
 	) {
 		if (*s == *Names[y] && !strcmp(s, Names[y]))
@@ -95,20 +95,31 @@ int newloc(void) {
 	return p;
 }
 
-char *galloc(int k) {
-	int	p;
+#ifdef __SUBC__
+ #define PTR_INT_CAST	(int)
+#else
+ #define PTR_INT_CAST	(int) (long)
+#endif
 
+char *galloc(int k, int align) {
+	int	p, mask;
+
+	k += align * BPW;
 	if (Nbot + k >= Ntop)
 		fatal("out of space for symbol names");
 	p = Nbot;
 	Nbot += k;
+	mask = BPW-1;
+	if (align)
+		while (PTR_INT_CAST &Nlist[p] & mask)
+			p++;
 	return &Nlist[p];
 }
 
 char *globname(char *s) {
 	char	*p;
 	
-	p = galloc(strlen(s)+1);
+	p = galloc(strlen(s)+1, 0);
 	strcpy(p, s);
 	return p;
 }

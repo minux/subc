@@ -440,11 +440,11 @@ static void signature(int fn, int from, int to) {
 		types[i] = Prims[--to];
 	types[i] = 0;
 	if (NULL == Mtext[fn]) {
-		Mtext[fn] = galloc((i+1) * sizeof(int));
+		Mtext[fn] = galloc((i+1) * sizeof(int), 1);
 		memcpy(Mtext[fn], types, (i+1) * sizeof(int));
 	}
 	else if (Sizes[fn] >= 0 && intcmp((int *) Mtext[fn], types))
-		error("redeclaration does not match prior type: %s",
+		error("declaration does not match prior prototype: %s",
 			Names[fn]);
 }
 
@@ -483,6 +483,7 @@ void decl(int clss, int prim) {
 				lsize = localdecls();
 				gentext();
 				if (CPUBLIC == clss) genpublic(name);
+				genaligntext();
 				genname(name);
 				genentry();
 				genstack(lsize);

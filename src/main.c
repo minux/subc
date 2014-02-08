@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011--2013
+ *	NMH's Simple C Compiler, 2011--2014
  *	Main program
  */
 
@@ -181,7 +181,7 @@ static void link(void) {
 }
 
 static void usage(void) {
-	printf("Usage: scc [-h] [-ctvS] [-d opt] [-o file] [-D macro[=text]]"
+	printf("Usage: scc [-h] [-ctvSV] [-d opt] [-o file] [-D macro[=text]]"
 		" file [...]\n");
 }
 
@@ -196,7 +196,12 @@ static void longusage(void) {
 		"-v       verbose, more v's = more verbose\n"
 		"-D m=v   define macro M with optional value V\n"
 		"-S       compile to assembly language\n"
+		"-V       print version and exit\n"
 		"\n" );
+}
+
+static void version(void) {
+	printf("SubC version %s for %s/%s\n", VERSION, OS, CPU);
 }
 
 static char *nextarg(int argc, char *argv[], int *pi, int *pj) {
@@ -271,6 +276,9 @@ int main(int argc, char *argv[]) {
 			case 'S':
 				O_componly = O_asmonly = 1;
 				break;
+			case 'V':
+				version();
+				exit(EXIT_SUCCESS);
 			default:
 				usage();
 				exit(EXIT_FAILURE);

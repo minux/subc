@@ -75,7 +75,7 @@ static int scanch(void) {
 		case 'x':
 			return hexchar();
 		default:
-			cerror("unknown escape sequence: %s", c);
+			scnerror("unknown escape sequence: %s", c);
 			return ' ';
 		}
 	}
@@ -103,7 +103,7 @@ static int scanint(int c) {
 	while ((k = chrpos("0123456789abcdef", tolower(c))) >= 0) {
 		Text[i++] = c;
 		if (k >= radix)
-			cerror("invalid digit in integer literal: %s", c);
+			scnerror("invalid digit in integer literal: %s", c);
 		val = val * radix + k;
 		c = next();
 	}
@@ -513,7 +513,7 @@ static int scanpp(void) {
 				return IDENT;
 			}
 			else {
-				cerror("funny input character: %s", c);
+				scnerror("funny input character: %s", c);
 				break;
 			}
 		}

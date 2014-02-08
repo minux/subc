@@ -26,7 +26,7 @@
 	the selected size will be sizeof(int) in the new back-end.
 
 
-	(3) Create en environment desscription for your OS
+	(3) Create en environment description for your OS
 
 	The SubC compiler uses some external resources that are part
 	of your operating system, like the assembler, linker, and

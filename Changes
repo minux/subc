@@ -1,4 +1,10 @@
-2014-01-19 Rewrote configure script.
+2014-02-07 Added FreeBSD/armv6 crt0 (crt0-freebsd-armv6.s).
+2014-02-06 Added FreeBSD/armv6 back-end (cgarmv6.c).
+2014-02-05 Added alignment option to galloc() for CPUs with aligned access.
+2014-02-03 Fix: wait_bye should not be visible at C level in Darwin crt0.
+2014-02-03 Added version info (-V option).
+2014-02-02 Renamed cerror() due to libc conflict (FreeBSD 10.0-RC5). wtf?!
+2014-01-19 Updated configure script.
 2014-01-19 Removed old, stack-based back-end.
 2014-01-15 Fixed alignment of environ and __progname in x86-64 crt0's.
 2014-01-15 Added experimental support for Darwin OS. Thanks, Romain LWPB!
@@ -20,7 +26,7 @@
 2013-02-19 Fix: stdout was not line-buffered.
 2013-02-18 Made printf %p output unsigned.
 2013-02-18 Fixed wrong output of printf("%d", INT_MIN);
-2013-02-18 Finished new code synthesizing back-end.
+2013-02-18 Finished new code-synthesizing back-end.
 2013-02-13 Added pointer arithmetics test suite.
 2013-02-03 Reversed this file.
 2013-02-03 Fixed some typos, updated book link in README.

@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011--2013
+ *	NMH's Simple C Compiler, 2011--2014
  *	386 target description (synthesizing generator)
  */
 
@@ -34,7 +34,7 @@ void cgsynth(char *op) {
 	case globl_word:	sgen("%s\t%s,%%eax", op, s); break;
 	case auto_byte:
 	case static_byte:
-	case globl_byte:	cgload();
+	case globl_byte:	cgload2();
 				ngen("%s\t%%ecx,%%eax", op, 0);
 				break;
 	case empty:		cgpop2();
@@ -45,11 +45,7 @@ void cgsynth(char *op) {
 	Q_type = empty;
 }
 
-void cgsynand(void)	{ cgsynth("andl"); }
-void cgsynor(void)	{ cgsynth("orl"); }
-void cgsynxor(void)	{ cgsynth("xorl"); }
-
-int cgload(void) {
+int cgload2(void) {
 	int	n, q;
 	char	*s, *op, *opb;
 
@@ -79,7 +75,7 @@ int cgload(void) {
 	case globl_word:	sgen("%s\t%s,%%ecx", op, s); break;
 	case empty:		cgpop2();
 				break;
-	default:		fatal("internal: bad type in cgsynth()");
+	default:		fatal("internal: bad type in cgload2()");
 	}
 	q = Q_type;
 	Q_type = empty;
@@ -110,9 +106,9 @@ void cgpushlit(int n)	{ ngen("%s\t$%d", "pushl", n); }
 void cgpop2(void)	{ gen("popl\t%ecx"); }
 void cgswap(void)	{ gen("xchgl\t%eax,%ecx"); }
 
-void cgand(void)	{ gen("andl\t%ecx,%eax"); }
-void cgxor(void)	{ gen("xorl\t%ecx,%eax"); }
-void cgior(void)	{ gen("orl\t%ecx,%eax"); }
+void cgand(void)	{ cgsynth("andl"); }
+void cgior(void)	{ cgsynth("orl"); }
+void cgxor(void)	{ cgsynth("xorl"); }
 void cgadd(void)	{ gen("addl\t%ecx,%eax"); }
 void cgmul(void)	{ gen("imull\t%ecx,%eax"); }
 void cgsub(void)	{ gen("subl\t%ecx,%eax"); }
@@ -256,3 +252,4 @@ void cgdefl(int v)	{ lgen("%s\t%c%d", ".long", v); }
 void cgdefc(int c)	{ ngen("%s\t'%c'", ".byte", c); }
 void cggbss(char *s, int z)	{ ngen(".comm\t%s,%d", s, z); }
 void cglbss(char *s, int z)	{ ngen(".lcomm\t%s,%d", s, z); }
+void cgalign(void)	{ /* unused */ }

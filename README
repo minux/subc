@@ -1,5 +1,5 @@
 
-	SubC Compiler, Version 2014-01-19
+	SubC Compiler, Version 2014-02-08
 	By Nils M Holm, 2011--2014
 	Placed in the public domain
 
@@ -18,20 +18,19 @@
 	The SubC compiler can compile itself. Unlike many other small C
 	compilers, it does not bend the rules, though. Its code passes
 	"gcc -Wall -pedantic" with little or no warnings (depending on
-	the gcc version used).
+	the gcc version used). Of course, you can also bootstrap it with
+	other C compilers, such as Clang or PCC.
 
-	The compiler generates code for GAS, the GNU assembler. It
-	targets the 386 and x86-64 processors and currently offers
-	runtime support for the following platforms:
+	SubC generates code for GAS, the GNU assembler. It targets the
+	following processors and operating systems:
 
-		FreeBSD/386
-		FreeBSD/x86-64
-		Linux/386
-		Linux/x86-64
-		NetBSD/x86-64
-		OpenBSD/386
-		Windows/386 (MinGW)
-		Darwin/x86-64 (experimental)
+		FreeBSD		386	armv6	x86-64
+		Linux		386	-	x86-64
+		NetBSD		-	-	x86-64
+		OpenBSD		386	-	-
+		Windows/MinGW	386	-	-
+		Darwin		-	-	x86-64*
+				*experimental
 
 	Porting it to other 32-bit or 64-bit platforms should be quite
 	straight-forward. See the file "Porting" and/or the book for a
@@ -188,7 +187,7 @@
 	it to src/cg.c. Also link the corresponding header file into
 	place:
 
-		(cd src && ln -fs targets/cg386-stk.c cg.c)
+		(cd src && ln -fs targets/cg386.c cg.c)
 		(cd src && ln -fs targets/cg386.h cg.h)
 
 	Also select the C startup (crt0) file for your OS and CPU type
@@ -248,9 +247,11 @@
 
 	INSTALLING THE COMPILER
 
-	The easy way would be to set up the SCCDIR and BINDIR variables
-	in src/Makefile to suit your taste and then run
+	The easy way would be to set up the PREFIX (and optionally
+	SCCDIR and BINDIR) variables in src/Makefile to suit your
+	taste and then run
 
+		make dirs	# to create the directories
 		make install
 
 	If you want to install the SubC compiler manually, you will

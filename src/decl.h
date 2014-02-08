@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011--2013
+ *	NMH's Simple C Compiler, 2011--2014
  *	Function declarations
  */
 
@@ -7,7 +7,7 @@ int	addglob(char *name, int prim, int type, int scls, int size, int val,
 		char *mval, int init);
 int	addloc(char *name, int prim, int type, int scls, int size, int val,
 		int init);
-void	cerror(char *s, int c);
+void	scnerror(char *s, int c);
 int	chrpos(char *s, int c);
 void	clear(int q);
 void	clrlocs(void);
@@ -31,11 +31,12 @@ int	findstruct(char *s);
 int	findsym(char *s);
 int	findmac(char *s);
 int	frozen(int depth);
-char	*galloc(int k);
+char	*galloc(int k, int align);
 void	gen(char *s);
 int	genadd(int p1, int p2, int swap);
 void	genaddr(int y);
 void	genalign(int k);
+void	genaligntext(void);
 void	genand(void);
 void	genargc(void);
 void	genasop(int op, int p1, int p2, int swap);

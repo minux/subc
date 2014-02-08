@@ -154,7 +154,7 @@ static int fnargs(int fn) {
 			break;
 	}
 	if (fn && TFUNCTION == Types[fn] && !Mtext[fn]) {
-		Mtext[fn] = galloc((na+1) * sizeof(int));
+		Mtext[fn] = galloc((na+1) * sizeof(int), 1);
 		memcpy(Mtext[fn], sgn, (na+1) * sizeof(int));
 	}
 	rparen();
@@ -212,7 +212,7 @@ static void badcall(int *lv) {
 }
 
 static int argsok(int na, int nf) {
-	return na == nf || nf < 0 && na >= -nf-1;
+	return na == nf || (nf < 0 && na >= -nf-1);
 }
 
 static int stc_access(int *pprim, int ptr) {

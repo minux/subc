@@ -1,3 +1,7 @@
+PREFIX=	/u
+SCCDIR=	$(PREFIX)/scc
+BINDIR=	$(PREFIX)/bin
+
 LINT=	gcc -c -o /dev/null -ansi -pedantic -Wall
 
 SRC=	cexpr.c cg.c decl.c error.c expr.c gen.c \
@@ -29,9 +33,6 @@ AS=	as
 AR=	ar -rc
 RANLIB=	ranlib
 
-SCCDIR=	/u/scc
-BINDIR=	/u/bin
-
 all:	scc0 crt0 lib
 
 lib:	lib/libscc.a
@@ -47,6 +48,13 @@ ptest:	scc0 ../ptest.src ../ptest.awk
 	./scc0 -o ptest ../ptest.c
 	./ptest
 	rm ptest
+
+dirs:
+	-mkdir $(PREFIX)
+	-mkdir $(SCCDIR)
+	-mkdir $(BINDIR)
+	-mkdir $(SCCDIR)/include
+	-mkdir $(SCCDIR)/lib
 
 install:	all
 	./scc0 -o scc -D 'SCCDIR="$(SCCDIR)"' *.c

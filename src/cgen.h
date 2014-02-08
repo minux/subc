@@ -4,6 +4,7 @@
  */
 
 void cgadd(void);
+void cgalign(void);
 void cgand(void);
 void cgargc(void);
 void cgbool(void);
@@ -84,7 +85,7 @@ void cgldsw(int n);
 void cgldswtch(int n);
 void cgle(void);
 void cglit(int v);
-int cgload(void);
+int  cgload2(void);
 void cglognot(void);
 void cglt(void);
 void cgmod(void);
@@ -116,10 +117,8 @@ void cgstorsb(int n);
 void cgstorsw(int n);
 void cgsub(void);
 void cgswap(void);
-void cgsynand(void);
-void cgsynor(void);
-void cgsynth(char *op);
-void cgsynxor(void);
+void cgand(void);
+void cgxor(void);
 void cgtext(void);
 void cgunscale(void);
 void cgunscaleby(int v);

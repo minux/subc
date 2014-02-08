@@ -1,6 +1,6 @@
 /*
- *	NMH's Simple C Compiler, 2013
- *	8086 target description (synthesizing generator)
+ *	NMH's Simple C Compiler, 2013,2014
+ *	8086 target description
  */
 
 #include "defs.h"
@@ -34,7 +34,7 @@ void cgsynth(char *op) {
 	case globl_word:	sgen("%s\tax,%s", op, s); break;
 	case auto_byte:
 	case static_byte:
-	case globl_byte:	cgload();
+	case globl_byte:	cgload2();
 				ngen("%s\tax,cx", op, 0);
 				break;
 	case empty:		cgpop2();
@@ -45,11 +45,7 @@ void cgsynth(char *op) {
 	Q_type = empty;
 }
 
-void cgsynand(void)	{ cgsynth("and"); }
-void cgsynor(void)	{ cgsynth("or"); }
-void cgsynxor(void)	{ cgsynth("xor"); }
-
-int cgload(void) {
+int cgload2(void) {
 	int	n, q;
 	char	*s, *op;
 
@@ -78,7 +74,7 @@ int cgload(void) {
 	case globl_word:	sgen("%s\tcx,%s", op, s); break;
 	case empty:		cgpop2();
 				break;
-	default:		fatal("internal: bad type in cgsynth()");
+	default:		fatal("internal: bad type in cgload2()");
 	}
 	q = Q_type;
 	Q_type = empty;
@@ -111,9 +107,9 @@ void cgpushlit(int n)	{ cglit(n);
 void cgpop2(void)	{ gen("pop\tcx"); }
 void cgswap(void)	{ gen("xchg\tax,cx"); }
 
-void cgand(void)	{ gen("and\tax,cx"); }
-void cgxor(void)	{ gen("xor\tax,cx"); }
-void cgior(void)	{ gen("or\tax,cx"); }
+void cgand(void)	{ cgsynth("and"); }
+void cgior(void)	{ cgsynth("or"); }
+void cgxor(void)	{ cgsynth("xor"); }
 void cgadd(void)	{ gen("add\tax,cx"); }
 void cgmul(void)	{ gen("imul\tcx"); }
 void cgsub(void)	{ gen("sub\tax,cx"); }
@@ -302,3 +298,4 @@ void cggbss(char *s, int z)	{ genraw(s);
 				  genraw(":");
 				  ngen("%s\t0 dup %d", "db", z); }
 void cglbss(char *s, int z)	{ cggbss(s, z); }
+void cgalign(void)	{ /* unused */ }

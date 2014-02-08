@@ -1,3 +1,7 @@
+PREFIX=	c:/mingw
+SCCDIR=	$(PREFIX)/scc
+BINDIR=	$(PREFIX)/bin
+
 LINT=	gcc -c -o /dev/null -ansi -pedantic -Wall
 
 SRC=	cexpr.c cg.c decl.c error.c expr.c gen.c \
@@ -29,9 +33,6 @@ AS=	as
 AR=	ar -rc
 RANLIB=	ranlib
 
-SCCDIR=	c:/mingw/scc
-BINDIR=	c:/mingw/bin
-
 all:	scc0 crt0 lib
 
 lib:	lib/libscc.a
@@ -48,12 +49,17 @@ ptest:	scc0 ../ptest.src ../ptest.awk
 	./ptest
 	rm ptest
 
+dirs:
+	-mkdir $(PREFIX)
+	-mkdir $(SCCDIR)
+	-mkdir $(BINDIR)
+	-mkdir $(SCCDIR)/include
+	-mkdir $(SCCDIR)/lib
+
 install:	all
 	./scc0 -o scc -D 'SCCDIR="$(SCCDIR)"' *.c
 	cp scc $(BINDIR)/scc.exe
-	mkdir -p $(SCCDIR)/include
 	cp include/* $(SCCDIR)/include
-	mkdir -p $(SCCDIR)/lib
 	cp lib/libscc.a lib/crt0.o $(SCCDIR)/lib
 
 scc:	scc1 $(SRC)
