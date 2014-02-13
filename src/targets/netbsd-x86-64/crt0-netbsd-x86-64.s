@@ -223,10 +223,19 @@ C_execve:
 # int _time(void);
 
 	.globl	C_time
-C_time:	xorq	%rdi,%rdi
+#C_time:	xorq	%rdi,%rdi
+#	xorq	%rax,%rax
+#	call	time
+#	ret
+C_time:	subq	$16,%rsp	# struct timespec
+	movq	$0,%rdi		# CLOCK_REALTIME
+	movq	%rsp,%rsi
 	xorq	%rax,%rax
-	call	time
+	call	__clock_gettime50	# alt: clock_gettime
+	movq	(%rsp),%rax
+	addq	$16,%rsp
 	ret
+
 
 # int raise(int sig);
 

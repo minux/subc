@@ -104,7 +104,6 @@ C_exit:	pushl	8(%esp)
 
 # int _sbrk(int size);
 
-	.globl	C_sbrk
 C_sbrk:	pushl	8(%esp)
 	call	sbrk
 	addl	$4,%esp

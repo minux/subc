@@ -76,8 +76,8 @@ esac
 
 if [ $os = windows ]; then
 	cp src/Makefile.windows src/Makefile
-	(cd src; ln -fs ../targets/init-windows.c lib/init.c)
-	(cd src; ln -fs ../targets/system-windows.c lib/system.c)
+	(cd src; ln -fs ../targets/lib/init-windows.c lib/init.c)
+	(cd src; ln -fs ../targets/lib/system-windows.c lib/system.c)
 else
 	if [ "$as" != "" ]; then
 		sed	-e "s/^AS=.*/AS=	$as/" \
@@ -87,14 +87,14 @@ else
 	else
 		cp src/Makefile.unix src/Makefile
 	fi
-	(cd src; ln -fs ../targets/init-unix.c lib/init.c)
-	(cd src; ln -fs ../targets/system-unix.c lib/system.c)
+	(cd src; ln -fs ../targets/lib/init-unix.c lib/init.c)
+	(cd src; ln -fs ../targets/lib/system-unix.c lib/system.c)
 fi
 
-(cd src && ln -fs targets/cg$mac$opt.c cg.c)
-(cd src && ln -fs targets/cg$mac.h cg.h)
-(cd src && ln -fs targets/$os.h sys.h)
-(cd src/lib && ln -fs ../targets/crt0-$os-$mac.s crt0.s)
-(cd src/include && ln -fs ../targets/limits-$int.h limits.h)
+(cd src && ln -fs targets/cg/cg$mac$opt.c cg.c)
+(cd src && ln -fs targets/cg/cg$mac.h cg.h)
+(cd src && ln -fs targets/$os-$mac/sys-$os-$mac.h sys.h)
+(cd src/lib && ln -fs ../targets/$os-$mac/crt0-$os-$mac.s crt0.s)
+(cd src/include && ln -fs ../targets/include/limits-$int.h limits.h)
 
 echo "Building for $os/$mac. Now cd to src and run make."

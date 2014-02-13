@@ -1,6 +1,6 @@
 /*
  *	NMH's Simple C Compiler, 2013,2014
- *	DOS environment
+ *	DOS/8086 environment
  */
 
 #define OS		"DOS"

@@ -24,13 +24,15 @@
 	SubC generates code for GAS, the GNU assembler. It targets the
 	following processors and operating systems:
 
-		FreeBSD		386	armv6	x86-64
-		Linux		386	-	x86-64
+		FreeBSD		386+	armv6+	x86-64
+		Linux		386	-	x86-64+
 		NetBSD		-	-	x86-64
 		OpenBSD		386	-	-
 		Windows/MinGW	386	-	-
 		Darwin		-	-	x86-64*
-				*experimental
+
+		+ does not use the syscall layer of the host libc
+		* experimental
 
 	Porting it to other 32-bit or 64-bit platforms should be quite
 	straight-forward. See the file "Porting" and/or the book for a
@@ -183,33 +185,37 @@
 	link a few machine-dependent files into place.
 
 	If you want to configure the compiler manually: select one of
-	the target descriptions (cg*.c) files in src/targets and symlink
-	it to src/cg.c. Also link the corresponding header file into
-	place:
+	the target descriptions (cg*.c) files in src/targets/cg and
+	symlink it to src/cg.c. Also link the corresponding header
+	file into place:
 
-		(cd src && ln -fs targets/cg386.c cg.c)
-		(cd src && ln -fs targets/cg386.h cg.h)
+		(cd src && ln -fs targets/cg/cg386.c cg.c)
+		(cd src && ln -fs targets/cg/cg386.h cg.h)
 
-	Also select the C startup (crt0) file for your OS and CPU type
-	from src/targets and link it to src/lib/crt0.s, e.g.:
+	Next select the C startup (crt0) file for your OS and CPU type
+	from src/targets/OS-CPU/ and link it to src/lib/crt0.s, e.g.:
 
 		(cd src/lib && \
-		 ln -fs ../targets/crt0-freebsd-386.s crt0.s)
+		 ln -fs ../targets/freebsd-386/crt0-freebsd-386.s \
+		 	crt0.s)
 
 	If your OS/CPU combination is not supported, you might try
 	to port the compiler. See the file "Porting" for details.
 
-	You will also need some operating system-dependent definitions,
-	which are kept in files named "your-os.h" in src/targets/. Just
-	symlink the appropriate file to sys.h:
+	You will also need some operating system-dependent
+	definitions, which are kept in files named "sys-OS-CPU.h"
+	in src/targets/OS-CPU/. Just symlink the appropriate file
+	to src/sys.h:
 
-		(cd src && ln -fs targets/freebsd.h sys.h)
+		(cd src && \
+		 ln -fs targets/freebsd-386/sys-freebsd-386.h sys.h)
 
-	Finally, select a limits-*.h file from targets/ that reflects the
-	machine word size of your target and link it to include/limits.h:
+	Finally, select a limits-*.h file from targets/include/ that
+	reflects the machine word size of your target and link it to
+	src/include/limits.h:
 
 		(cd src/include && \
-		 ln -fs ../targets/limits-32.h limits.h)
+		 ln -fs ../targets/include/limits-32.h limits.h)
 
 
 	COMPILING THE COMPILER
@@ -257,7 +263,7 @@
 	If you want to install the SubC compiler manually, you will
 	have to change the SCCDIR variable in the compiler itself.
 	It points to the base directory which will contain the SubC
-	headers and runtime library. SCCDIR defaults to "." and can
+	headers and runtime library. SCCDIR defaults to "." but can
 	be overridden on the command line:
 
 		./scc1 -o scc -D 'SCCDIR="INSTALLDIR"' *.c
@@ -295,8 +301,8 @@
 
 	Replace or symlink the following files:
 
-		ln -fs targets/init-windows.c lib/init.c
-		ln -fs targets/system-windows.c lib/system.c
+		ln -fs targets/lib/init-windows.c lib/init.c
+		ln -fs targets/lib/system-windows.c lib/system.c
 
 	Also use the Windows Makefile instead of its Unix cousin:
 
@@ -322,6 +328,9 @@
 	To Romain LWPB for porting the runtime module to OpenBSD/386
 	and Darwin/x86-64 as well as for modifying the x86-64 code
 	generator to emit proper code for Darwin.
+
+	To The Unknown Hacker for various minor and not so minor
+	contributions.
 
 
 	CONTACT

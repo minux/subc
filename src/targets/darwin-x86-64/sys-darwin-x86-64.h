@@ -1,6 +1,6 @@
 /*
  *	NMH's Simple C Compiler, 2013,2014
- *	Darwin environment
+ *	Darwin/x86-64 environment
  */
 
 #define OS		"Darwin"

@@ -1,5 +1,5 @@
 
-	- fix time() on NetBSD (linker warning)
+	- fix time()/clock_gettime() on NetBSD (linker warning)
 
 	- test Darwin port
 

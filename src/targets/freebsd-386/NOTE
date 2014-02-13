@@ -1,0 +1,4 @@
+Ths current crt0 file does not use the system's C library. If
+you should run into trouble, you may try the alternative version
+crt0-freebsd-386.OLD. In this case, you also have to set the
+SYSLIBC variable in sys-freebsd-386.h to "/usr/lib/libc.a".

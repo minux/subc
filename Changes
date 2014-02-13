@@ -1,3 +1,7 @@
+2014-02-13 Removed libc dependencies from freebsd-armv6 crt0.
+2014-02-12 Removed libc dependencies from freebsd-386 crt0.
+2014-02-12 Re-organized targets/ directory, adapted configure script.
+2014-02-12 Fix: Linux/386 does in fact need the system libc.
 2014-02-07 Added FreeBSD/armv6 crt0 (crt0-freebsd-armv6.s).
 2014-02-06 Added FreeBSD/armv6 back-end (cgarmv6.c).
 2014-02-05 Added alignment option to galloc() for CPUs with aligned access.
@@ -7,7 +11,7 @@
 2014-01-19 Updated configure script.
 2014-01-19 Removed old, stack-based back-end.
 2014-01-15 Fixed alignment of environ and __progname in x86-64 crt0's.
-2014-01-15 Added experimental support for Darwin OS. Thanks, Romain LWPB!
+2014-01-15 Added experimental support for Darwin/x86-64. Thanks, Romain LWPB!
 2014-01-15 Made CG emit ".comm" instead of ".lcomm/.globl" for globals.
 2014-01-14 Added OpenBSD/386 crt0 module (crt0-openbsd-386.s). Thanks, Romain!
 2014-01-05 Removed superfluous system libc from linux sys.h.

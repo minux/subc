@@ -1,6 +1,6 @@
 /*
  *	NMH's Simple C Compiler, 2011--2014
- *	Windows/MinGW environment
+ *	Windows/386 (MinGW) environment
  */
 
 #define OS	"Window-MinGW"
