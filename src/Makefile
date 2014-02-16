@@ -1,4 +1,5 @@
 PREFIX=	/u
+EXESFX=	
 SCCDIR=	$(PREFIX)/scc
 BINDIR=	$(PREFIX)/bin
 
@@ -43,11 +44,16 @@ test:	scc $(SRC)
 	./scc -o scc2 $(SRC)
 	cmp scc scc2 && rm -f scc2
 
-ptest:	scc0 ../ptest.src ../ptest.awk
-	awk -f ../ptest.awk <../ptest.src >../ptest.c
-	./scc0 -o ptest ../ptest.c
+ptest:	scc0 lib/crt0.o lib/libscc.a ../tests/ptest.src ../tests/ptest.awk
+	awk -f ../tests/ptest.awk <../tests/ptest.src >../tests/ptest.c
+	./scc0 -o ptest ../tests/ptest.c
 	./ptest
 	rm ptest
+
+systest:	scc0 lib/crt0.o lib/libscc.a ../tests/systest.c
+	./scc0 -o systest ../tests/systest.c
+	./systest
+	rm systest
 
 dirs:
 	-mkdir $(PREFIX)
@@ -58,7 +64,8 @@ dirs:
 
 install:	all
 	./scc0 -o scc -D 'SCCDIR="$(SCCDIR)"' *.c
-	cp scc $(BINDIR)
+	cp scc$(EXESFX) $(BINDIR)
+	strip $(BINDIR)/scc$(EXESFX)
 	cp include/* $(SCCDIR)/include
 	cp lib/libscc.a lib/crt0.o $(SCCDIR)/lib
 
@@ -101,4 +108,4 @@ lint:
 
 clean:
 	rm -f scc0 scc1 scc2 scc test.s *.o *.core core a.out lib/crt0.o \
-		*.tmp lib/*.o lib/libscc.a
+		*.tmp lib/*.o lib/libscc.a *.exe

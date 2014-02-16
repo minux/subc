@@ -75,17 +75,15 @@ DOS/8086)		os=dos     ; mac=8086   ; int=16
 esac
 
 if [ $os = windows ]; then
-	cp src/Makefile.windows src/Makefile
 	(cd src; ln -fs ../targets/lib/init-windows.c lib/init.c)
 	(cd src; ln -fs ../targets/lib/system-windows.c lib/system.c)
 else
 	if [ "$as" != "" ]; then
+		cp src/Makefile src/Makefile.ORIG
 		sed	-e "s/^AS=.*/AS=	$as/" \
 			-e "s/^AR=.*/AR=	$ar/" \
 			-e "s/^RANLIB=.*/RANLIB=	$ranlib/" \
-		<src/Makefile.unix >src/Makefile
-	else
-		cp src/Makefile.unix src/Makefile
+		<src/Makefile.ORIG >src/Makefile
 	fi
 	(cd src; ln -fs ../targets/lib/init-unix.c lib/init.c)
 	(cd src; ln -fs ../targets/lib/system-unix.c lib/system.c)

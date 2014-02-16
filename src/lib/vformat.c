@@ -44,24 +44,22 @@ static char *itoa(char *p, int n, int base, char *sgnch) {
 }
 
 /*
- * Jump through some hoops to make output unsigned
- * using a compiler w/o unsigned int.
+ * Convert integer N to unsigned hexa-decimal
+ * string representation. Write string to P.
+ * P must point to the *end* of the buffer
+ * initially; the output is written backwards!
  */
 static char *ptoa(char *p, int n) {
-	char	dummy[1], *q, *r;
-	int	x;
+	int	i, x;
 
-	x = (n & 0xf) + '0';
-	if (x-'0' > 9) x += 'a'-10-'0';
 	*--p = 0;
-	q = p-1;
-	n >>= 4;
-	if (n)
-		r = itoa(p, n, 16, dummy);
-	else
-		r = p-1;
-	*q = x;
-	return r;
+	for (i=0; i<sizeof(int)*2; i++) {
+		x = n & 0xf;
+		*--p = x + '0';
+		if (x > 9) *p += 'a'-10-'0';
+		n >>= 4;
+	}
+	return p;
 }
 
 static void append(char *what, int len) {

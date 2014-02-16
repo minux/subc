@@ -2,8 +2,8 @@ set DEVCPPPATH=c:\\dev-cpp\\
 set CC=gcc
 
 echo c:\dev-cpp\bin\ must be in the path environment variable!
+echo EXESFX must be set in src/Makefile!
 
-copy src\Makefile.windows src\Makefile
 copy src\targets\init-windows.c src\lib\init.c
 copy src\targets\system-windows.c src\lib\system.c
 copy src\targets\cg386-syn.c src\cg.c

@@ -1,3 +1,8 @@
+2014-02-16 Updated docs, misc. cosmetical changes.
+2014-02-15 Added tests/sys.c program for testing crt0 functions.
+2014-02-15 Fixed %p in *printf functions (wrong result for values < INT_MIN).
+2014-02-14 Wrote simple crt0 test suite.
+2014-02-14 Added fcntl.h include file, added SEEK_* constants to unistd.h.
 2014-02-13 Removed libc dependencies from freebsd-armv6 crt0.
 2014-02-12 Removed libc dependencies from freebsd-386 crt0.
 2014-02-12 Re-organized targets/ directory, adapted configure script.

@@ -105,6 +105,13 @@
 
 		vi src/targets/OS-CPU/crt0-OS-CPU.s
 
+	There is a usefull tool called "sys" in the tests/ directory of
+	the SubC directory tree. When compiled with SubC, it can be used
+	to test the system call wrapper, program argument passing and
+	environment access in the crt0 module.
+
+		./scc0 -o sys ../tests/sys.c
+
 
 	(7) Compile, test, repeat
 
@@ -119,6 +126,10 @@
 	ad-hoc pointer arithmetics test suite included in the SubC
 	archive. Just run 'make ptest' in src/. If it does not print
 	anything, fine!
+
+	The system call interface can be ad-hoc tested by running
+	"make systest". It is pretty likely to blow up at some point
+	when there is something wrong with the crt0 module.
 
 
 	(8) Add your back-end to the configure script

@@ -69,6 +69,7 @@ int	ftell(FILE *f);
 int	fwrite(void *buf, int size, int count, FILE *f);
 int	getchar(void);
 char	*gets(char *buf);
+int	kprintf(int fd, char *fmt, ...);
 void	perror(char *s);
 int	printf(char *fmt, ...);
 int	putchar(int c);

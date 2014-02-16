@@ -1,0 +1,6 @@
+In case you get an unresolved external "__clock_gettime50" with
+the current version of the NetBSD/x86-64 crt0, edit the file
+crt0-netbsd-x86-64.s, look for _time(), uncomment the old version
+of that function and comment out the new one.
+
+A portable fix would be welcome!

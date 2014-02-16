@@ -281,7 +281,7 @@ C_execve:
 	int	$0x80
 	jnc	excok
 	negl	%eax
-excok:	addl	$12,%esp
+excok:	addl	$16,%esp
 	ret
 
 # int _time(void);
