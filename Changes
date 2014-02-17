@@ -1,3 +1,6 @@
+2014-02-17 Successfully cross-compiled main(){printf("hi\n");} for DOS/8086.
+2014-02-17 Fixed wrong DUP argument in S86.
+2014-02-17 Fixed wrong return value in fread().
 2014-02-16 Updated docs, misc. cosmetical changes.
 2014-02-15 Added tests/sys.c program for testing crt0 functions.
 2014-02-15 Fixed %p in *printf functions (wrong result for values < INT_MIN).

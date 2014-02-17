@@ -79,7 +79,9 @@ if [ $os = windows ]; then
 	(cd src; ln -fs ../targets/lib/system-windows.c lib/system.c)
 else
 	if [ "$as" != "" ]; then
-		cp src/Makefile src/Makefile.ORIG
+		if [ ! -f src/Makefile.ORIG ]; then
+			cp src/Makefile src/Makefile.ORIG
+		fi
 		sed	-e "s/^AS=.*/AS=	$as/" \
 			-e "s/^AR=.*/AR=	$ar/" \
 			-e "s/^RANLIB=.*/RANLIB=	$ranlib/" \

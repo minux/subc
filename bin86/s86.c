@@ -1102,10 +1102,12 @@ void dodata(int word) {
 	while (*p != ' ' && *p != '\t' && *p) p++;
 	while (*p == ' ' || *p == '\t') p++;
 	if (!strncmp(p, "dup", 3)) {
+		p += 3;
+		while (*p == ' ' || *p == '\t') p++;
 		if (word)
-			emitword(0, xtoi(Oper1));
+			emitword(xtoi(Oper1), xtoi(p));
 		else
-			emit(0, xtoi(Oper1));
+			emit(xtoi(Oper1), xtoi(p));
 		return;
 	}
 	for (p = strcpy(buf, Oper1); *p; ) {

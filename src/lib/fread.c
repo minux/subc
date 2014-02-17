@@ -57,7 +57,6 @@ int _fread(void *p, int size, FILE *f) {
 	while (size > len) {
 		if ((k = _read(f->fd, p, len)) != len) {
 			f->iom |= _FERROR;
-			errno = EIO;
 			return total-size+k;
 		}
 		p += len;
@@ -65,8 +64,16 @@ int _fread(void *p, int size, FILE *f) {
 	}
 	if (size != 0) {
 		if (!_refill(f)) return total-size;
-		memcpy(p, f->buf, size);
-		f->ptr = size;
+		k = f->end - f->ptr;
+		if (k < size) {
+			memcpy(p, f->buf, k);
+			f->ptr = k;
+			total = total-size+k;
+		}
+		else {
+			memcpy(p, f->buf, size);
+			f->ptr = size;
+		}
 	}
 	return total;
 }

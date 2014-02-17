@@ -1,5 +1,5 @@
 ;
-;	NMH's Simple C Compiler, 2013
+;	NMH's Simple C Compiler, 2013,2014
 ;	C runtime module for DOS
 ;
 
@@ -139,6 +139,8 @@ argsdone:
 	mov	word ptr [si],0	; terminate argv[] with NULL
 	push	cx		; pass argc
 	push	di		; and argv to main()
+	mov	ax,2		; __argc
+	push	ax
 
 ; copy environment
 
@@ -202,6 +204,9 @@ scan:	lodsb
 ; call main() and exit
 
 	call	near ptr Cmain
+	add	sp,6
+	push	ax
+	mov	ax,1
 	push	ax
 ;	call	near ptr Cexit	; XXX
 	call	near ptr C_exit
@@ -217,13 +222,14 @@ swapsegs:
 
 ; void _exit(int rc);
 
-C_exit:	mov	ax,[bp+4]
+C_exit:	mov	bx,sp
+	mov	ax,[bx+4]
 	mov	ah,4ch		; terminate program
 	int	DOS
 
 ; evaluate 'switch' statement XXX
 
-case:	pop	si		; get offset of case table
+switch:	pop	si		; get offset of case table
 docase:	mov	dx,cs:[si]	; fetch value from table
 	add	si,BPW		; advance tbl ptr
 	mov	bx,cs:[si]	; fetch address from table
@@ -233,7 +239,6 @@ docase:	mov	dx,cs:[si]	; fetch value from table
 	cmp	ax,dx		; right case ?
 	jnz	docase		; no, go on
 	jmp	bx		; yes: jump to it
-
 dodflt:	mov	bx,dx		; do default
 	jmp	bx
 
@@ -337,12 +342,12 @@ Craise:	mov	dx,offset abort
 
 C_lseek:
 	mov	bx,sp
-	mov	ax,[bp+6]
+	mov	ax,[bx+6]
 	cwd
 	mov	cx,dx
 	mov	dx,ax
-	mov	ax,[bp+4]
-	mov	bx,[bp+8]
+	mov	ax,[bx+4]
+	mov	bx,[bx+8]
 	mov	ah,42h
 	int	DOS
 	jnc	lsok

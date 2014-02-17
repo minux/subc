@@ -292,7 +292,7 @@ void cgexit(void)	{ gen("pop\tbp");
 void cgdefb(int v)	{ ngen("%s\t%d", "db", v); }
 void cgdefw(int v)	{ ngen("%s\t%d", "dw", v); }
 void cgdefp(int v)	{ ngen("%s\t%d", "dw", v); }
-void cgdefl(int v)	{ lgen("%s\toffset %c%d", "dw", v); }
+void cgdefl(int v)	{ lgen("%s\t%c%d", "dw", v); }
 void cgdefc(int c)	{ ngen("%s\t'%c'", "db", c); }
 void cggbss(char *s, int z)	{ genraw(s);
 				  genraw(":");

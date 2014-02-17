@@ -300,10 +300,10 @@ void try_reslv(void) {
 							(Symtab[j+SADDR+1]<<8);
 						if (debug)
 							printf(
-					"resolving extern:\t%s (%04x) ...\n",
+						"resolving:\t%s (%04x) ...\n",
 							&Symtab[i], addr);
 						resolve(ptr, addr,
-						Symtab[j+SSEGMT]);
+							Symtab[j+SSEGMT]);
 						Symtab[i] = Symtab[i+SCLASS] = 0;
 						break;
 					}
@@ -351,7 +351,7 @@ void bind(void) {
 		if (Symtab[i+SCLASS] == EXTRN) {
 			slp = &Symtab[i+SLLIST];
 			if (*slp != 0xff || slp[0] != 0xff)
-				error("unresolved external", &Symtab[i]);
+				error("unresolved symbol", &Symtab[i]);
 		}
 	}
 	while ((Codep++)%16)

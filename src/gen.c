@@ -86,7 +86,7 @@ void sgen2(char *s, char *inst, int v, char *s2) {
 
 void genlab(int id) {
 	if (NULL == Outfile) return;
-	fprintf(Outfile, "%c%d:", LPREFIX, id);
+	fprintf(Outfile, "%c%d:\n", LPREFIX, id);
 }
 
 char *labname(int id) {
