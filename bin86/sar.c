@@ -1,6 +1,6 @@
 /*
- *	SAR -- A Small Archiver
- *	Nils M Holm, 1993,1995,2013
+ *	SAR -- A Simple Archiver
+ *	Nils M Holm, 1993,1995,2014
  *	In the public domain
  */
 
@@ -171,7 +171,7 @@ void ranlib(char *name, int verbose) {
 	if ((arc = fopen(name, "rb")) == NULL)
 		quit("no such file", name);
 	if ((tmp = fopen(ARTMP, "wb")) == NULL)
-		quit("cannot create tmp", ARTMP);
+		quit("cannot create tmp file", ARTMP);
 	strcpy(&Arh[AR_MAGIC], "  ");
 	if (fwrite(Arh, 1, ARH_LEN, tmp) != ARH_LEN) writeerr();
 	isize = 0;
@@ -244,7 +244,7 @@ void ranlib(char *name, int verbose) {
 	fclose(tmp);
 	remove(name);
 	if (rename(ARTMP, name))
-		quit("rename failed -- archive saved in", ARTMP);
+		quit("rename failed, archive saved in", ARTMP);
 }
 
 void usage(void) {

@@ -1,6 +1,6 @@
 /*
- *	SLD -- A Small Loader
- *	Nils M Holm, 1993,1995,2013
+ *	SLD -- A Simple Loader
+ *	Nils M Holm, 1993,1995,2013,2014
  *	In the public domain
  */
 
@@ -142,7 +142,7 @@ void mkmark(int si, char *ebuf) {
 					Extsym[i+MKADDR] +
 						(Extsym[i+MKADDR+1]<<8),
 					Extsym[i+MKPTR] +
-						(Extsym[i+MKPTR]<<8));
+						(Extsym[i+MKPTR+1]<<8));
 			return;
 		}
 	}
@@ -183,7 +183,7 @@ void load(char *name) {
 		off += SSIZE;
 		fread(ee, 1, MKSZ, Objf);
 		off += MKSZ;
-		while (ee[MKADDR] != 0xff && ee[MKADDR+1] != 0xff) {
+		while (ee[MKADDR] != 0xff || ee[MKADDR+1] != 0xff) {
 			k = ee[MKADDR] + (ee[MKADDR+1]<<8);
 			k += Codep;
 			ee[MKADDR] = k;
@@ -205,10 +205,10 @@ void load(char *name) {
 		if (fwrite(drel, 1, 2, Exef) != 2) writeerr();
 		N_dosrel++;
 	}
-
 	n = Ohd[OCODE] + (Ohd[OCODE+1]<<8) - off;
 	off += n;
 	nrel = n/3;
+	if (n > REL_SZ) fatal("relocation table overflow");
 	if (fread(Reloc, 1, n, Objf) != n) readerr();
 	if (debug) printf("%d RELOC entries\n", nrel);
 	n = Ohd[ODATA] + (Ohd[ODATA+1]<<8) - off;
@@ -228,13 +228,14 @@ void load(char *name) {
 		paddr[1] = k>>8;
 		if (debug)
 			printf(" %04x%c%s",
-				a, (char) t, !(i%48)&&i? "\n": "");
+				a, (char) t, !(i%36)&&i? "\n": "");
 	}
 	if (debug) putchar('\n');
 	if (fwrite(Buffer, 1, n, Ctmp) != n) writeerr();
 	old = Codep;
 	cmp = (Codep += n);
-	if (cmp < old) fatal("code segment overflow");
+	if (cmp < old || Codep > CODESZ)
+		fatal("code segment overflow");
 	for (i=size=Ohd[ODATASZ] + (Ohd[ODATASZ+1]<<8); i; ) {
 		if (i >= BUF_SZ || i < 0)
 			n = BUF_SZ;
@@ -247,7 +248,8 @@ void load(char *name) {
 	}
 	old = Datap;
 	cmp = (Datap += size);
-	if (cmp < old) fatal("data segment overflow");
+	if (cmp < old || Datap > DATASZ)
+		fatal("data segment overflow");
 	if (debug) printf("%d DATA bytes\n", size);
 }
 
@@ -263,7 +265,6 @@ void resolve(int ptr, int addr, int class) {
 				la, (Extsym[ptr+MKFLAG] & MKREL)? "R": "A",
 				!(i%15)&&i++? "\n": "");
 		fseek(Ctmp, la, SEEK_SET);
-		/*if (class == SCODE) {*/
 		if (Extsym[ptr+MKFLAG] & MKREL) {
 			va = addr-la-2;
 			fputc(va & 0xff, Ctmp);
@@ -295,16 +296,17 @@ void try_reslv(void) {
 				if (Symtab[j+SCLASS] == PUBLIC) {
 					if (!strcmp(&Symtab[i], &Symtab[j])) {
 						ptr = (Symtab[i+SLLIST]&0xff)+
-							(Symtab[i+SLLIST+1]<<8);
+						      (Symtab[i+SLLIST+1]<<8);
 						addr = (Symtab[j+SADDR]&0xff)+
-							(Symtab[j+SADDR+1]<<8);
+						       (Symtab[j+SADDR+1]<<8);
 						if (debug)
 							printf(
 						"resolving:\t%s (%04x) ...\n",
 							&Symtab[i], addr);
 						resolve(ptr, addr,
 							Symtab[j+SSEGMT]);
-						Symtab[i] = Symtab[i+SCLASS] = 0;
+						Symtab[i] = 0;
+						Symtab[i+SCLASS] = 0;
 						break;
 					}
 				}
@@ -392,10 +394,11 @@ void bind(void) {
 	Xhd[X_SSEG] = k;
 	Xhd[X_SSEG+1] = k>>8;
 	fseek(Exef, XORELOC, SEEK_SET);
+	if (N_dosrel<<2 > BUF_SZ) fatal("DOSRELOC overflow");
 	if (fread(Buffer, 1, N_dosrel<<2, Exef) != (N_dosrel<<2)) readerr();
-	for (i=0, relp=Buffer; i<N_dosrel; i++) {
-		n = *relp++ + hdsz;
-		relp++;
+	for (i=0, relp = Buffer; i<N_dosrel; i++) {
+		n = *relp + hdsz;
+		relp += 4;
 		fseek(Exef, n, SEEK_SET);
 		fputc(Codep&0xff, Exef);
 		fputc(Codep>>8, Exef);
@@ -416,7 +419,7 @@ void wr_symtab(void) {
 }
 
 void usage(void) {
-	printf("usage: ld [-dsv] [-o outfile] [-L libdir] [-f listfile] "
+	printf("usage: sld [-dsv] [-o outfile] [-L libdir] [-f listfile] "
 		"[file ...]"
 		" [-llib ...]\n");
 	exit(1);
@@ -430,7 +433,7 @@ char *islib(char *name) {
 	if (!strcmp(&name[len-2], ".a")) return name;
 	if (strncmp(name, "-l", 2)) return NULL;
 	strcpy(lib, Libdir);
-	strcat(lib, "/l");
+	strcat(lib, "/lib");
 	strcat(lib, name+2);
 	strcat(lib, ".a");
 	return lib;
@@ -571,7 +574,8 @@ int main(int argc, char **argv) {
 					if (verbose)
 						printf("loading %s\n", buf);
  					if ((Objf = fopen(buf,"rb")) == NULL) {
-						error("no such module", buf);
+						error("no such object file",
+							buf);
 					}
 					else {
 						load(buf);

@@ -3,6 +3,13 @@
 #	C runtime module for FreeBSD/armv6
 #
 
+# Calling conventions: r0,r1,r2,stack, return in r0
+#                      64-bit values in r0/r1, r2/r3, never in r1/r2
+#                      (observe register alignment!)
+# System call: r7=call#, arguments as above,
+#              carry indicates error,
+#              return/error value in r0
+
 # FreeBSD voodoo stuff, mostly copied from the x86-64 port, good luck!
 
 	.section .note.ABI-tag,"a"

@@ -66,7 +66,7 @@ DOS/8086)		os=dos     ; mac=8086   ; int=16
 			ar="sar -c"
 			ranlib="sar -r"
 			echo
-			echo "WARNING: this back-end is unfinished!"
+			echo "Warning: this back-end is experimental!"
 			echo
 			;;
 *)			echo "Sorry, $os/$mac is currently not supported."

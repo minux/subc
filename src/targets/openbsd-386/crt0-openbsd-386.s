@@ -3,6 +3,8 @@
 #	C runtime module for OpenBSD/386
 #
 
+# Calling conventions: stack, return in %eax
+
 	.section	.rodata
 .LC0:
 	.string	""

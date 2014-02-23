@@ -50,7 +50,6 @@ void	gencalr(void);
 void	gencmp(char *inst);
 void	gendata(void);
 void	gendefb(int v);
-void	gendefl(int id);
 void	gendefp(int v);
 void	gendefs(char *s, int len);
 void	gendefw(int v);

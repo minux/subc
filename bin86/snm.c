@@ -1,6 +1,6 @@
 /*
  *	SNM -- Print symbol table names
- *	Nils M Holm, 1993,1994,2013
+ *	Nils M Holm, 1993,1994,2013,2014
  *	In the public domain
  */
 
@@ -15,7 +15,7 @@ int	O_ext, O_all, O_verbose, O_marks;
 char	*Fname, *Aname;
 
 error(char *m, char *n) {
-	fputs("nm: ", stderr);
+	fputs("snm: ", stderr);
 	fprintf(stderr, m, n);
 	fputc('\n', stderr);
 }
@@ -45,10 +45,12 @@ void nm_sym(FILE *f) {
 			printf("%c%c 0x%04x (%05d) %s",
 				sym[SSEGMT], sym[SCLASS],
 				sym[SADDR] + (sym[SADDR+1]<<8),
-				sym[SADDR] + (sym[SADDR+1]<<8), sym);
+				sym[SADDR] + (sym[SADDR+1]<<8),
+				sym);
 		}
-		else
+		else {
 			printf(sym);
+		}
 		if (sym[SCLASS] == EXTRN) {
 			if (O_marks) printf("\t[");
 			fread(mk, 1, MKSZ, f);
@@ -164,7 +166,7 @@ void names(char *file) {
 	}
 	else if (!strncmp(magic, XMAGIC, strlen(XMAGIC))) {
 		type = nm_exec;
-		if (O_verbose > 1) puts(" (DOS EXEC module)");
+		if (O_verbose > 1) puts(" (DOS exe file)");
 	}
 	else if (!strncmp(magic, A_MAGIC, strlen(A_MAGIC))) {
 		type = nm_arc;
@@ -182,7 +184,7 @@ void names(char *file) {
 }
 
 void usage(void) {
-	printf("usage: nm [-aemvv] file ...\n");
+	printf("usage: snm [-aemvv] file ...\n");
 	exit(1);
 }
  

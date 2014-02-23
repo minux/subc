@@ -1,6 +1,6 @@
 /*
- *	S86 -- A Small Assembler for the 8086
- *	Nils M Holm, 1993,1995,2013
+ *	S86 -- A Simple Assembler for the 8086
+ *	Nils M Holm, 1993,1995,2013,2014
  *	In the public domain
  */
 
@@ -13,7 +13,6 @@
 #include "defs.h"
 #include "as.h"
 
-char	Code[CODESZ];
 char	Marks[MARKSZ];
 char	Reloc[NRELOC];
 int	Reltop;
@@ -24,6 +23,7 @@ int	debug = 0;
 
 FILE	*Infile;
 FILE	*Sdata;
+FILE	*Scode;
 char	Linebuf[MAXLN+1];
 char	*Label, *Instr, *Oper1, *Oper2, *Aoper;
 int	Off1, Off2;
@@ -43,6 +43,8 @@ int	Errcnt;
 jmp_buf	Restart;
 
 void fatal(char *msg) {
+	remove(TMPCODE);
+	remove(TMPDATA);
 	printf("s86: %d: fatal error: %s\n", Line, msg);
 	exit(1);
 }
@@ -57,7 +59,7 @@ void warn(char *msg) {
 }
 
 void dreloc(void) {
-	if (DosReltop >= NDOSREL) fatal("EXE relocation table overflow");
+	if (DosReltop >= NDOSREL) fatal("DOS relocation table overflow");
 	DosReloc[DosReltop++] = Ctop-2;
 	DosReloc[DosReltop++] = (Ctop-2) >> 8;
 }
@@ -98,12 +100,7 @@ void mark(char *name, int class, int addr, int shrt, int rel) {
 			Marks[i+MKPTR+1] = Symbols[sym+SLLIST+1];
 			Marks[i+MKADDR] = addr;
 			Marks[i+MKADDR+1] = addr >> 8;
-			if (class == SCODE)
-				Marks[i+MKFLAG] = MKCODE;
-			else if (class == SDATA)
-				Marks[i+MKFLAG] = MKDATA;
-			else
-				Marks[i+MKFLAG] = 0;
+			Marks[i+MKFLAG] = 0;
 			if (shrt) Marks[i+MKFLAG] |= MKSHORT;
 			if (rel) Marks[i+MKFLAG] |= MKREL;
 			Symbols[sym+SLLIST] = i;
@@ -121,7 +118,7 @@ void mark(char *name, int class, int addr, int shrt, int rel) {
 }
 
 void resolve(char *sym, int addr) {
-	int	a, ptr, disp, pt;
+	int	a, ptr, disp, pt, h, l;
 	char	*cp;
 
 	ptr = sym[SLLIST] + (sym[SLLIST+1] << 8);
@@ -131,16 +128,27 @@ void resolve(char *sym, int addr) {
 		if (debug)
 			printf(" %04x%s",
 				a, (Marks[ptr+MKFLAG] & MKREL)? "R": "A");
-		/*if (sym[SSEGMT] != SCODE) {*/
 		if (!(Marks[ptr+MKFLAG] & MKREL)) {
+			fseek(Scode, a, SEEK_SET);
+			l = fgetc(Scode);
+			h = fgetc(Scode);
+			pt = (h << 8) | l;
+			pt += addr;
+			fseek(Scode, a, SEEK_SET);
+			fputc(pt, Scode);
+			fputc(pt>>8, Scode);
+			reloc(a, sym[SSEGMT]);
+			/*
 			cp = &Code[a];
 			pt = cp[0] | (cp[1] << 8);
 			pt += addr;
 			cp[0] = pt;
 			cp[1] = pt >> 8;
 			reloc(a, sym[SSEGMT]);
+			*/
 		}
 		else {
+			fseek(Scode, a, SEEK_SET);
 	 		disp = addr-a-((Marks[ptr+MKFLAG] & MKSHORT)? 1: 2);
 			if (Marks[ptr+MKFLAG] & MKSHORT) {
 				if (disp < -128 || disp > 127) {
@@ -148,17 +156,18 @@ void resolve(char *sym, int addr) {
 					 "short jump to %s out of range\n",
 					 sym);
 				}
-				Code[a] = disp;
+				fputc(disp, Scode);
 			}
 			else {
-				Code[a] = (disp & 0xff);
-				Code[a+1] = (disp >> 8);
+				fputc(disp, Scode);
+				fputc(disp >> 8, Scode);
 			}
 		}
 		a = ptr;
 		ptr = Marks[ptr+MKPTR] + (Marks[ptr+MKPTR+1]<<8);
 		Marks[a+MKADDR] = Marks[a+MKADDR+1] = 0;
 	}
+	fseek(Scode, 0, SEEK_END);
 	if (debug) putchar('\n');
 }
 
@@ -170,7 +179,8 @@ void ckpubs(void) {
 			if (Symbols[i+SLLIST] != 0xff ||
 			    Symbols[i+SLLIST+1] != 0xff
 		) {
-			printf("s86: undefined public: %s\n", &Symbols[i]);
+			printf("s86: undefined public symbol: %s\n",
+				&Symbols[i]);
 			Errcnt++;
 		}
 	}
@@ -192,9 +202,11 @@ void eject(char *srcname, char *objname) {
 		strcat(objname, ".o");
 	}
 	rewind(Sdata);
+	rewind(Scode);
 	if ((outfile = fopen(objname, "wb")) == NULL) {
 		fclose(Sdata);
 		remove(TMPDATA);
+		remove(TMPCODE);
 		fprintf(stderr, "cannot create output file: %s\n", objname);
 		exit(1);
 	}
@@ -215,7 +227,7 @@ void eject(char *srcname, char *objname) {
 		if (Symbols[i+SCLASS] == UNDEFD)
 			Symbols[i+SCLASS] = EXTRN;
 		if (Symbols[i+SCLASS] == EXTRN) {
-			ptr = Symbols[i+SLLIST]+ (Symbols[i+SLLIST+1]<<8);
+			ptr = Symbols[i+SLLIST] + (Symbols[i+SLLIST+1]<<8);
 			if (ptr != 0xffff) {
 				cnt += fwrite(&Symbols[i], 1, SSIZE, outfile);
 				while (ptr != 0xffff) {
@@ -242,7 +254,11 @@ void eject(char *srcname, char *objname) {
 	/* append code area */
 	ohd[OCODE] = cnt;
 	ohd[OCODE+1] = cnt>>8;
-	fwrite(Code, 1, Ctop, outfile);
+	n = fread(buf, 1, 256, Scode);
+	while (n > 0) {
+		fwrite(buf, 1, n, outfile);
+		n = fread(buf, 1, 256, Scode);
+	}
 	cnt += Ctop;
 	/* append data area */
 	ohd[ODATA] = cnt;
@@ -262,6 +278,7 @@ void eject(char *srcname, char *objname) {
 	fclose(outfile);
 	fclose(Sdata);
 	remove(TMPDATA);
+	remove(TMPCODE);
 }
 
 void nosegment(void) {
@@ -277,11 +294,13 @@ void bigval(void) {
 }
 
 void csizechk(int len) {
-	if (Ctop + len > CODESZ) fatal("code segment too big");
+	if ((Ctop>>1) + (len>>1) > (CODESZ>>1))
+		fatal("code segment too big");
 }
 
 void dsizechk(int len) {
-	if (((Dtop+len)>>1) > (DATASZ>>1)) fatal("data segment too big");
+	if ((Dtop>>1)+(len>>1) > (DATASZ>>1))
+		fatal("data segment too big");
 }
 
 void emit(int val, int count) {
@@ -290,8 +309,8 @@ void emit(int val, int count) {
 	val &= 0xff;
 	if (Segment == SCODE) {
 		csizechk(count);
-		for (i=count; i--; )
-			Code[Ctop++] = val;
+		for (i=count; i--; Ctop++)
+			fputc(val, Scode);
 	}
 	else if (Segment == SDATA) {
 		dsizechk(count);
@@ -311,9 +330,9 @@ void emitword(int val, int count) {
 	h = (val >> 8);
 	if (Segment == SCODE) {
 		csizechk(count<<1);
-		for (i=count; i--; ) {
-			Code[Ctop++] = l;
-			Code[Ctop++] = h;
+		for (i=count; i--; Ctop += 2) {
+			fputc(l, Scode);
+			fputc(h, Scode);
 		}
 	}
 	else if (Segment == SDATA) {
@@ -1275,8 +1294,13 @@ int main(int argc, char **argv) {
 		else if (verbose) {
 			puts(p);
 		}
+		if ((Scode = fopen(TMPCODE, "wb+")) == NULL) {
+			if (Infile != stdin) fclose(Infile);
+			notmp(TMPCODE);
+		}
 		if ((Sdata = fopen(TMPDATA, "wb+")) == NULL) {
 			if (Infile != stdin) fclose(Infile);
+			remove(TMPCODE);
 			notmp(TMPDATA);
 		}
 		Line = 0;

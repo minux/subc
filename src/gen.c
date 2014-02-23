@@ -117,9 +117,9 @@ void gentext(void) {
 }
 
 void genprelude(void) {
+	cgprelude();
 	Textseg = 0;
 	gentext();
-	cgprelude();
 }
 
 void genpostlude(void) {
@@ -567,11 +567,6 @@ void gendefb(int v) {
 	cgdefb(v);
 }
 
-void gendefl(int id) {
-	gendata();
-	cgdefl(id);
-}
-
 void gendefp(int v) {
 	gendata();
 	cgdefp(v);
@@ -702,12 +697,11 @@ void genswitch(int *vals, int *labs, int nc, int dflt) {
 	gentext();
 	cgldswtch(ltbl);
 	cgcalswtch();
-	gendata();
 	genlab(ltbl);
-	gendefw(nc);
+	cgdefw(nc);
 	for (i = 0; i < nc; i++)
 		cgcase(vals[i], labs[i]);
-	gendefl(dflt);
+	cgdefl(dflt);
 }
 
 /* assigments */

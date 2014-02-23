@@ -1,7 +1,12 @@
 #
-#	NMH's Simple C Compiler, 2011--2013
+#	NMH's Simple C Compiler, 2011--2014
 #	C runtime module for Linux/386
 #
+
+# Calling conventions: %ebx,%ecx,%edx,stack return in %eax
+# System call: %eax=call#, arguments as above,
+#              carry indicates error,
+#              return/error value in %eax
 
 	.data
 	.globl	Cenviron
@@ -244,6 +249,7 @@ Craise:
 	movl	8(%esp),%ecx
 	movl	$37,%eax
 	int	$0x80
+
 # int signal(int sig, int (*fn)());
 
 	.globl	Csignal

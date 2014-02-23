@@ -3,6 +3,8 @@
 #	C runtime module for Darwin/x86-64
 #
 
+# Calling conventions: ?
+
 	.data
 	.align	4
 	.globl	Cenviron

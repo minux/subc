@@ -1,7 +1,12 @@
 #
-#	NMH's Simple C Compiler, 2011--2013
+#	NMH's Simple C Compiler, 2011--2014
 #	C runtime module for Linux/amd64
 #
+
+# Calling conventions: %rdi,%rsi,%rdx,stack return in %rax
+# System call: %rax=call#, arguments as above,
+#              carry indicates error,
+#              return/error value in %rax
 
 	.data
 	.globl	Cenviron

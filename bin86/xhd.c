@@ -1,6 +1,6 @@
 /*
  *	XHD -- Print EXE header info
- *	Nils M Holm, 1993,1995,2013
+ *	Nils M Holm, 1993,1995,2013,2014
  *	In the public domain
  */
 
@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
 			continue;
 		}
 		if (memcmp(&xhdr[X_MAGIC], XMAGIC, 2)) {
-			fprintf(stderr, "xhd: not a valid executable: %s\n",
+			fprintf(stderr, "xhd: not a valid exe file: %s\n",
 				p);
 			fclose(f);
 			continue;

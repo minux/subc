@@ -1,7 +1,10 @@
 #
-#	NMH's Simple C Compiler, 2011--2013
+#	NMH's Simple C Compiler, 2011--2014
 #	C runtime module for Windows/386 via MinGW
 #
+
+# Calling conventions: stack, return in %eax
+
 	.text
 
 # internal switch(expr) routine

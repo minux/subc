@@ -1,6 +1,6 @@
 /*
  *	XSTRIP -- Strip symbol tables from EXE files
- *	Nils M Holm, 1993,1994,2013
+ *	Nils M Holm, 1993,1994,2013,2014
  *	In the public domain
  */
 
@@ -10,14 +10,14 @@
 #include "x_out.h"
 
 #define TMPFILE	"st00000.tmp"
-#define CBUFL	16384		/* DONT CHANGE ! */
+#define CBUFL	16384		/* DON'T CHANGE! */
 
 char	*symfile;
 int	o_force, o_verbose;
 char	*cbuf;
 
 void error(char *m, char *n) {
-	fputs("strip: ", stderr);
+	fputs("xstrip: ", stderr);
 	fprintf(stderr, m, n);
 	fputc('\n', stderr);
 }
@@ -43,7 +43,7 @@ void strip(char *name) {
 		return;
 	}
 	if (fread(xh, 1, XHDR_SZ, f) != XHDR_SZ) {
-		error("bad exec file: %s", name);
+		error("bad exe file: %s", name);
 		fclose(f);
 		return;
 	}
@@ -53,12 +53,12 @@ void strip(char *name) {
 		return;
 	}
 	p2 = 0;
-	off = xh[X_NPAGES];
+	off = xh[X_NPAGES] + (xh[X_NPAGES+1] << 8);
 	if (xh[X_NPAGES] > 128) {
 		p2 = 1;
 		off -= 128;
 	}
-	off = --off * 512 + xh[X_NBYTES];
+	off = --off * 512 + xh[X_NBYTES] + (xh[X_NBYTES+1]<<8);
 	fseek(f, 65536*p2+off, SEEK_SET);
 	if (fread(magic, 1, 2, f) != 2) {
 		error("file has no symbol table: %s", name);
@@ -88,7 +88,7 @@ void strip(char *name) {
 	}
 	if (symfile) {
 		if ((sym = fopen(symfile, "wb")) == NULL) {
-			error("cannot create symfile: %s\n", symfile);
+			error("cannot create symbol file: %s\n", symfile);
 		}
 		else {
 			i = fread(cbuf, 1, CBUFL, f);
@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
 	}
 	if (i >= argc) usage();
 	if (i < argc-1 && symfile) {
-		error("strip: too many files with -s", NULL);
+		error("xstrip: too many files with -s", NULL);
 		exit(1);
 	}
 	while (i < argc) {

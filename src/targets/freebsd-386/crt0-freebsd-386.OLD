@@ -1,7 +1,9 @@
 #
-#	NMH's Simple C Compiler, 2011--2013
+#	NMH's Simple C Compiler, 2011--2014
 #	C runtime module for FreeBSD/386
 #
+
+# Calling conventions: stack, return in %eax
 
 # FreeBSD voodoo stuff, mostly copied from the x86-64 port, good luck!
 

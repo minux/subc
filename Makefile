@@ -1,5 +1,5 @@
 SNAP=	20140202
-REL=	20140217
+REL=	20140223
 ARC=	subc-$(SNAP).tgz
 DIST=	subc-$(REL).tgz
 
@@ -19,6 +19,9 @@ clean:
 	cd src && make clean
 	cd bin86 && make clean
 	rm -f tests/ptest.c $(ARC) $(DIST)
+	if [ -f src/Makefile.ORIG ]; then \
+		mv -f src/Makefile.ORIG src/Makefile; \
+	fi
 
 arc:	clean
 	tar cvfz $(ARC) *

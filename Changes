@@ -1,15 +1,19 @@
+2014-02-23 Fixed duplicate register use in 8086 CG.
+2014-02-21 Made s86 keep its code output on disk instead of in memory.
+2014-02-20 Moved switch tables to code segment.
+2014-02-19 Documented SLD (small loader) file formats.
+2014-02-18 Fixed DOSRELOC bug in SLD.
 2014-02-17 Successfully cross-compiled main(){printf("hi\n");} for DOS/8086.
 2014-02-17 Fixed wrong DUP argument in S86.
 2014-02-17 Fixed wrong return value in fread().
-2014-02-16 Updated docs, misc. cosmetical changes.
+2014-02-16 Updated docs, misc. cosmetic changes.
 2014-02-15 Added tests/sys.c program for testing crt0 functions.
-2014-02-15 Fixed %p in *printf functions (wrong result for values < INT_MIN).
+2014-02-15 Fixed %p in *printf functions (wrong result for values < 0).
 2014-02-14 Wrote simple crt0 test suite.
 2014-02-14 Added fcntl.h include file, added SEEK_* constants to unistd.h.
 2014-02-13 Removed libc dependencies from freebsd-armv6 crt0.
 2014-02-12 Removed libc dependencies from freebsd-386 crt0.
 2014-02-12 Re-organized targets/ directory, adapted configure script.
-2014-02-12 Fix: Linux/386 does in fact need the system libc.
 2014-02-07 Added FreeBSD/armv6 crt0 (crt0-freebsd-armv6.s).
 2014-02-06 Added FreeBSD/armv6 back-end (cgarmv6.c).
 2014-02-05 Added alignment option to galloc() for CPUs with aligned access.

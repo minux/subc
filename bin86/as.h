@@ -23,11 +23,8 @@
 
 /*	Mark Flags: Code address, Data address, short mark, long mark,
 	relative address	*/
-#define MKCODE	1
-#define MKDATA	2
-#define MKSHORT	4
-#define MKLONG	8
-#define MKREL	16
+#define MKSHORT	1
+#define MKREL	2
 
 /*	Symbol entry structure	*/
 #define SNAME	0

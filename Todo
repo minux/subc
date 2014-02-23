@@ -1,6 +1,4 @@
 
-	- fix time()/clock_gettime() on NetBSD (linker warning)
-
 	- test Darwin port
 
 	- clean up sym.c

@@ -1,7 +1,7 @@
+BINDIR	=	/u/bin
+
 CC	=	scc
 CFLAGS	=
-
-BINDIR	=	/u/bin
 
 forget-it:
 	cat WARNING

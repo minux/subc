@@ -1,4 +1,16 @@
 
-	The code in this directory is an interrupted work in progress
-	and not suitable for anything at this point. Really!
+	The S86/SLD tool chain contained in this directory is a
+	work in (slow) progress. It was originally designed as a
+	native 16-bit, DOS-hosted tool chain, and has then been
+	hacked to serve as a cross compiler back end hosted on
+	a 32-bit (or 64-bit) system. It no longer runs in 16-bit
+	environments.
+
+	Expect lots of bugs!
+
+	Do not try to compile this with anything but SubC (or
+	at least make sure that char is unsigned and CHAR_MAX
+	is 255).
+
+	Run "make all" to compile S86/SLD and related tools.
 

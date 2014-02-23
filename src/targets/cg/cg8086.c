@@ -10,8 +10,8 @@
 
 void cgdata(void)	{ gen(".data"); }
 void cgtext(void)	{ gen(".code"); }
-void cgprelude(void)	{ }
-void cgpostlude(void)	{ }
+void cgprelude(void)	{ gen(".model small"); }
+void cgpostlude(void)	{ gen("end"); }
 void cgpublic(char *s)	{ ngen("public\t%s", s, 0); }
 
 void cgsynth(char *op) {
@@ -183,9 +183,9 @@ void cgbool(void)	{ gen("neg\tax");
 			  gen("neg\tax"); }
 
 void cgincind(char *r, char *i, int v) {
-	if (!strcmp(r, "bx")) sgen("%s\tbx,%s", "mov", r);
-	ngen("%s\tax,%d", "mov", v);
-	sgen("%s\t[bx],ax", i, NULL);
+	if (strcmp(r, "bx")) sgen("%s\tbx,%s", "mov", r);
+	ngen("%s\tcx,%d", "mov", v);
+	sgen("%s\t[bx],cx", i, NULL);
 }
 
 void cgincloc(char *i, int a, int v) {
@@ -204,14 +204,14 @@ void cgincglob(char *i, char *s, int v) {
 }
 
 void cgincbind(char *r, char *i, int v) {
-	if (!strcmp(r, "bx")) sgen("%s\tbx,%s", "mov", r);
-	ngen("%s\tal,%d", "mov", v);
-	sgen("%s\t[bx],al", i, NULL);
+	if (strcmp(r, "bx")) sgen("%s\tbx,%s", "mov", r);
+	ngen("%s\tcl,%d", "mov", v);
+	sgen("%s\tbyte ptr [bx],cl", i, NULL);
 }
 
 void cgincbloc(char *i, int a, int v) {
 	ngen("%s\tcl,%d", "mov", v);
-	ngen("%s\t[bp%+d],cl", i, v);
+	ngen("%s\tbyte ptr [bp%+d],cl", i, v);
 }
 
 void cgincbstat(char *i, int a, int v) {
@@ -224,7 +224,7 @@ void cgincbglob(char *i, char *s, int v) {
 	sgen("%s\t%s,cl", i, s);
 }
 
-void cgldinc(void)	{ gen("mov\tbx,ax"); }
+void cgldinc(void)	{ /*gen("mov\tbx,ax");*/ }
 void cginc1pi(int v)	{ cgincind("ax", "add", v); }
 void cgdec1pi(int v)	{ cgincind("ax", "sub", v); }
 void cginc2pi(int v)	{ cgincind("bx", "add", v); }
@@ -265,7 +265,7 @@ void cgbr(char *how, int n)	{ int lab;
 void cgbrtrue(int n)	{ cgbr("jz", n); }
 void cgbrfalse(int n)	{ cgbr("jnz", n); }
 void cgjump(int n)	{ lgen("%s\t%c%d", "jmp", n); }
-void cgldswtch(int n)	{ lgen("%s\tdx,offset %c%d", "mov", n); }
+void cgldswtch(int n)	{ lgen("%s\tsi,offset %c%d", "mov", n); }
 void cgcalswtch(void)	{ gen("jmp\tswitch"); }
 void cgcase(int v, int l)	{ lgen2("dw\t%d,%c%d", v, l); }
 

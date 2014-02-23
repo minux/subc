@@ -2,6 +2,7 @@ PREFIX=	/u
 EXESFX=	
 SCCDIR=	$(PREFIX)/scc
 BINDIR=	$(PREFIX)/bin
+SC86DIR=$(PREFIX)/scc86
 
 LINT=	gcc -c -o /dev/null -ansi -pedantic -Wall
 
@@ -69,6 +70,13 @@ install:	all
 	cp include/* $(SCCDIR)/include
 	cp lib/libscc.a lib/crt0.o $(SCCDIR)/lib
 
+install-scc86:	all
+	scc -o scc86 -D 'SCCDIR="$(SC86DIR)"' *.c
+	cp scc86$(EXESFX) $(BINDIR)
+	strip $(BINDIR)/scc86$(EXESFX)
+	cp include/* $(SC86DIR)/include
+	cp lib/libscc.a lib/crt0.o $(SC86DIR)/lib
+
 scc:	scc1 $(SRC)
 	./scc1 -o scc $(SRC)
 
@@ -107,5 +115,5 @@ lint:
 	$(LINT) sym.c
 
 clean:
-	rm -f scc0 scc1 scc2 scc test.s *.o *.core core a.out lib/crt0.o \
-		*.tmp lib/*.o lib/libscc.a *.exe
+	rm -f scc0 scc1 scc2 scc scc86 test.s *.o *.core core a.out \
+		lib/crt0.o *.tmp lib/*.o lib/libscc.a *.exe

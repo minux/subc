@@ -3,6 +3,12 @@
 #	C runtime module for FreeBSD/386
 #
 
+# Calling conventions: stack, return in %eax
+# System call: %eax=call#, arguments on stack,
+#              push additional dummy value last,
+#              carry indicates error,
+#              return/error value in %eax
+
 # FreeBSD voodoo stuff, mostly copied from the x86-64 port, good luck!
 
 	.section .note.ABI-tag,"a",@note

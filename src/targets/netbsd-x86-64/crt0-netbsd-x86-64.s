@@ -1,7 +1,9 @@
 #
-#	NMH's Simple C Compiler, 2012--2013
+#	NMH's Simple C Compiler, 2012--2014
 #	C runtime module for NetBSD/x86-64
 #
+
+# Calling conventions: %rdi,%rsi,%rdx,stack return in %rax
 
 # NetBSD voodoo stuff
 

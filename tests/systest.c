@@ -3,7 +3,11 @@
  * Nils M Holm, 2014
  * In the public domain
  *
- * Will delete "__testfile__" silently!
+ * The executable program *must* be called "systest" or
+ * the execve() tests will fail!
+ *
+ * The program will delete the files TESTFILE and
+ * TESTFILE2 (below) silently!
  */
 
 #include <stdlib.h>
@@ -11,8 +15,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#define TESTFILE	"__testfile__"
-#define TESTFILE2	"__testfile_2__"
+#define TESTFILE	"___test.___"
+#define TESTFILE2	"___test2.___"
 
 void error(char *s) {
 	kprintf(1, "error: %s\n", s);
