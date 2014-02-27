@@ -195,15 +195,15 @@ void cgmod(void)	{ gen("bl\tsrem"); }
 void cgshl(void)	{ gen("lsl\tr0,r0,r1"); }
 void cgshr(void)	{ gen("asr\tr0,r0,r1"); }
 
-void cgcmp(char *inst)	{ gen("mov\tr2,r0");
+void cgcmp(char *inst)	{ gen("mov\tr3,r0");
 			  gen("mov\tr0,#0");
 			  if (empty == Q_type) {
 				cgpop2();
-				gen("cmp\tr1,r2");
+				gen("cmp\tr1,r3");
 			  }
 			  else {
 				cgload2();
-				gen("cmp\tr2,r1");
+				gen("cmp\tr3,r1");
 			  }
 			  ngen("%s\tr0,#%d", inst, 1); }
 void cgeq()		{ cgcmp("moveq"); }

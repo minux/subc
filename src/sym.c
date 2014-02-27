@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011,2012
+ *	NMH's Simple C Compiler, 2011,2012,2014
  *	Symbol table management
  */
 
@@ -104,12 +104,12 @@ int newloc(void) {
 char *galloc(int k, int align) {
 	int	p, mask;
 
-	k += align * BPW;
+	k += align * sizeof(int);
 	if (Nbot + k >= Ntop)
 		fatal("out of space for symbol names");
 	p = Nbot;
 	Nbot += k;
-	mask = BPW-1;
+	mask = sizeof(int)-1;
 	if (align)
 		while (PTR_INT_CAST &Nlist[p] & mask)
 			p++;

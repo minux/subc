@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011--2013
+ *	NMH's Simple C Compiler, 2011--2014
  *	Declaration parser
  */
 
@@ -439,11 +439,11 @@ static void signature(int fn, int from, int to) {
 	for (i=0; i<MAXFNARGS && from < to; i++)
 		types[i] = Prims[--to];
 	types[i] = 0;
-	if (NULL == Mtext[fn]) {
+	if (Sizes[fn] < 0 || NULL == Mtext[fn]) {
 		Mtext[fn] = galloc((i+1) * sizeof(int), 1);
 		memcpy(Mtext[fn], types, (i+1) * sizeof(int));
 	}
-	else if (Sizes[fn] >= 0 && intcmp((int *) Mtext[fn], types))
+	else if (intcmp((int *) Mtext[fn], types))
 		error("declaration does not match prior prototype: %s",
 			Names[fn]);
 }

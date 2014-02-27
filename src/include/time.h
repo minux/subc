@@ -4,5 +4,5 @@
  */
 
 char	*ctime(int t);
-int	difftime(int t1, int t0);
-int	time(int *tp);
+int	 difftime(int t1, int t0);
+int	 time(int *tp);

@@ -1,3 +1,7 @@
+2014-02-26 Fixed code generator bug in armv6 back end.
+2014-02-26 Fixed alignment in galloc() for cross-compilation.
+2014-02-25 Added vprintf(), vfprintf(), and vsprintf() functions.
+2014-02-25 Added (slightly incompatible) varargs mechanism.
 2014-02-23 Fixed duplicate register use in 8086 CG.
 2014-02-21 Made s86 keep its code output on disk instead of in memory.
 2014-02-20 Moved switch tables to code segment.

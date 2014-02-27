@@ -29,7 +29,8 @@ LIBOBJS=lib/init.o lib/abort.o lib/abs.o lib/atexit.o lib/atoi.o \
 	lib/strlen.o lib/strncat.o lib/strncmp.o lib/strncpy.o \
 	lib/strpbrk.o lib/strrchr.o lib/strspn.o lib/strtok.o \
 	lib/strtol.o lib/system.o lib/time.o lib/tmpfile.o \
-	lib/tmpnam.o lib/ungetc.o lib/vformat.o lib/vscan.o
+	lib/tmpnam.o lib/ungetc.o lib/varargs.o lib/vformat.o \
+	lib/vfprintf.o lib/vprintf.o lib/vscan.o lib/vsprintf.o
 
 AS=	as
 AR=	ar -rc
@@ -62,6 +63,13 @@ dirs:
 	-mkdir $(BINDIR)
 	-mkdir $(SCCDIR)/include
 	-mkdir $(SCCDIR)/lib
+
+dirs86:
+	-mkdir $(PREFIX)
+	-mkdir $(SC86DIR)
+	-mkdir $(BINDIR)
+	-mkdir $(SC86DIR)/include
+	-mkdir $(SC86DIR)/lib
 
 install:	all
 	./scc0 -o scc -D 'SCCDIR="$(SCCDIR)"' *.c

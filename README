@@ -1,5 +1,5 @@
 
-	SubC Compiler, Version 2014-02-23
+	SubC Compiler, Version 2014-02-27
 	By Nils M Holm, 2011--2014
 	Placed in the public domain
 
@@ -21,41 +21,52 @@
 	the gcc version used). Of course, you can also bootstrap it with
 	other C compilers, such as Clang or PCC.
 
-	SubC generates code for GAS, the GNU assembler. It targets the
+	SubC is fast and simple. Its output is typically small (due to
+	a non-bloated library), but not very runtime-efficient, because
+	it employs none of the optimization strategies explained in the
+	book.
+
+
+	SUPPORTED SYSTEMS
+
+	SubC generates code for GAS, the GNU assembler (except for the
+	DOS version, which emits TASM-style syntax). It targets the
 	following processors and operating systems:
 
 		FreeBSD		386+	armv6+	x86-64
-		Linux		386+	-	x86-64+
+		Linux		386+*	-	x86-64+*
 		NetBSD		-	-	x86-64
-		OpenBSD		386	-	-
-		Windows/MinGW	386	-	-
+		OpenBSD		386*	-	-
+		Windows/MinGW	386*	-	-
 		Darwin		-	-	x86-64*
+		DOS		8086+!
 
-		+ does not use the syscall layer of the host libc
-		* experimental
+		+ does *not* use the syscall layer of the host libc
+		* untested
+		! unfinished / experimental
 
-	Porting it to other 32-bit or 64-bit platforms should be quite
-	straight-forward. See the file "Porting" and/or the book for a
-	general road map.
+	Platforms tagged "untested" are not regularly tested by myself
+	and are therefore subject to potential bit rot. You can help
+	me improve SubC by running "make test", "make ptest", and
+	"make systest" on an "untested" platform and send me the result.
+
+	Porting SubC to other 32-bit or 64-bit platforms should be
+	quite straight-forward. See the file "Porting" and/or the book
+	for a general road map.
 
 	There is also an in-slow-progress port to DOS on 8086-based
 	processors. It currently works as a cross compiler, but with
 	rather limited capabilities. See the file SubC-for-DOS for
 	details.
 
-	SubC is fast and simple. Its output is typically small (due
-	to a non-bloated library), but not very runtime-efficient,
-	because it employs none of the optimization strategies
-	explained in the book.
-
-	The compiler now uses a synthesizing back-end (as described in
-	the book), which generates much better code than the original
-	stack-based back-end.
-
 
 	CHANGES TO THE BOOK VERSION
 
 	Note: The book version runs on FreeBSD/386 exclusively.
+
+	The current version uses an improved code generator, which
+	emits about 10% smaller and faster code than the compiler
+	described in the book.
 
 	This version of the SubC compiler adds support for the
 	following parts of C language to the version described in
@@ -84,6 +95,30 @@
 
 	o  There is a (non-standard) kprintf() function, which is
 	   like fprintf(), but uses a file descriptor.
+
+	o  There is now a (slightly incompatible) varargs mechanism.
+	   Here is how it works:
+
+		#include <varargs.h>
+
+		void p(void *last, ...) {
+			void	*ap;
+			int	first;
+
+			ap = _va_start(&last);
+			first = (int) _va_arg(&ap);
+			vprintf("other args: %d %d %d\n", ap);
+			_va_end(&last);
+		}
+
+		int p(int x, int y, ...);
+
+	   There may only be one argument in front of the "...", but
+	   the signature of the function can later be modified with a
+	   prototype.
+
+	o  The vprintf(), vfprintf(), and vsprintf() functions have
+	   been added to the runtime library.
 
 
 	DIFFERENCES BETWEEN SUBC (THIS VERSION) AND FULL C89
@@ -138,9 +173,9 @@
 
 	o  The #if and #elif preprocessor commands are not recognized.
 
-	o  The preprocessor does not accept multi-line command.
+	o  The preprocessor does not accept multi-line commands.
 
-	o  The preprocessor does not accept comments in commands.
+	o  The preprocessor does not accept comments in (some) commands.
 
 	o  The preprocessor does not recognize the # and ## operators.
 
@@ -161,9 +196,6 @@
 	o  The atexit() mechanism is limited to one function (this may
 	   even be covered by TCPL2).
 
-	o  The setjmp()/longjmp() functions must be called with &jmp_buf
-	   due to the lack of typedef. This is a bug!
-
 	o  The signal() function returns int due to the lack of a more
 	   sophisticated type system; the return value must be casted to
 	   int(*)() manually.
@@ -175,6 +207,8 @@
 	   varies among systems.
 
 	o  The ctime() function ignores the time zone.
+
+	o  The varargs mechanism is slightly incompatible.
 
 
 	SELECTING A TARGET PLATFORM

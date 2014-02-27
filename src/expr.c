@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011--2013
+ *	NMH's Simple C Compiler, 2011--2014
  *	Expression parser
  */
 
@@ -134,7 +134,7 @@ static int fnargs(int fn) {
 	while (RPAREN != Token) {
 		if (asgmnt(lv)) rvalue(lv);
 		if (comptype(lv[LVPRIM])) {
-			error("struct/union passed by reference", NULL);
+			error("struct/union passed by value", NULL);
 			lv[LVPRIM] = pointerto(lv[LVPRIM]);
 		}
 		if (types && *types) {
