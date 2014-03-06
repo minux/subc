@@ -32,8 +32,8 @@
 
 	The S86/SLD tool chain and related utilities originally had
 	quite a few 16-bit dependencies. They have been modified to
-	run on 32- and 64-bit hosts, and currently probably do not run
-	on 16-bit systems any longer, so bootstrapping the compiler on
+	run on 32- and 64-bit hosts, and probably do not run on
+	16-bit systems any longer, so bootstrapping the compiler on
 	a DOS system is currently not possible.
 
 

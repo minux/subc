@@ -13,6 +13,7 @@ void	clear(int q);
 void	clrlocs(void);
 void	colon(void);
 void	commit(void);
+void	commit_bool(void);
 void	commit_cmp(void);
 void	compound(int lbr);
 int	comptype(int p);

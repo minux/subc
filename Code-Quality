@@ -45,7 +45,7 @@
 	Furthermore, the emitted code uses traditional Unix calling
 	conventions, so all function arguments are passed on the stack.
 
-	On the armv6, currently a separate indirect address is
+	On the armv6, a separate indirect address is currently being
 	generated for each *access* to a global or static variable,
 	so the expression
 
@@ -97,29 +97,29 @@
 	time is the time taken by a self-compiled SubC compiler.
 
 	FreeBSD 8.2-RELEASE, 686 CPU @ 600 MHz
-				GCC 4.2.1	SUBC 2014-02-08
-		bootstrap	  1.73s		  0.83s (SCC0: 0.37)
+				GCC 4.2.1	SUBC 2014-03-06
+		bootstrap	  1.73s		  0.82s (SCC0: 0.38)
 		sizeof(int)	      4		      4
-		text size	223,245		 71,336
-		data size	  8,112		 11,092
-		bss size	 77,768		 41,132
-		file size	252,548		 86,646
+		text size	223,485		 71,658
+		data size	  8,112		  8,756
+		bss size	 77,768		 41,112
+		file size	252,548		 80,860
 
 	FreeBSD 10.0-RC5, armv6 CPU @ 700 MHz
-				Clang 3.3	SUBC 2014-02-08
-		bootstrap	 10.15s		  4.37s (SCC0: 2.58)
+				Clang 3.3	SUBC 2014-03-06
+		bootstrap	 10.19s		  3.05s (SCC0: 1.95)
 		sizeof(int)	      4		      4
-		text size	442,219		151,904
-		data size	  9,064		 10,932
-		bss size	121,160		 41,132
-		file size	464,424		164,052
+		text size	442,603		151,864
+		data size	  9,064		  8,712
+		bss size	121,168		 41,112
+		file size	464,808		161,092
 
 	NetBSD 6.1-STABLE, x86-64 CPU @ 2400 MHz
-				GCC 4.5.3	SUBC 2014-02-08
-		bootstrap	  0.84s		  0.37s	(SCC0: 0.21)
+				GCC 4.5.3	SUBC 2014-03-06
+		bootstrap	  0.87s		  0.36s	(SCC0: 0.22)
 		sizeof(int)	      4		      8 (!)
-		text size	241,788		251,620
-		data size	  4,768		 19,136
+		text size	242,108		255,108
+		data size	  4,768		 14,496
 		bss size	 67,176		 79,792
-		file size	256,640		278,736
+		file size	256,992		277,480
 

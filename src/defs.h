@@ -10,7 +10,7 @@
 #include "cg.h"
 #include "sys.h"
 
-#define VERSION		"2014-02-27"
+#define VERSION		"2014-03-06"
 
 #ifndef SCCDIR
  #define SCCDIR		"."
@@ -124,6 +124,13 @@ enum {
 	greater,
 	less_equal,
 	greater_equal
+};
+
+/* boolean instructions */
+enum {
+	noop,
+	lognot,
+	normalize
 };
 
 /* tokens */

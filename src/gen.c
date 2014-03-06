@@ -142,6 +142,10 @@ void commit(void) {
 		commit_cmp();
 		return;
 	}
+	if (Q_bool != noop) {
+		commit_bool();
+		return;
+	}
 	if (empty == Q_type) return;
 	spill();
 	switch (Q_type) {
@@ -365,6 +369,7 @@ void commit_cmp(void) {
 }
 
 void queue_cmp(int op) {
+	if (Q_bool != noop) commit_bool();
 	Q_cmp = op;
 }
 
@@ -393,10 +398,25 @@ int genbinop(int op, int p1, int p2) {
 
 /* unary ops */
 
-void genbool(void) {
-	gentext();
+void commit_bool(void) {
+	switch (Q_bool) {
+	case lognot:	cglognot(); break;
+	case normalize:	cgbool(); break;
+	}
+	Q_bool = noop;
+}
+
+void queue_bool(int op) {
 	commit();
-	cgbool();
+	Q_bool = op;
+}
+
+void genbool(void) {
+	queue_bool(normalize);
+}
+
+void genlognot(void) {
+	queue_bool(lognot);
 }
 
 void genind(int p) {
@@ -406,12 +426,6 @@ void genind(int p) {
 		cgindb();
 	else
 		cgindw();
-}
-
-void genlognot(void) {
-	gentext();
-	commit();
-	cglognot();
 }
 
 void genneg(void) {
@@ -470,10 +484,30 @@ void genbranch(int dest, int inv) {
 	Q_cmp = none;
 }
 
+void genlogbr(int dest, int inv) {
+	if (normalize == Q_bool) {
+		if (inv)
+			cgbrfalse(dest);
+		else
+			cgbrtrue(dest);
+	}
+	else if (lognot == Q_bool) {
+		if (inv)
+			cgbrtrue(dest);
+		else
+			cgbrfalse(dest);
+	}
+	Q_bool = noop;
+}
+
 void genbrfalse(int dest) {
 	gentext();
 	if (Q_cmp != none) {
 		genbranch(dest, 0);
+		return;
+	}
+	if (Q_bool != noop) {
+		genlogbr(dest, 1);
 		return;
 	}
 	commit();
@@ -484,6 +518,10 @@ void genbrtrue(int dest) {
 	gentext();
 	if (Q_cmp != none) {
 		genbranch(dest, 1);
+		return;
+	}
+	if (Q_bool != noop) {
+		genlogbr(dest, 0);
 		return;
 	}
 	commit();
