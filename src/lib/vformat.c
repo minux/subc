@@ -136,7 +136,7 @@ int _vformat(int mode, int max, void *dest, char *fmt, void **varg) {
 		left = len = 0;
 		*sgnch = 0;
 		pfx = "";
-		if ('%' == *fmt && fmt[1] != '%') {
+		if ('%' == *fmt) {
 			fmt++;
 			*pad = ' ';
 			alt = 0;
@@ -208,10 +208,14 @@ int _vformat(int mode, int max, void *dest, char *fmt, void **varg) {
 				if (alt) pfx = k<0? "0X": "0x";
 				na++;
 				break;
+			default:
+				lbuf[0] = fmt[-1];
+				lbuf[1] = 0;
+				p = lbuf;
+				break;
 			}
 		}
 		else {
-			if ('%' == *fmt) fmt++;
 			lbuf[0] = *fmt++;
 			lbuf[1] = 0;
 			p = lbuf;

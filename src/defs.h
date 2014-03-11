@@ -10,7 +10,7 @@
 #include "cg.h"
 #include "sys.h"
 
-#define VERSION		"2014-03-09"
+#define VERSION		"2014-03-11"
 
 #ifndef SCCDIR
  #define SCCDIR		"."
@@ -117,7 +117,7 @@ enum {
 
 /* compare instructions */
 enum {
-	none,
+	cnone,
 	equal,
 	not_equal,
 	less,
@@ -128,7 +128,7 @@ enum {
 
 /* boolean instructions */
 enum {
-	noop,
+	bnone,
 	lognot,
 	normalize
 };

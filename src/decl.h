@@ -23,7 +23,7 @@ int	deref(int p);
 void	dumpsyms(char *title, char *sub, int from, int to);
 int	eofcheck(void);
 void	error(char *s, char *a);
-int	expr(int *lv);
+int	expr(int *lv, int cvoid);
 void	fatal(char *s);
 int	findglob(char *s);
 int	findloc(char *s);

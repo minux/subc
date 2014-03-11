@@ -1,5 +1,5 @@
 
-	SubC Compiler, Version 2014-03-09
+	SubC Compiler, Version 2014-03-11
 	By Nils M Holm, 2011--2014
 	Placed in the public domain
 
@@ -108,7 +108,7 @@
 			ap = _va_start(&last);
 			first = (int) _va_arg(&ap);
 			vprintf("other args: %d %d %d\n", ap);
-			_va_end(&last);
+			_va_end(&ap);
 		}
 
 		int p(int x, int y, ...);

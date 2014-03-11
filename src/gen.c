@@ -138,11 +138,11 @@ void genpublic(char *name) {
 /* loading values */
 
 void commit(void) {
-	if (Q_cmp != none) {
+	if (Q_cmp != cnone) {
 		commit_cmp();
 		return;
 	}
-	if (Q_bool != noop) {
+	if (Q_bool != bnone) {
 		commit_bool();
 		return;
 	}
@@ -172,7 +172,7 @@ void queue(int type, int val, char *name) {
 	Q_type = type;
 	Q_val = val;
 	if (name) copyname(Q_name, name);
-	Q_cmp = none;
+	Q_cmp = cnone;
 }
 
 void genaddr(int y) {
@@ -341,6 +341,8 @@ static void binopchk(int op, int p1, int p2) {
 		return;
 	else if (comptype(p1) || comptype(p2))
 		/* fail */;
+	else if (PVOID == p1 || PVOID == p2)
+		/* fail */;
 	else if (PLUS == op && (inttype(p1) || inttype(p2)))
 		return;
 	else if (MINUS == op && (!inttype(p1) || inttype(p2)))
@@ -365,11 +367,11 @@ void commit_cmp(void) {
 	case less_equal:	cgle(); break;
 	case greater_equal:	cgge(); break;
 	}
-	Q_cmp = none;
+	Q_cmp = cnone;
 }
 
 void queue_cmp(int op) {
-	if (Q_bool != noop) commit_bool();
+	if (Q_bool != bnone) commit_bool();
 	Q_cmp = op;
 }
 
@@ -403,7 +405,7 @@ void commit_bool(void) {
 	case lognot:	cglognot(); break;
 	case normalize:	cgbool(); break;
 	}
-	Q_bool = noop;
+	Q_bool = bnone;
 }
 
 void queue_bool(int op) {
@@ -481,7 +483,7 @@ void genbranch(int dest, int inv) {
 		case greater_equal:	cgbrge(dest); break;
 		}
 	}
-	Q_cmp = none;
+	Q_cmp = cnone;
 }
 
 void genlogbr(int dest, int inv) {
@@ -497,16 +499,16 @@ void genlogbr(int dest, int inv) {
 		else
 			cgbrfalse(dest);
 	}
-	Q_bool = noop;
+	Q_bool = bnone;
 }
 
 void genbrfalse(int dest) {
 	gentext();
-	if (Q_cmp != none) {
+	if (Q_cmp != cnone) {
 		genbranch(dest, 0);
 		return;
 	}
-	if (Q_bool != noop) {
+	if (Q_bool != bnone) {
 		genlogbr(dest, 1);
 		return;
 	}
@@ -516,11 +518,11 @@ void genbrfalse(int dest) {
 
 void genbrtrue(int dest) {
 	gentext();
-	if (Q_cmp != none) {
+	if (Q_cmp != cnone) {
 		genbranch(dest, 1);
 		return;
 	}
-	if (Q_bool != noop) {
+	if (Q_bool != bnone) {
 		genlogbr(dest, 0);
 		return;
 	}

@@ -171,7 +171,7 @@ static void return_stmt(void) {
 
 	Token = scan();
 	if (Token != SEMI) {
-		if (expr(lv))
+		if (expr(lv, 1))
 			rvalue(lv);
 		if (!typematch(lv[LVPRIM], Prims[Thisfn]))
 			error("incompatible type in 'return'", NULL);
@@ -310,6 +310,8 @@ void wrong_ctx(int t) {
  */
 
 static void stmt(void) {
+	int	lv[LV];
+
 	switch (Token) {
 	case BREAK:	break_stmt(); break;
 	case CONTINUE:	continue_stmt(); break;
@@ -323,7 +325,7 @@ static void stmt(void) {
 	case SEMI:	Token = scan(); break;
 	case DEFAULT:	wrong_ctx(DEFAULT); break;
 	case CASE:	wrong_ctx(CASE); break;
-	default:	rexpr(0); semi(); break;
+	default:	expr(lv, 0); semi(); break;
 	}
 	clear(1);
 }

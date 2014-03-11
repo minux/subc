@@ -26,7 +26,8 @@ static void init(void) {
 	Bsp = 0;
 	Csp = 0;
 	Q_type = empty;
-	Q_cmp = none;
+	Q_cmp = cnone;
+	Q_bool = bnone;
 	addglob("", 0, 0, 0, 0, 0, NULL, 0);
 	addglob("__SUBC__", 0, TMACRO, 0, 0, 0, globname(""), 0);
 	Infile = stdin;
@@ -190,7 +191,7 @@ static void longusage(void) {
 	usage();
 	printf(	"\n"
 		"-c       compile only, do not link\n"
-		"-d opt   activate debug option OPT\n"
+		"-d opt   activate debug option OPT, ? = list\n"
 		"-o file  write linker output to FILE\n"
 		"-t       test only, generate no code\n"
 		"-v       verbose, more v's = more verbose\n"

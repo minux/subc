@@ -50,7 +50,7 @@ static int hexchar(void) {
 }
 
 static int scanch(void) {
-	int	c, c2;
+	int	i, c, c2;
 
 	c = next();
 	if ('\\' == c) {
@@ -68,8 +68,10 @@ static int scanch(void) {
 		case '0': case '1': case '2':
 		case '3': case '4': case '5':
 		case '6': case '7':
-			for (c2 = 0; isdigit(c) && c < '8'; c = next())
+			for (i = c2 = 0; isdigit(c) && c < '8'; c = next()) {
+				if (++i > 3) break;
 				c2 = c2 * 8 + (c - '0');
+			}
 			putback(c);
 			return c2;
 		case 'x':

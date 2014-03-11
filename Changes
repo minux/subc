@@ -1,3 +1,7 @@
+2014-03-11 Fix: _vformat() crashed on unknown % sequences.
+2014-03-11 Fix: limited octal escape sequences to three digits.
+2014-03-11 Fix: added code to handle void values in expressions.
+2014-03-11 Improved long usage (-d ?), misc cosmetical fixes.
 2014-03-09 Updated misc. docs.
 2014-03-06 Added code to fuse logic ops and conditional jumps (optimization).
 2014-02-26 Fixed code generator bug in armv6 back end.

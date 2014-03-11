@@ -14,7 +14,7 @@ void **_va_start(void **last) {
 /* Extract vararg, advance pointer */
 
 void *_va_arg(void **ap) {
-	return * ((void **) *ap)--;
+	return *((void **) *ap)--;
 }
 
 void _va_end(void **ap) {}

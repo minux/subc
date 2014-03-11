@@ -11,7 +11,7 @@
 static int asgmnt(int *lv);
 static int cast(int *lv);
 
-int expr(int *lv);
+int expr(int *lv, int cvoid);
 
 /*
  * primary :=
@@ -93,7 +93,7 @@ static int primary(int *lv) {
 		return 0;
 	case LPAREN:
 		Token = scan();
-		a = expr(lv);
+		a = expr(lv, 0);
 		rparen();
 		return a;
 	case __ARGC:
@@ -264,7 +264,7 @@ static int postfix(int *lv) {
 			while (LBRACK == Token) {
 				p = indirection(a, lv);
 				Token = scan();
-				if (expr(lv2))
+				if (expr(lv2, 1))
 					rvalue(lv2);
 				if (PINT != lv2[LVPRIM])
 					error("non-integer subscript", NULL);
@@ -669,7 +669,7 @@ static int cond3(int *lv) {
 		genbrfalse(l1);
 		clear(0);
 		Token = scan();
-		if (expr(lv))
+		if (expr(lv, 1))
 			rvalue(lv);
 		if (!p) p = lv[LVPRIM];
 		if (!typematch(p, lv[LVPRIM]))
@@ -743,14 +743,20 @@ static int asgmnt(int *lv) {
  *	| asgmnt , expr
  */
 
-int expr(int *lv) {
+int expr(int *lv, int cvoid) {
 	int	a, a2 = 0, lv2[LV];
+	char	*msg;
 
+	msg = "void value in expression";
 	a = asgmnt(lv);
+	if (cvoid && PVOID == lv2[LVPRIM])
+		error(msg, NULL);
 	while (COMMA == Token) {
 		Token = scan();
 		clear(0);
 		a2 = asgmnt(lv2);
+		if (PVOID == lv2[LVPRIM])
+			error(msg, NULL);
 		a = 0;
 	}
 	if (a2) rvalue(lv2);
@@ -760,7 +766,9 @@ int expr(int *lv) {
 int rexpr(int com) {
 	int	lv[LV];
 
-	if (expr(lv)) rvalue(lv);
+	if (expr(lv, 0)) rvalue(lv);
+	if (PVOID == lv[LVPRIM])
+		error("void value in expression", NULL);
 	if (com) commit();
 	return lv[LVPRIM];
 }
