@@ -366,16 +366,24 @@ void commit_cmp(void) {
 	case greater:		cggt(); break;
 	case less_equal:	cgle(); break;
 	case greater_equal:	cgge(); break;
+	case below:		cgult(); break;
+	case above:		cgugt(); break;
+	case below_equal:	cgule(); break;
+	case above_equal:	cguge(); break;
 	}
 	Q_cmp = cnone;
 }
 
 void queue_cmp(int op) {
 	if (Q_bool != bnone) commit_bool();
+	if (Q_cmp != cnone) commit_cmp();
 	Q_cmp = op;
 }
 
 int genbinop(int op, int p1, int p2) {
+	int	ptr;
+
+	ptr = !inttype(p1);
 	binopchk(op, p1, p2);
 	switch (op) {
 	case PLUS:	return genadd(p1, p2, 1);
@@ -390,10 +398,10 @@ int genbinop(int op, int p1, int p2) {
 	case PIPE:	genior(); break;
 	case EQUAL:	queue_cmp(equal); break;
 	case NOTEQ:	queue_cmp(not_equal); break;
-	case LESS:	queue_cmp(less); break;
-	case GREATER:	queue_cmp(greater); break;
-	case LTEQ:	queue_cmp(less_equal); break;
-	case GTEQ:	queue_cmp(greater_equal); break;
+	case LESS:	queue_cmp(ptr? below: less); break;
+	case GREATER:	queue_cmp(ptr? above: greater); break;
+	case LTEQ:	queue_cmp(ptr? below_equal: less_equal); break;
+	case GTEQ:	queue_cmp(ptr? above_equal: greater_equal); break;
 	}
 	return PINT;
 }
@@ -471,6 +479,10 @@ void genbranch(int dest, int inv) {
 		case greater:		cgbrle(dest); break;
 		case less_equal:	cgbrgt(dest); break;
 		case greater_equal:	cgbrlt(dest); break;
+		case below:		cgbruge(dest); break;
+		case above:		cgbrule(dest); break;
+		case below_equal:	cgbrugt(dest); break;
+		case above_equal:	cgbrult(dest); break;
 		}
 	}
 	else {
@@ -481,6 +493,10 @@ void genbranch(int dest, int inv) {
 		case greater:		cgbrgt(dest); break;
 		case less_equal:	cgbrle(dest); break;
 		case greater_equal:	cgbrge(dest); break;
+		case below:		cgbrult(dest); break;
+		case above:		cgbrugt(dest); break;
+		case below_equal:	cgbrule(dest); break;
+		case above_equal:	cgbruge(dest); break;
 		}
 	}
 	Q_cmp = cnone;

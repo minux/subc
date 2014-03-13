@@ -139,6 +139,10 @@ void cglt()		{ cgcmp("jge"); }
 void cggt()		{ cgcmp("jle"); }
 void cgle()		{ cgcmp("jg"); }
 void cgge()		{ cgcmp("jl"); }
+void cgult()		{ cgcmp("jae"); }
+void cgugt()		{ cgcmp("jbe"); }
+void cgule()		{ cgcmp("ja"); }
+void cguge()		{ cgcmp("jb"); }
 
 void cgbrcond(char *i, int n)	{ int lab;
 				  lab = label();
@@ -158,6 +162,10 @@ void cgbrlt(int n)		{ cgbrcond("jl", n); }
 void cgbrgt(int n)		{ cgbrcond("jg", n); }
 void cgbrle(int n)		{ cgbrcond("jle", n); }
 void cgbrge(int n)		{ cgbrcond("jge", n); }
+void cgbrult(int n)		{ cgbrcond("jb", n); }
+void cgbrugt(int n)		{ cgbrcond("ja", n); }
+void cgbrule(int n)		{ cgbrcond("jbe", n); }
+void cgbruge(int n)		{ cgbrcond("jae", n); }
 
 void cgneg(void)	{ gen("negl\t%eax"); }
 void cgnot(void)	{ gen("notl\t%eax"); }

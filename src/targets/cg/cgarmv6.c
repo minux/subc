@@ -212,6 +212,10 @@ void cglt()		{ cgcmp("movlt"); }
 void cggt()		{ cgcmp("movgt"); }
 void cgle()		{ cgcmp("movle"); }
 void cgge()		{ cgcmp("movge"); }
+void cgult()		{ cgcmp("movlo"); }
+void cgugt()		{ cgcmp("movhi"); }
+void cgule()		{ cgcmp("movls"); }
+void cguge()		{ cgcmp("movhs"); }
 
 void cgbrcond(char *i, int n)	{ int lab;
 				  lab = label();
@@ -232,6 +236,10 @@ void cgbrlt(int n)	{ cgbrcond("blt", n); }
 void cgbrgt(int n)	{ cgbrcond("bgt", n); }
 void cgbrle(int n)	{ cgbrcond("ble", n); }
 void cgbrge(int n)	{ cgbrcond("bge", n); }
+void cgbrult(int n)	{ cgbrcond("blo", n); }
+void cgbrugt(int n)	{ cgbrcond("bhi", n); }
+void cgbrule(int n)	{ cgbrcond("bls", n); }
+void cgbruge(int n)	{ cgbrcond("bhs", n); }
 
 void cgneg(void)	{ gen("neg\tr0,r0"); }
 void cgnot(void)	{ gen("mvn\tr0,r0"); }

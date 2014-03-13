@@ -42,20 +42,27 @@ lib:	lib/libscc.a
 
 crt0:	lib/crt0.o
 
+tests:	test ptest systest libtest
+
 test:	scc $(SRC)
 	./scc -o scc2 $(SRC)
 	cmp scc scc2 && rm -f scc2
 
 ptest:	scc0 lib/crt0.o lib/libscc.a ../tests/ptest.src ../tests/ptest.awk
 	awk -f ../tests/ptest.awk <../tests/ptest.src >../tests/ptest.c
-	./scc0 -o ptest ../tests/ptest.c
-	./ptest
-	rm ptest
+	./scc0 -o ../tests/ptest ../tests/ptest.c && \
+		../tests/ptest && \
+		rm ../tests/ptest
 
 systest:	scc0 lib/crt0.o lib/libscc.a ../tests/systest.c
-	./scc0 -o systest ../tests/systest.c
-	./systest
-	rm systest
+	./scc0 -o ../tests/systest ../tests/systest.c && \
+		 (cd ../tests && ./systest) && \
+		rm ../tests/systest
+
+libtest:	scc0 lib/crt0.o lib/libscc.a ../tests/libtest.c
+	./scc0 -o ../tests/libtest ../tests/libtest.c && \
+		(cd ../tests && ./libtest) && \
+		rm ../tests/libtest
 
 dirs:
 	-mkdir $(PREFIX)

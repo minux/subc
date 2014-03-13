@@ -1,3 +1,5 @@
+2014-03-13 Implemented proper (unsigned) pointer comparison. (all back-ends)
+2014-03-13 Fix: missing cmp queue commit in queue_cmp() (all back-ends).
 2014-03-11 Fix: _vformat() crashed on unknown % sequences.
 2014-03-11 Fix: limited octal escape sequences to three digits.
 2014-03-11 Fix: added code to handle void values in expressions.
