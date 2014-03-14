@@ -1,5 +1,5 @@
 
-	SubC Compiler, Version 2014-03-13
+	SubC Compiler, Version 2014-03-14
 	By Nils M Holm, 2011--2014
 	Placed in the public domain
 
@@ -47,8 +47,8 @@
 
 	Platforms tagged "untested" are not regularly tested by myself
 	and are therefore subject to potential bit rot. You can help
-	me improve SubC by running "make test", "make ptest", and
-	"make systest" on an "untested" platform and send me the result.
+	me improve SubC by running "make tests" on an "untested"
+	platform and inform me about the result.
 
 	Porting SubC to other 32-bit or 64-bit platforms should be
 	quite straight-forward. See the file "Porting" and/or the book

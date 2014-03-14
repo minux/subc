@@ -1,3 +1,8 @@
+2014-03-14 Misc. small fixes to libc (purely stylistic).
+2014-03-14 Made printf("%s",NULL); print (NULL) instead of crash.
+2014-03-14 Added missing CG prototypes.
+2014-03-13 Added arena check to realloc().
+2014-03-13 Added ad-hoc libc test suite. (tests/libtest.c)
 2014-03-13 Implemented proper (unsigned) pointer comparison. (all back-ends)
 2014-03-13 Fix: missing cmp queue commit in queue_cmp() (all back-ends).
 2014-03-11 Fix: _vformat() crashed on unknown % sequences.

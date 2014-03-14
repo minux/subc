@@ -131,6 +131,9 @@
 	"make systest". It is pretty likely to blow up at some point
 	when there is something wrong with the crt0 module.
 
+	In a similar way, most parts of the C library can be tested
+	by running "make libtest".
+
 
 	(8) Add your back-end to the configure script
 

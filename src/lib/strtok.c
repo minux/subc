@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2012
+ *	NMH's Simple C Compiler, 2012,2014
  *	strtok()
  */
 
@@ -10,7 +10,7 @@ char *strtok(char *s, char *sep) {
 	static char	*src = 0;
 	char		*p;
 
-	if (s == NULL) s = src;
+	if (NULL == s) s = src;
 	while (*s && strchr(sep, *s))
 		s++;
 	if (!*s) return NULL;

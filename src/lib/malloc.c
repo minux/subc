@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011,2012
+ *	NMH's Simple C Compiler, 2011,2012,2014
  *	malloc()
  */
 
@@ -38,7 +38,7 @@ void *malloc(int size) {
 		else
 			_asize = size * 50;
 		_arena = _sbrk(_asize * sizeof(int));
-		if (_arena == (int *)-1) {
+		if ((int *) -1 == _arena) {
 			errno = ENOMEM;
 			return NULL;
 		}

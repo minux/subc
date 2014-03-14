@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2012
+ *	NMH's Simple C Compiler, 2012,2014
  *	fgets()
  */
 
@@ -42,7 +42,7 @@ char *fgets(char *s, int len, FILE *f) {
 		return fgets_raw(s, len, f);
 	buf = f->buf;
 	pn = NULL;
-	while (len > 1 && pn == NULL) {
+	while (len > 1 && NULL == pn) {
 		if (!_refill(f))
 			return NULL;
 		if ((pn = memchr(buf + f->ptr, '\n', f->end - f->ptr)) != NULL)

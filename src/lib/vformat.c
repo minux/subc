@@ -140,7 +140,7 @@ int _vformat(int mode, int max, void *dest, char *fmt, void **varg) {
 			fmt++;
 			*pad = ' ';
 			alt = 0;
-			while (strchr("-+0 #", *fmt)) {
+			while (*fmt && strchr("-+0 #", *fmt)) {
 				if ('-' == *fmt) {
 					left = 1, *pad = ' ';
 					fmt++;
@@ -192,6 +192,7 @@ int _vformat(int mode, int max, void *dest, char *fmt, void **varg) {
 				*sgnch = 0;
 				*pad = ' ';
 				p = *varg--;
+				if (NULL == p) p = "(NULL)";
 				na++;
 				break;
 			case 'p':

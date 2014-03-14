@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2012
+ *	NMH's Simple C Compiler, 2012,2014
  *	_vscan()
  */
 
@@ -52,7 +52,7 @@ static int scanstr(char *p, int len) {
 	k = len;
 	while (0 == len || k--) {
 		c = next();
-		if (isspace(c) || c == EOF) 
+		if (isspace(c) || EOF == c) 
 			return 1;
 		if (p) *p++ = c;
 	}
@@ -64,7 +64,7 @@ static char *mkclass(char *fmt) {
 	int		i = 0, j;
 
 	clss[0] = 0;
-	if (*fmt == '^') fmt++, clss[0] = 1;
+	if ('^' == *fmt) fmt++, clss[0] = 1;
 	i = 1;
 	while (*fmt && *fmt != ']' && i < 127) {
 		clss[i++] = *fmt++;
@@ -107,7 +107,7 @@ static int scannum(int *pi, int base, int len) {
 	if ('-' == c) sign = -1, k--, c = next();
 	else if ('+' == c) c = next(), k--;
 	if ((0 == base || 16 == base) && '0' == c) {
-		if ((c = next()) == 'x' || c == 'X') {
+		if ((c = next()) == 'x' || 'X' == c) {
 			base = 16;
 			c = next();
 			k--;

@@ -4,25 +4,28 @@
  * In the public domain
  *
  * The executable program *must* be called "libtest" or
- * the stdout test will fail.
+ * some tests will fail.
  *
- * The program will delete the file stdio.tmp silently!
+ * The program will delete the files "stdio.tmp" and
+ * "stdio2.tmp" silently!
  */
 
 /* Todo:
- * abort atexit clearerr ctime ctype difftime fdopen ferror
- * fflush fgetpos fprintf fputs fread freopen fscanf fsetpos fwrite
- * getchar getenv memchr perror putchar puts rand realloc remove rename
- * scanf setbuf setvbuf sprintf sscanf strcspn strdup strerror strpbrk
- * strspn strtok strtol system time tmpfile tmpnam varargs vformat
+ * abort clearerr ctime difftime fdopen ferror
+ * fgetpos fprintf freopen fscanf fsetpos
+ * getchar getenv perror
+ * scanf setbuf setvbuf signal sscanf strdup strerror
+ * strtol system time varargs vformat
  * vfprintf vprintf vscan vsprintf
  */
 
-#define TMPFILE	"stdio.tmp"
+#define TMPFILE		"stdio.tmp"
+#define TMPFILE2	"stdio2.tmp"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <setjmp.h>
 #include <errno.h>
 #include <limits.h>
@@ -36,7 +39,7 @@ void fail(char *name) {
 }
 
 void test_memfn(void) {
-	char	*c1, *c2;
+	char	*c1, *c2, *p;
 	char	v1[128];
 	int	i;
 
@@ -70,10 +73,23 @@ void test_memfn(void) {
 	memset(v1, 123, 64);
 	if (v1[63] != 123) fail("memset-3");
 	if (v1[64] == 123) fail("memset-4");
+
+	c1 = "...............X1";
+	p = memchr(c1, 'X', 16);
+	if (!p || *p != 'X' || p[1] != '1') fail("memchr-1");
+	if (memchr(c1, 'X', 15) != NULL) fail("memchr-2");
 }
 
-void test_indx(void) {
+char *xstrchr(char *s, int c) {
+	if (c == 0) return NULL;
+	return strchr(s, c);
+}
+
+void test_chrfn(void) {
 	char	*c1, *p1;
+	int	c;
+	char	*num, *low, *upc, *gra, *wsp, *pun;
+	char	alpha[128], alnum[128], xnum[128];
 
 	c1 = "...............X1..............X2";
 	p1 = strchr(c1, 'X');
@@ -83,6 +99,46 @@ void test_indx(void) {
 	p1 = strrchr(c1, 'X');
 	if (!p1 || *p1 != 'X' || p1[1] != '2') fail("strrchr-1");
 	if (strrchr(c1, 'Z')) fail("strchr-2");
+
+	num = "0123456789";
+	low = "abcdefghijklmnopqrstuvwxyz";
+	upc = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	wsp = "\t\v\f\n\r ";
+	pun = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
+	strcpy(alpha, low);
+	strcat(alpha, upc);
+	strcpy(alnum, alpha);
+	strcat(alnum, num);
+	strcpy(xnum, num);
+	strcat(xnum, "abcdefABCDEF");
+	for (c=0; c<128; c++) {
+		if (isalnum(c) && !strchr(alnum, c)) fail("isalnum-1");
+		if (isalpha(c) && !strchr(alpha, c)) fail("isalpha-1");
+		if (iscntrl(c) && c > 31 && c < 127) fail("iscrntl-1");
+		if (isdigit(c) && !strchr(num, c)) fail("isdigit-1");
+		if (isgraph(c) && c < 33 && c > 126) fail("isgraph-1");
+		if (islower(c) && !strchr(low, c)) fail("islower-1");
+		if (isprint(c) && (c < 32 || c > 126)) fail("isprint-1");
+		if (ispunct(c) && !strchr(pun, c)) fail("ispunct-1");
+		if (isspace(c) && !strchr(wsp, c)) fail("isspace-1");
+		if (isupper(c) && !strchr(upc, c)) fail("isupper-1");
+		if (isxdigit(c) && !strchr(xnum, c)) fail("isxdigit-1");
+		if (!isalnum(c) && xstrchr(alnum, c)) fail("isalnum-2");
+		if (!isalpha(c) && xstrchr(alpha, c)) fail("isalpha-2");
+		if (!iscntrl(c) && (c < 32 || c > 126)) fail("iscrntl-2");
+		if (!isdigit(c) && xstrchr(num, c)) fail("isdigit-2");
+		if (!isgraph(c) && c > 32 && c < 127) fail("isgraph-2");
+		if (!islower(c) && xstrchr(low, c)) fail("islower-2");
+		if (!isprint(c) && c > 31 && c < 127) fail("isprint-2");
+		if (!ispunct(c) && xstrchr(pun, c)) fail("ispunct-2");
+		if (!isspace(c) && xstrchr(wsp, c)) fail("isspace-2");
+		if (!isupper(c) && xstrchr(upc, c)) fail("isupper-2");
+		if (!isxdigit(c) && xstrchr(xnum, c)) fail("isxdigit-2");
+		if (isupper(c) && !islower(tolower(c))) fail("tolower-1");
+		if (islower(c) && tolower(toupper(c)) != c) fail("tolower-2");
+		if (islower(c) && !isupper(toupper(c))) fail("toupper-1");
+		if (isupper(c) && toupper(tolower(c)) != c) fail("toupper-2");
+	}
 }
 
 void test_dmem(void) {
@@ -114,6 +170,24 @@ void test_dmem(void) {
 		if (a[i]) break;
 	if (i < 1024)
 		fail("calloc-2");
+	free(a);
+
+	if ((a = malloc(123)) == NULL)
+		fail("malloc-3");
+	for (i=0; i<123; i++)
+		a[i] = i;
+	if ((a = realloc(a, 257)) == NULL)
+		fail("realloc-1");
+	for (i=0; i<123; i++)
+		if (a[i] != i)
+			break;
+	if (i < 123) fail("realloc-2");
+	if ((a = realloc(a, 97)) == NULL)
+		fail("realloc-3");
+	for (i=0; i<97; i++)
+		if (a[i] != i)
+			break;
+	if (i < 97) fail("realloc-4");
 	free(a);
 }
 
@@ -154,14 +228,14 @@ void test_search(void) {
 
 void test_mem(void) {
 	test_memfn();
-	test_indx();
+	test_chrfn();
 	test_dmem();
 	test_sort();
 	test_search();
 }
 
 void test_str(void) {
-	char	v1[128];
+	char	v1[128], *sep;
 
 	if (strlen("\0") != 0) fail("strlen-1");
 	if (strlen("0123456789abcdef") != 16) fail("strlen-2");
@@ -208,11 +282,127 @@ void test_str(void) {
 	strncat(v1, "abcdef0000", 6);
 	if (strcmp(v1, "0123456789abcdef")) fail("strncat-2");
 
-	/* sprintf() , strspn(), strtok(), strcspn() */
+	if (strspn("abcdefg", "abc") != 3) fail("strspn-1");
+	if (strspn("abcabcabcdefg", "abc") != 9) fail("strspn-2");
+	if (strspn("abcdefg", "") != 0) fail("strspn-3");
+
+	if (strcspn("abcdefg", "def") != 3) fail("strcspn-1");
+	if (strcspn("abcabcabcdefg", "def") != 9) fail("strcspn-2");
+	if (strcspn("abcdefg", "") != 7) fail("strcspn-2");
+	if (strcspn("abcdefg", "xyz") != 7) fail("strcspn-3");
+
+	if (strcmp(strpbrk("abcdef", "def"), "def")) fail("strpbrk-1");
+	if (strcmp(strpbrk("abcabcabcdef", "def"), "def")) fail("strpbrk-2");
+	if (strpbrk("abcdef", "") != NULL) fail("strpbrk-2");
+	if (strpbrk("abcdef", "xyz") != NULL) fail("strpbrk-3");
+
+	sep = "+-*";
+	strcpy(v1, "foo++bar---baz*goo");
+	if (strcmp(strtok(v1, sep), "foo")) fail("strtok-1");
+	if (strcmp(strtok(NULL, sep), "bar")) fail("strtok-2");
+	if (strcmp(strtok(NULL, sep), "baz")) fail("strtok-3");
+	if (strcmp(strtok(NULL, sep), "goo")) fail("strtok-4");
+	if (strtok(NULL, sep) != NULL) fail("strtok-5");
+	if (strtok(NULL, sep) != NULL) fail("strtok-6");
+}
+
+void spfn_test(char *id, char *fmt, int v, char *res) {
+	char	buf[256];
+
+	sprintf(buf, fmt, v);
+	if (strcmp(buf, res)) {
+		strcpy(buf, "sprintf(");
+		strcat(buf, fmt);
+		strcat(buf, ")-");
+		strcat(buf, id);
+		fail(buf);
+	}
+}
+
+void spfs_test(char *id, char *fmt, char *v, char *res) {
+	char	buf[256];
+
+	sprintf(buf, fmt, v);
+	if (strcmp(buf, res)) {
+		strcpy(buf, "sprintf(");
+		strcat(buf, fmt);
+		strcat(buf, ")-");
+		strcat(buf, id);
+		fail(buf);
+	}
+}
+
+void test_sprintf(void) {
+	spfn_test("1", "%d", 12345, "12345");
+	spfn_test("2", "%d", -12345, "-12345");
+	spfn_test("3", "%+d", 12345, "+12345");
+	spfn_test("4", "%+d", -12345, "-12345");
+	spfn_test("5", "%10d", 12345, "     12345");
+	spfn_test("6", "%10d", -12345, "    -12345");
+	spfn_test("7", "%+10d", 12345, "    +12345");
+	spfn_test("8", "%+10d", -12345, "    -12345");
+	spfn_test("9", "%-10d", 12345, "12345     ");
+	spfn_test("10", "%-10d", -12345, "-12345    ");
+	spfn_test("11", "%-+10d", 12345, "+12345    ");
+	spfn_test("12", "%-+10d", -12345, "-12345    ");
+	spfn_test("13", "%+-10d", 12345, "+12345    ");
+	spfn_test("14", "%+-10d", -12345, "-12345    ");
+	spfn_test("15", "% 10d", 12345, "     12345");
+	spfn_test("16", "% 10d", -12345, "    -12345");
+	spfn_test("17", "%010d", 12345, "0000012345");
+	spfn_test("18", "%010d", -12345, "-000012345");
+	spfn_test("19", "%x", 0x2def, "2def");
+	spfn_test("20", "%X", 0x2def, "2DEF");
+	spfn_test("21", "%#x", 0x2def, "0x2def");
+	spfn_test("22", "%#X", 0x2def, "0X2DEF");
+	spfn_test("23", "%x", -0x2def, "-2def");
+	spfn_test("24", "%#x", -0x2def, "-0x2def");
+	spfn_test("25", "%+#X", 0x2def, "+0X2DEF");
+	spfn_test("26", "%#+X", 0x2def, "+0X2DEF");
+	spfn_test("27", "%#+X", 0x2def, "+0X2DEF");
+	spfn_test("28", "%10X", 0x2def, "      2DEF");
+	spfn_test("29", "%010X", 0x2def, "0000002DEF");
+	spfn_test("30", "%-10X", 0x2def, "2DEF      ");
+	spfn_test("31", "%#10X", 0x2def, "    0X2DEF");
+	spfn_test("32", "%#010X", 0x2def, "0X00002DEF");
+	spfn_test("33", "%#-10X", 0x2def, "0X2DEF    ");
+	spfn_test("34", "%10X", -0x2def, "     -2DEF");
+	spfn_test("35", "%010X", -0x2def, "-000002DEF");
+	spfn_test("36", "%-10X", -0x2def, "-2DEF     ");
+	spfn_test("37", "%#10X", -0x2def, "   -0X2DEF");
+	spfn_test("38", "%#010X", -0x2def, "-0X0002DEF");
+	spfn_test("39", "%#-10X", -0x2def, "-0X2DEF   ");
+	spfn_test("40", "%o", 0417, "417");
+	spfn_test("41", "%o", -0417, "-417");
+	spfn_test("42", "%#o", 0417, "0417");
+	spfn_test("43", "%#o", -0417, "-0417");
+	spfn_test("44", "%#+o", 0417, "+0417");
+	spfn_test("45", "%+#o", 0417, "+0417");
+	spfn_test("46", "%#10o", 0417, "      0417");
+	spfn_test("47", "%#-10o", 0417, "0417      ");
+	spfn_test("48", "%#010o", 0417, "0000000417");
+	spfn_test("49", "%#10o", -0417, "     -0417");
+	spfn_test("50", "%#-10o", -0417, "-0417     ");
+	spfn_test("51", "%#010o", -0417, "-000000417");
+	spfn_test("52", "%d", 0, "0");
+	spfn_test("53", "%o", 0, "0");
+	spfn_test("54", "%x", 0, "0");
+	spfn_test("55", "%c", 'a', "a");
+	spfn_test("56", "%10c", 'a', "         a");
+	spfn_test("57", "%-10c", 'a', "a         ");
+	spfs_test("58", "%s", "foo", "foo");
+	spfs_test("59", "%10s", "foo", "       foo");
+	spfs_test("60", "%-10s", "foo", "foo       ");
+	spfn_test("61", "%1d", 12345, "12345");
+	spfn_test("62", "%-1d", 12345, "12345");
+	spfn_test("61", "%#1x", 0xabc, "0xabc");
+	spfn_test("62", "%#-1x", -0xabc, "-0xabc");
+	spfs_test("63", "%1s", "foo", "foo");
+	spfs_test("64", "%-1s", "foo", "foo");
 }
 
 void test_math(void) {
-	int	i;
+	int	i, j;
 
 	i = 12345;
 	if (i != atoi("   12345")) fail("atoi-1");
@@ -226,10 +416,11 @@ void test_math(void) {
 	if (abs(123) != 123) fail("abs-2");
 	if (abs(-456) != 456) fail("abs-3");
 	if (abs(INT_MIN) != INT_MIN) fail("abs-4"); /* man page says so */
-}
 
-void test_misc(void) {
-	test_math();
+	for (i=0; i<100; i++) {
+		j = rand();
+		if (j < 0 || j > RAND_MAX) fail("rand-1");
+	}
 }
 
 jmp_buf	here;
@@ -272,11 +463,11 @@ void test_sio1(void) {
 		fail("fopen-2");
 	}
 	else {
-		fputs("1111111111\n", f);
-		fputs("2222222222\n", f);
-		fputs("3333333333\n", f);
-		fputs("4444444444\n", f);
-		fputs("5555555555\n", f);
+		if (fputs("1111111111\n", f) == EOF) fail("fputs-1");
+		if (fputs("2222222222\n", f) == EOF) fail("fputs-2");
+		if (fputs("3333333333\n", f) == EOF) fail("fputs-3");
+		if (fputs("4444444444\n", f) == EOF) fail("fputs-4");
+		if (fputs("5555555555\n", f) == EOF) fail("fputs-5");
 		fd = fileno(f);
 		if (fclose(f)) fail("fclose-1");
 		if (_close(fd) == 0) fail("fclose-2");
@@ -323,6 +514,7 @@ void test_sio2(void) {
 			fail("fputc-1");
 
 	if (fflush(f) < 0) fail("fflush-1");
+	if (_lseek(fileno(f), 0, SEEK_END) != 26) fail("fflush-2");
 
 	rewind(f);
 	if (_lseek(fileno(f), 0, SEEK_CUR) != 0)
@@ -351,31 +543,52 @@ void test_sio2(void) {
 void test_sio3(void) {
 	FILE	*f;
 	static char	buf[1024];
-	int	i;
+	int	i, j;
 
 	if ((f = fopen(TMPFILE, "w+")) == NULL) {
 		fail("fopen-5");
 		return;
 	}
-
-	for (i=0; i<1024; i++)
-		buf[i] = '5';
-
-	for (i=0; i<16; i++) {
-		if (fwrite(buf, 1, 1024, f) != 1024) {
+	for (i=31; i<=527; i += 31) {
+		memset(buf, i, i);
+		if (fwrite(buf, 1, i, f) != i)
 			fail("fwrite-1");
+	}
+	rewind(f);
+	for (i=31; i<=527; i += 31) {
+		memset(buf, i, i);
+		if (fread(buf, 1, i, f) != i)
+			fail("fread-1");
+		for (j=0; j<i; j++) {
+			if (buf[j] != i % 256)
+				break;
+		}
+		if (j < i) {
+			fail("fread-2");
 			break;
 		}
 	}
 
+	if ((f = fopen(TMPFILE, "w+")) == NULL) {
+		fail("fopen-5");
+		return;
+	}
+	for (i=0; i<1024; i++)
+		buf[i] = '5';
+	for (i=0; i<16; i++) {
+		if (fwrite(buf, 1, 1024, f) != 1024) {
+			fail("fwrite-2");
+			break;
+		}
+	}
 	rewind(f);
 	for (i=0; i<16; i++) {
 		if (fread(buf, 1, 1024, f) != 1024) {
-			fail("fread-1");
+			fail("fread-3");
 			break;
 		}
 	}
-	if (fgetc(f) != EOF) fail("fread-2");
+	if (fgetc(f) != EOF) fail("fread-4");
 
 	clearerr(f);
 	rewind(f);
@@ -450,7 +663,7 @@ void test_sio4(void) {
 		fclose(f);
 	}
 	if (!err) _unlink(TMPFILE);
-	if (err) fail("printf");
+	if (err) fail("misc-stdout");
 }
 
 void test_stdio(void) {
@@ -460,7 +673,49 @@ void test_stdio(void) {
 	test_sio4();
 }
 
+void test_file(void) {
+	FILE	*f;
+	char	buf[1024];
+	char	tn1[L_tmpnam], tn2[L_tmpnam];
+
+	fclose(fopen(TMPFILE, "w"));
+	if (remove(TMPFILE) < 0) fail("remove-1");
+	if (remove(TMPFILE) >= 0) fail("remove-2");
+
+	if (rename(TMPFILE, TMPFILE2) >= 0) fail("rename-1");
+	fclose(fopen(TMPFILE, "w"));
+	if (rename(TMPFILE, TMPFILE2) < 0) fail("rename-2");
+	if (rename(TMPFILE, TMPFILE2) >= 0) fail("rename-3");
+	remove(TMPFILE2);
+
+	if ((f = tmpfile()) == NULL) fail("tmpfile-1");
+	memset(buf, 0xa5, 1024);
+	if (fwrite(buf, 1, 1024, f) != 1024) fail("tmpfile-2");
+	rewind(f);
+	if (fread(buf, 1, 1024, f) != 1024) fail("tmpfile-3");
+
+	if (tmpnam(tn1) == NULL) fail("tmpnam-1");
+	fclose(fopen(tn1, "w"));
+	if (tmpnam(tn2) == NULL) fail("tmpnam-2");
+	if (!strcmp(tn1, tn2)) fail("tmpnam-3");
+	remove(tn1);
+}
+
+void doexit(void) {
+	fclose(fopen(TMPFILE, "w"));
+}
+
+void test_atexit(void) {
+	atexit(doexit);
+	exit(0);
+}
+
 void test_exit(void) {
+	remove(TMPFILE);
+	system("./libtest test-atexit");
+	if (fclose(fopen(TMPFILE, "r")) == EOF)
+		fail("atexit-1");
+	remove(TMPFILE);
 	exit(Errors? 1: 0);
 	fail("exit-1");
 }
@@ -468,13 +723,16 @@ void test_exit(void) {
 int main(int argc, char **argv) {
 	if (argc > 1) {
 		if (!strcmp(argv[1], "test-stdout")) test_stdout();
+		if (!strcmp(argv[1], "test-atexit")) test_atexit();
 		return EXIT_SUCCESS;
 	}
 	test_mem();
 	test_str();
-	test_misc();
+	test_sprintf();
+	test_math();
 	test_proc();
 	test_stdio();
+	test_file();
 	test_exit();
 	return EXIT_FAILURE;
 }

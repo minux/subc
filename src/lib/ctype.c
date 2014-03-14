@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011
+ *	NMH's Simple C Compiler, 2011,2014
  *	ctype functions
  */
 
@@ -41,7 +41,7 @@ int iscntrl(int c) { return 0 != (ctypes[c & 127] & C); }
 int isdigit(int c) { return 0 != (ctypes[c & 127] & D); }
 int isgraph(int c) { return 0 != (ctypes[c & 127] & G); }
 int islower(int c) { return 0 != (ctypes[c & 127] & L); }
-int isprint(int c) { return c == ' ' || isgraph(c); }
+int isprint(int c) { return ' ' == c || isgraph(c); }
 int ispunct(int c) { return 0 != (ctypes[c & 127] & P); }
 int isspace(int c) { return 0 != (ctypes[c & 127] & S); }
 int isupper(int c) { return 0 != (ctypes[c & 127] & U); }
