@@ -1,15 +1,16 @@
 /*
- *	SNM -- Print symbol table names
+ *	S86 -- A Simple 8086 Tool Chain
+ *	Print symbol tables
  *	Nils M Holm, 1993,1994,2013,2014
  *	In the public domain
  */
 
 #include <stdio.h>
 #include <string.h>
-#include "sld.h"
-#include "ar.h"
-#include "x_out.h"
-#include "as.h"
+#include "obj.h"
+#include "arc.h"
+#include "exe.h"
+#include "sym.h"
 
 int	O_ext, O_all, O_verbose, O_marks;
 char	*Fname, *Aname;

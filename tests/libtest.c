@@ -14,7 +14,7 @@
  * abort clearerr ctime difftime fdopen ferror
  * fgetpos fprintf freopen fscanf fsetpos
  * getchar getenv perror
- * scanf setbuf setvbuf signal sscanf strdup strerror
+ * scanf setbuf setvbuf sscanf strdup strerror
  * strtol system time varargs vformat
  * vfprintf vprintf vscan vsprintf
  */
@@ -29,6 +29,7 @@
 #include <setjmp.h>
 #include <errno.h>
 #include <limits.h>
+#include <signal.h>
 
 int	Errors = 0;
 
@@ -441,8 +442,25 @@ void test_ljmp(void) {
 	jump();
 }
 
+volatile caught = 0;
+
+int catch(void) {
+	caught = 1;
+}
+
+void test_signal(void) {
+	signal(SIGABRT, catch);
+	raise(SIGABRT);
+	if (!caught) fail("signal-1");
+	caught = 0;
+	signal(SIGABRT, SIG_IGN);
+	raise(SIGABRT);
+	if (caught) fail("signal-2");
+}
+
 void test_proc(void) {
 	test_ljmp();
+	test_signal();
 }
 
 void test_sio1(void) {

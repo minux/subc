@@ -1,13 +1,14 @@
 /*
- *	XSTRIP -- Strip symbol tables from EXE files
+ *	S86 -- A Simple 8086 Tool Chain
+ *	Strip symbol tables
  *	Nils M Holm, 1993,1994,2013,2014
  *	In the public domain
  */
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "sld.h"
-#include "x_out.h"
+#include "obj.h"
+#include "exe.h"
 
 #define TMPFILE	"st00000.tmp"
 #define CBUFL	16384		/* DON'T CHANGE! */

@@ -1,5 +1,5 @@
 
-	SubC Compiler, Version 2014-03-14
+	SubC Compiler, Version 2014-03-20
 	By Nils M Holm, 2011--2014
 	Placed in the public domain
 
@@ -75,7 +75,8 @@
 	o  &array is now valid syntax (you no longer have to write
 	   &array[0]).
 
-	o  the auto and register keywords are recognized (as no-ops).
+	o  the auto, register, and volatile keywords are recognized
+	   (as no-ops).
 
 	o  enums may now be local.
 
@@ -125,7 +126,7 @@
 
 	o  The following keywords are not recognized:
 	   const, double, float, goto, long, short, signed, typedef,
-	   unsigned, volatile.
+	   unsigned.
 
 	o  There are only two primitive data types: the signed int and
 	   the unsigned char; there are also void pointers, and there
@@ -140,7 +141,7 @@
 	   declarations between the parameter list and function body)
 	   are not accepted.
 
-	o  There are no ``volatile'' or ``const'' variables.
+	o  There are no ``const'' variables.
 
 	o  There is no typedef.
 

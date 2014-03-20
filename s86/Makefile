@@ -3,27 +3,24 @@ BINDIR	=	/u/bin
 CC	=	scc
 CFLAGS	=
 
-forget-it:
-	cat WARNING
-
 all:		sar s86 sld snm xhd xstrip
 
-xhd:	xhd.c x_out.h
+xhd:	xhd.c exe.h
 	$(CC) $(CFLAGS) -o xhd xhd.c
 
-snm:	snm.c x_out.h sld.h ar.h as.h
+snm:	snm.c exe.h obj.h arc.h sym.h
 	$(CC) $(CFLAGS) -o snm snm.c
 
-xstrip:	xstrip.c sld.h x_out.h
+xstrip:	xstrip.c obj.h exe.h
 	$(CC) $(CFLAGS) -o xstrip xstrip.c
 
-sld:	sld.c x_out.h sld.h as.h ld.h defs.h
+sld:	sld.c exe.h obj.h sym.h defs.h
 	$(CC) $(CFLAGS) -o sld sld.c
 
-s86:	s86.c as.h sld.h defs.h
+s86:	s86.c sym.h obj.h defs.h
 	$(CC) $(CFLAGS) -o s86 s86.c
 
-sar:	sar.c as.h sld.h ar.h
+sar:	sar.c sym.h obj.h arc.h
 	$(CC) $(CFLAGS) -o sar sar.c
 
 install:	all

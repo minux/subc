@@ -340,6 +340,7 @@ static int declarator(int pmtr, int scls, char *name, int *pprim, int *psize,
  *	| EXTERN
  *	| REGISTER
  *	| STATIC
+ *	| VOLATILE
  *
  * ldecl_list :=
  *	  declarator
@@ -354,7 +355,7 @@ static int localdecls(void) {
 
 	Nli = 0;
 	while ( AUTO == Token || EXTERN == Token || REGISTER == Token ||
-		STATIC == Token ||
+		STATIC == Token || VOLATILE == Token ||
 		INT == Token || CHAR == Token || VOID == Token ||
 		ENUM == Token ||
 		STRUCT == Token || UNION == Token
@@ -365,7 +366,7 @@ static int localdecls(void) {
 		}
 		extn = stat = 0;
 		if (AUTO == Token || REGISTER == Token || STATIC == Token ||
-			EXTERN == Token
+			VOLATILE == Token || EXTERN == Token
 		) {
 			stat = STATIC == Token;
 			extn = EXTERN == Token;
@@ -598,6 +599,7 @@ void top(void) {
 	switch (Token) {
 	case EXTERN:	clss = CEXTERN; Token = scan(); break;
 	case STATIC:	clss = CSTATIC; Token = scan(); break;
+	case VOLATILE:	Token = scan(); break;
 	}
 	switch (Token) {
 	case ENUM:

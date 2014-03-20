@@ -1,3 +1,13 @@
+2014-03-20 Updated documentation.
+2014-03-19 Both S86 and SLD run on 16-bit systems now.
+2014-03-19 Made SLD store its relocation buffer on disk.
+2014-03-19 Updated build script for windows. (untested!)
+2014-03-18 Changed malloc() over-alloc. threshold for 16-bit systems.
+2014-03-18 Made SLD store its relocation table on disk.
+2014-03-17 Cleaned up the S86 tool chain, moved to s86/.
+2014-03-17 Added setjmp() and longjmp() to DOS crt0.
+2014-03-17 Made s86 write RELOC table to file to save memory.
+2014-03-16 Added volatile keyword (as no-op).
 2014-03-14 Misc. small fixes to libc (purely stylistic).
 2014-03-14 Made printf("%s",NULL); print (NULL) instead of crash.
 2014-03-14 Added missing CG prototypes.
@@ -28,8 +38,8 @@
 2014-02-15 Fixed %p in *printf functions (wrong result for values < 0).
 2014-02-14 Wrote simple crt0 test suite.
 2014-02-14 Added fcntl.h include file, added SEEK_* constants to unistd.h.
-2014-02-13 Removed libc dependencies from freebsd-armv6 crt0.
-2014-02-12 Removed libc dependencies from freebsd-386 crt0.
+2014-02-13 Removed system libc dependencies from freebsd-armv6 crt0.
+2014-02-12 Removed system libc dependencies from freebsd-386 crt0.
 2014-02-12 Re-organized targets/ directory, adapted configure script.
 2014-02-07 Added FreeBSD/armv6 crt0 (crt0-freebsd-armv6.s).
 2014-02-06 Added FreeBSD/armv6 back-end (cgarmv6.c).

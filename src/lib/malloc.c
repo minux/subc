@@ -36,7 +36,7 @@ void *malloc(int size) {
 		if (size >= THRESHOLD)
 			_asize = size + 1;
 		else
-			_asize = size * 50;
+			_asize = size * 10;
 		_arena = _sbrk(_asize * sizeof(int));
 		if ((int *) -1 == _arena) {
 			errno = ENOMEM;

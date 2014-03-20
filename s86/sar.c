@@ -1,16 +1,16 @@
 /*
- *	SAR -- A Simple Archiver
+ *	S86 -- A Simple 8086 Tool Chain
+ *	Archiver
  *	Nils M Holm, 1993,1995,2014
  *	In the public domain
  */
 
 #include <stdio.h>
 #include <string.h>
-#include "defs.h"
-#include "ar.h"
-#include "as.h"
-#include "sld.h"
-#include "x_out.h"
+#include "arc.h"
+#include "sym.h"
+#include "obj.h"
+#include "exe.h"
 
 #define BUFSZ	4096
 

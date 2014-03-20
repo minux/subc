@@ -10,41 +10,36 @@
 	support for cross-compiling SubC to DOS/8086 EXE format. The
 	following limitations currently exist:
 
-	* Code size of the resulting EXE file is limited to 32K bytes.
+	* The tool chain can only generate small-model EXE files.
 
-	  This means that neither the compiler itself nor the rest
-	  of the tool chain currently can be self-compiled.
-
-	* The compiler can only generate small-model EXE files.
-
-	  The S86 assembler, the SLD loader and the SubC compiler
-	  itself are probably too big to fit in small-model DOS
-	  executables.
+	  The SubC compiler itself is too big to fit in a small-model
+	  DOS executable.
 
 	* There is no BSS segment, so static arrays are packed
 	  into the data segment, thereby increasing the size of
 	  the resulting EXE file unnecessarily. Note: this is
 	  unrelated to the above issues.
 
+	  Workaround: use malloc() instead of static arrays.
+
 	* There are some subtle differences between S86 and popular
 	  DOS assemblers, e.g.: S86 assumes that undefined symbols
 	  are external, etc.
 
-	The S86/SLD tool chain and related utilities originally had
-	quite a few 16-bit dependencies. They have been modified to
-	run on 32- and 64-bit hosts, and probably do not run on
-	16-bit systems any longer, so bootstrapping the compiler on
-	a DOS system is currently not possible.
+	The S86 tool chain and related utilities originally had quite
+	a few 16-bit dependencies. They have been modified to run on
+	32- and 64-bit hosts, and probably do not run on 16-bit
+	systems any longer, so bootstrapping the compiler on a DOS
+	system is currently not possible.
 
 
 	STATUS
 
-	Scc86 currently passes the pointer test suite (tests/ptest.c),
-	although it must be splitted into two parts, and the systest
-	suite except for _fork(), execve(), and _wait(). _time() just
-	returns 0 at the moment. argc/argv/environ cannot be tested
-	due to lack of _fork() and _execve(), but they can be checked
-	with the sys tool (also contained in tests/).
+	Scc86 currently passes the pointer test suite (tests/ptest.c)
+	and the systest suite except for _fork(), execve(), and _wait().
+	_time() just returns 0 at the moment. argc/argv/environ cannot
+	be tested due to lack of _fork() and _execve(), but they can be
+	checked with the sys tool (also contained in tests/).
 
 
 	COMPILING AND INSTALLING SCC86
@@ -64,8 +59,8 @@
 	This step will build the stage-zero cross compiler scc0, the
 	DOS crt0 file, and the DOS/8086 runtime library.
 
-	You *cannot* run the triple test on this compiler, because it
-	emits 8086 instructions in TASM format.
+	You *cannot* triple-test this compiler on a Unix machine,
+	because it emits 8086 instructions in TASM format.
 
 	To install the cross compiler, run
 
@@ -76,9 +71,9 @@
 	$(BINDIR).
 
 	You also need to build and install the s86 tool chain, which
-	is contained in the bin86 directory:
+	is contained in the s86 directory:
 
-		cd ../bin86
+		cd ../s86
 		make all
 
 	BTW, if you plan to compile these programs with a C compiler
@@ -95,7 +90,5 @@
 
 		scc86 file.c ...
 
-	The output will be placed in an "a.out" file, so it is
-	recommended to use the "-o" option to redirect it to a
-	file with a ".exe" suffix.
+	The output will be placed in a file named "aout.exe" by default.
 

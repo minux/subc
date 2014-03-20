@@ -259,6 +259,7 @@ static int keyword(char *s) {
 		break;
 	case 'v':
 		if (!strcmp(s, "void")) return VOID;
+		if (!strcmp(s, "volatile")) return VOLATILE;
 		break;
 	case 'w':
 		if (!strcmp(s, "while")) return WHILE;

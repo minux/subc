@@ -4,14 +4,13 @@ set CC=gcc
 echo c:\dev-cpp\bin\ must be in the path environment variable!
 echo EXESFX must be set in src/Makefile!
 
-copy src\targets\init-windows.c src\lib\init.c
-copy src\targets\system-windows.c src\lib\system.c
-copy src\targets\cg386-syn.c src\cg.c
-copy src\targets\cg386.h src\cg.h
-copy src\targets\syngen.c src\gen.c
-copy src\targets\windows.h src\sys.h
-copy src\targets\crt0-windows-386.s src\lib\crt0.s
-copy src\targets\limits-32.h src\include\limits.h
+copy src\targets\lib\init-windows.c src\lib\init.c
+copy src\targets\lib\system-windows.c src\lib\system.c
+copy src\targets\cg\cg386.c src\cg.c
+copy src\targets\cg\cg386.h src\cg.h
+copy src\targets\windows-386\sys-windows-386.h src\sys.h
+copy src\targets\windows-386\crt0-windows-386.s src\lib\crt0.s
+copy src\targets\include\limits-32.h src\include\limits.h
 
 echo #undef SYSLIBC >> src\sys.h
 echo #define SYSLIBC	"%DEVCPPPATH%lib/libuser32.a %DEVCPPPATH%lib/libkernel32.a %DEVCPPPATH%/lib/libgdi32.a" >> src\sys.h

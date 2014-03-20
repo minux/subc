@@ -1,5 +1,6 @@
 /*
- *	SLD -- A Simple Loader
+ *	S86 -- A Simple 8086 Tool Chain
+ *	EXE Loader
  *	Nils M Holm, 1993,1995,2013,2014
  *	In the public domain
  */
@@ -8,21 +9,39 @@
 #include <stdio.h>
 #include <string.h>
 #include "defs.h"
-#include "ar.h"
-#include "as.h"
-#include "sld.h"
-#include "x_out.h"
-#include "ld.h"
+#include "arc.h"
+#include "sym.h"
+#include "obj.h"
+#include "exe.h"
+
+/*
+ * Resolve dependencies in memory;
+ * fast but will not work on 16-bit systems.
+ */
+/* #define INCORE	/**/
+
+#define LDCODE	"ldc00000.tmp"
+#define LDDATA	"ldd00000.tmp"
+#define LDRLOC	"ldr00000.tmp"
+#define LDRBUF	"ldb00000.tmp"
+
+#define SYM_SZ	20480
+#define EXT_SZ	16384
+#define BUF_SZ	60000
 
 int	debug = 0;
 
-FILE	*Objf, *Ctmp, *Dtmp, *Exef;
+FILE	*Objf, *Ctmp, *Dtmp, *Rtmp, *Rbuf, *Exef;
 char	Outfile[81];
 int	Errors;
 char	Ohd[OHDSZ];
 char	Xhd[XHDR_SZ];
 int	Codep, Datap;
 int	Stkinit;
+
+char	Buf[BUFSIZ];
+
+char	DOSRel[NDOSREL*4];
 
 char	*Libdir;
 
@@ -48,6 +67,8 @@ void fatal(char *m) {
 	if (!debug) {
 		remove(LDCODE);
 		remove(LDDATA);
+		remove(LDRLOC);
+		remove(LDRBUF);
 	}
 	exit(1);
 }
@@ -71,18 +92,32 @@ void init(void) {
 		fatal(nomem);
 	if ((Extsym = malloc(EXT_SZ)) == NULL)
 		fatal(nomem);
-	if ((Reloc = malloc(REL_SZ)) == NULL)
-		fatal(nomem);
-	if ((Buffer = malloc(BUF_SZ)) == NULL)
-		fatal(nomem);
 	memset(Symtab, 0, SYM_SZ);
 	memset(Extsym, 0, EXT_SZ);
-	memset(Reloc, 0, REL_SZ);
+#ifdef INCORE
+	if ((Buffer = malloc(BUF_SZ)) == NULL)
+		fatal(nomem);
 	memset(Buffer, 0, BUF_SZ);
+#endif
 	if ((Ctmp = fopen(LDCODE, "wb+")) == NULL)
 		fatal(notmp);
-	if ((Dtmp = fopen(LDDATA, "wb+")) == NULL)
+	if ((Dtmp = fopen(LDDATA, "wb+")) == NULL) {
+		remove(LDCODE);
 		fatal(notmp);
+	}
+	if ((Rtmp = fopen(LDRLOC, "wb+")) == NULL) {
+		remove(LDCODE);
+		remove(LDDATA);
+		fatal(notmp);
+	}
+#ifndef INCORE
+	if ((Rbuf = fopen(LDRBUF, "wb+")) == NULL) {
+		remove(LDCODE);
+		remove(LDDATA);
+		remove(LDRLOC);
+		fatal(notmp);
+	}
+#endif
 	if ((Exef = fopen(Outfile, "wb+")) == NULL) {
 		error("could not create output file", Outfile);
 		fatal("aborting");
@@ -104,7 +139,7 @@ int addsym(char *buf) {
 		if (!Symtab[i]) {
 			if (add != -1) continue;
 			memcpy(&Symtab[i], buf, SSIZE);
-			Symtab[i+SLLIST] = Symtab[i+SLLIST+1] = 0xff;
+			Symtab[i+SMARK] = Symtab[i+SMARK+1] = 0xff;
 			if (debug)
 				printf("add sym:\t%s (%c,%c) = %04x\n",
 					buf, buf[SSEGMT], buf[SCLASS],
@@ -128,11 +163,11 @@ void mkmark(int si, char *ebuf) {
 
 	for (i=0; i<EXT_SZ; i+= MKSZ) {
 		if (Extsym[i+MKADDR] == 0 && Extsym[i+MKADDR+1] == 0) {
-			a = Symtab[si+SLLIST] + (Symtab[si+SLLIST+1] << 8);
+			a = Symtab[si+SMARK] + (Symtab[si+SMARK+1] << 8);
 			Extsym[i+MKPTR] = a;
 			Extsym[i+MKPTR+1] = a>>8;
-			Symtab[si+SLLIST] = i;
-			Symtab[si+SLLIST+1] = (i >> 8);
+			Symtab[si+SMARK] = i;
+			Symtab[si+SMARK+1] = (i >> 8);
 			Extsym[i+MKFLAG] = ebuf[MKFLAG];
 			Extsym[i+MKADDR] = ebuf[MKADDR];
 			Extsym[i+MKADDR+1] = ebuf[MKADDR+1];
@@ -152,7 +187,7 @@ void mkmark(int si, char *ebuf) {
 void load(char *name) {
 	int	i, n, off, si, nrel, old, cmp, size, t, k, a;
 	char	*paddr;
-	char	buf[SSIZE];
+	char	sym[SSIZE];
 	char	ee[MKSZ];
 	char	drel[2];
 
@@ -166,20 +201,20 @@ void load(char *name) {
 	}
 	off = OHDSZ;
 	while (off < Ohd[OEXTP] + (Ohd[OEXTP+1]<<8)) {
-		if (fread(buf, 1, SSIZE, Objf) != SSIZE)
+		if (fread(sym, 1, SSIZE, Objf) != SSIZE)
 			readerr();
-		paddr = &buf[SADDR];
+		paddr = &sym[SADDR];
 		k = paddr[0] + (paddr[1]<<8);
-		k += buf[SSEGMT] == SCODE? Codep: Datap;
+		k += sym[SSEGMT] == SCODE? Codep: Datap;
 		paddr[0] = k;
 		paddr[1] = k>>8;
-		addsym(buf);
+		addsym(sym);
 		off += SSIZE;
 	}
 	while (off < Ohd[ODOSREL] + (Ohd[ODOSREL+1]<<8)) {
-		if (fread(buf, 1, SSIZE, Objf) != SSIZE)
+		if (fread(sym, 1, SSIZE, Objf) != SSIZE)
 			readerr();
-		si = addsym(buf);
+		si = addsym(sym);
 		off += SSIZE;
 		fread(ee, 1, MKSZ, Objf);
 		off += MKSZ;
@@ -208,47 +243,92 @@ void load(char *name) {
 	n = Ohd[OCODE] + (Ohd[OCODE+1]<<8) - off;
 	off += n;
 	nrel = n/3;
-	if (n > REL_SZ) fatal("relocation table overflow");
-	if (fread(Reloc, 1, n, Objf) != n) readerr();
+	rewind(Rtmp);
+	for (i=n; i>0; ) {
+		k = i<BUFSIZ? i: BUFSIZ;
+		if (fread(Buf, 1, k, Objf) != k) readerr();
+		if (fwrite(Buf, 1, k, Rtmp) != k) writeerr();
+		i -= k;
+	}
 	if (debug) printf("%d RELOC entries\n", nrel);
 	n = Ohd[ODATA] + (Ohd[ODATA+1]<<8) - off;
 	off += n;
-	if (n >= BUF_SZ) fatal("text area too large");
-	if (fread(Buffer, 1, n, Objf) != n) readerr();
+	if ((char *) n >= (char *) CODESZ) fatal("text area too large");
 	if (debug) {
 		printf("%d TEXT bytes\n", n);
 		printf("Relocating...\n");
 	}
-	for (nrel*=3, i=0; i<nrel; i+=3) {
-		t = Reloc[i];
-		paddr = &Buffer[a = Reloc[i+1] + (Reloc[i+2]<<8)];
+	rewind(Rtmp);
+#ifdef INCORE
+	if (fread(Buffer, 1, n, Objf) != n) readerr();
+	for (i=0; i<nrel; i++) {
+		t = fgetc(Rtmp);
+		a = fgetc(Rtmp);
+		a += fgetc(Rtmp) << 8;
+		paddr = &Buffer[a];
 		k = paddr[0] + (paddr[1]<<8);
 		k += (t == SCODE? Codep: Datap);
 		paddr[0] = k;
 		paddr[1] = k>>8;
-		if (debug)
+		if (debug) {
 			printf(" %04x%c%s",
-				a, (char) t, !(i%36)&&i? "\n": "");
+				a, (char) t, !((i+1)%10)? "\n": "");
+			fflush(stdout);
+		}
 	}
 	if (debug) putchar('\n');
 	if (fwrite(Buffer, 1, n, Ctmp) != n) writeerr();
+#else
+	rewind(Rbuf);
+	for (i=n; i>0; ) {
+		k = i<BUFSIZ? i: BUFSIZ;
+		if (fread(Buf, 1, k, Objf) != k) readerr();
+		if (fwrite(Buf, 1, k, Rbuf) != k) writeerr();
+		i -= k;
+	}
+	for (i=0; i<nrel; i++) {
+		t = fgetc(Rtmp);
+		a = fgetc(Rtmp);
+		a += fgetc(Rtmp) << 8;
+		fseek(Rbuf, a, SEEK_SET);
+		k = fgetc(Rbuf);
+		k += fgetc(Rbuf)<<8;
+		k += (t == SCODE? Codep: Datap);
+		fseek(Rbuf, a, SEEK_SET);
+		fputc(k, Rbuf);
+		fputc(k>>8, Rbuf);
+		if (debug) {
+			printf(" %04x%c%s",
+				a, (char) t, !((i+1)%10)? "\n": "");
+			fflush(stdout);
+		}
+	}
+	if (debug) putchar('\n');
+	rewind(Rbuf);
+	for (i=n; i>0; ) {
+		k = i<BUFSIZ? i: BUFSIZ;
+		if (fread(Buf, 1, k, Rbuf) != k) readerr();
+		if (fwrite(Buf, 1, k, Ctmp) != k) writeerr();
+		i -= k;
+	}
+#endif
 	old = Codep;
 	cmp = (Codep += n);
-	if (cmp < old || Codep > CODESZ)
+	if ((char *) cmp < (char *) old || (char *) Codep > (char *) CODESZ)
 		fatal("code segment overflow");
 	for (i=size=Ohd[ODATASZ] + (Ohd[ODATASZ+1]<<8); i; ) {
-		if (i >= BUF_SZ || i < 0)
-			n = BUF_SZ;
+		if (i >= BUFSIZ || i < 0)
+			n = BUFSIZ;
 		else
 			n = i;
-		if (fread(Buffer, 1, n, Objf) != n) readerr();
-		if (fwrite(Buffer, 1, n, Dtmp) != n) writeerr();
+		if (fread(Buf, 1, n, Objf) != n) readerr();
+		if (fwrite(Buf, 1, n, Dtmp) != n) writeerr();
 		off += n;
 		i -= n;
 	}
 	old = Datap;
 	cmp = (Datap += size);
-	if (cmp < old || Datap > DATASZ)
+	if ((char *) cmp < (char *) old || (char *) Datap > (char *) DATASZ)
 		fatal("data segment overflow");
 	if (debug) printf("%d DATA bytes\n", size);
 }
@@ -263,7 +343,7 @@ void resolve(int ptr, int addr, int class) {
 		if (debug)
 			printf(" %04x%s%s",
 				la, (Extsym[ptr+MKFLAG] & MKREL)? "R": "A",
-				!(i%15)&&i++? "\n": "");
+				!(++i%10)? "\n": "");
 		fseek(Ctmp, la, SEEK_SET);
 		if (Extsym[ptr+MKFLAG] & MKREL) {
 			va = addr-la-2;
@@ -295,8 +375,8 @@ void try_reslv(void) {
 			for (j=0; j<SYM_SZ; j+=SSIZE) {
 				if (Symtab[j+SCLASS] == PUBLIC) {
 					if (!strcmp(&Symtab[i], &Symtab[j])) {
-						ptr = (Symtab[i+SLLIST]&0xff)+
-						      (Symtab[i+SLLIST+1]<<8);
+						ptr = (Symtab[i+SMARK]&0xff)+
+						      (Symtab[i+SMARK+1]<<8);
 						addr = (Symtab[j+SADDR]&0xff)+
 						       (Symtab[j+SADDR+1]<<8);
 						if (debug)
@@ -351,7 +431,7 @@ void bind(void) {
 
 	for (i=0; i<SYM_SZ; i+=SSIZE) {
 		if (Symtab[i+SCLASS] == EXTRN) {
-			slp = &Symtab[i+SLLIST];
+			slp = &Symtab[i+SMARK];
 			if (*slp != 0xff || slp[0] != 0xff)
 				error("unresolved symbol", &Symtab[i]);
 		}
@@ -362,15 +442,15 @@ void bind(void) {
 		fputc(0, Exef);
 	rewind(Ctmp);
 	rewind(Dtmp);
-	n = fread(Buffer, 1, BUF_SZ, Ctmp);
+	n = fread(Buf, 1, BUFSIZ, Ctmp);
 	while (n) {
-		fwrite(Buffer, 1, n, Exef);
-		n = fread(Buffer, 1, BUF_SZ, Ctmp);
+		fwrite(Buf, 1, n, Exef);
+		n = fread(Buf, 1, BUFSIZ, Ctmp);
 	}
-	n = fread(Buffer, 1, BUF_SZ, Dtmp);
+	n = fread(Buf, 1, BUFSIZ, Dtmp);
 	while (n) {
-		fwrite(Buffer, 1, n, Exef);
-		n = fread(Buffer, 1, BUF_SZ, Dtmp);
+		fwrite(Buf, 1, n, Exef);
+		n = fread(Buf, 1, BUFSIZ, Dtmp);
 	}
 	fclose(Ctmp);
 	fclose(Dtmp);
@@ -393,16 +473,20 @@ void bind(void) {
 	k = Codep + Datap + 1;
 	Xhd[X_SSEG] = k;
 	Xhd[X_SSEG+1] = k>>8;
+	if (debug) printf("DGROUP refs:");
 	fseek(Exef, XORELOC, SEEK_SET);
-	if (N_dosrel<<2 > BUF_SZ) fatal("DOSRELOC overflow");
-	if (fread(Buffer, 1, N_dosrel<<2, Exef) != (N_dosrel<<2)) readerr();
-	for (i=0, relp = Buffer; i<N_dosrel; i++) {
-		n = *relp + hdsz;
+	if (N_dosrel > NDOSREL) fatal("DOSRELOC overflow");
+	if (fread(DOSRel, 1, N_dosrel<<2, Exef) != N_dosrel<<2) readerr();
+	for (i=0, relp = DOSRel; i<N_dosrel; i++) {
+		n = relp[0] | (relp[1] << 8);
+		n += hdsz;
+		if (debug) printf(" %04x", n);
 		relp += 4;
 		fseek(Exef, n, SEEK_SET);
 		fputc(Codep&0xff, Exef);
 		fputc(Codep>>8, Exef);
 	}
+	if (debug) putchar('\n');
 }
 
 void wr_symtab(void) {
@@ -478,7 +562,7 @@ void loadlib(char *name, int verbose) {
 						if (fread(Arh, 1, ARH_LEN,
 						    libf) != ARH_LEN)
 							readerr();
-						if (verbose)
+						if (verbose > 2)
 							printf(
 							"loading %s from %s\n",
 							&Arh[AR_NAME], name);
@@ -505,7 +589,7 @@ int main(int argc, char **argv) {
 	int	verbose, strip;
 	int	i;
 
-	strcpy(Outfile, "a_out.exe");
+	strcpy(Outfile, "aout.exe");
 	Libdir = ".";
 	strip = verbose = 0;
 	listfile = NULL;
@@ -515,7 +599,7 @@ int main(int argc, char **argv) {
 		if (*p == 'l') break;
 		while (*p) switch(*p++) {
 			case 'd':	debug = 1; break;
-			case 'v':	verbose = 1; break;
+			case 'v':	verbose++; break;
 			case 's':	strip = 1; break;
 			case 'f':	if (*p == 0) {
 						if ((p = argv[++i]) == NULL)
@@ -548,7 +632,7 @@ int main(int argc, char **argv) {
 	for (; i < argc; i++) {
 		p = argv[i];
 		if (islib(p)) break;
-		if (verbose) printf("loading %s\n", p);
+		if (verbose > 1) printf("loading %s\n", p);
 		if ((Objf = fopen(p, "rb")) == NULL) {
 			error("no such file", p);
 			continue;
@@ -565,13 +649,13 @@ int main(int argc, char **argv) {
 			while (!feof(list)) {
 				buf[strlen(buf)-1] = 0;
 				if ((p = islib(buf)) != NULL) {
-					if (verbose)
+					if (verbose > 1)
 						printf("loading library: %s\n",
 						p);
 					loadlib(p, verbose);
 				}
 				else {
-					if (verbose)
+					if (verbose > 1)
 						printf("loading %s\n", buf);
  					if ((Objf = fopen(buf,"rb")) == NULL) {
 						error("no such object file",
@@ -591,13 +675,15 @@ int main(int argc, char **argv) {
 	for (; i < argc; i++) {
 		if ((p = islib(argv[i])) == NULL)
 			error("bad library", argv[i]);
-		if (verbose) printf("loading library: %s\n", p);
+		if (verbose > 1) printf("loading library: %s\n", p);
 		loadlib(p, verbose);
 	}
 	bind();
 	if (!debug) {
 		remove(LDCODE);
 		remove(LDDATA);
+		remove(LDRLOC);
+		remove(LDRBUF);
 	}
 	mkxhdr(1);
 	if (!strip) wr_symtab();
@@ -606,6 +692,12 @@ int main(int argc, char **argv) {
 		printf("%d error(s)\n", Errors);
 		remove(Outfile);
 		return 1;
+	}
+	if (verbose) {
+		Codep <<= 4;
+		Datap <<= 4;
+		printf("%5d (0x%04x) code bytes\n%5d (0x%04x) data bytes\n",
+			Codep, Codep, Datap, Datap);
 	}
 	return 0;
 }

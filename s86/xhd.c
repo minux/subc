@@ -1,12 +1,13 @@
 /*
- *	XHD -- Print EXE header info
+ *	S86 -- A Simple 8086 Tool Chain
+ *	Print EXE headers
  *	Nils M Holm, 1993,1995,2013,2014
  *	In the public domain
  */
 
 #include <stdio.h>
 #include <string.h>
-#include "x_out.h"
+#include "exe.h"
 
 int main(int argc, char **argv) {
 	char	*p;

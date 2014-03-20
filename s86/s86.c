@@ -1,5 +1,6 @@
 /*
- *	S86 -- A Simple Assembler for the 8086
+ *	S86 -- A Simple 8086 Tool Chain
+ *	8086 assembler
  *	Nils M Holm, 1993,1995,2013,2014
  *	In the public domain
  */
@@ -9,21 +10,31 @@
 #include <string.h>
 #include <setjmp.h>
 #include <ctype.h>
-#include "sld.h"
+#include "obj.h"
 #include "defs.h"
-#include "as.h"
+#include "sym.h"
 
-char	Marks[MARKSZ];
-char	Reloc[NRELOC];
-int	Reltop;
+#define TMPDATA	"asd00000.tmp"
+#define TMPCODE	"asc00000.tmp"
+#define TMPRLOC	"asr00000.tmp"
+
+#define MAXLN	128
+
+#define SYMSZ	32760
+#define MARKSZ	12280
+#define MACSZ	2048
+
+char	*Marks;
 char	DosReloc[NDOSREL];
 int	DosReltop;
+int	Reltop;
 
 int	debug = 0;
 
 FILE	*Infile;
 FILE	*Sdata;
 FILE	*Scode;
+FILE	*Sreloc;
 char	Linebuf[MAXLN+1];
 char	*Label, *Instr, *Oper1, *Oper2, *Aoper;
 int	Off1, Off2;
@@ -31,8 +42,8 @@ int	Line;
 int	Segment;
 int	Ctop, Dtop;
 int	Symtop;
-char	Symbols[SYMSZ];
-char	Macpool[MACSZ];
+char	*Symbols;
+char	*Macpool;
 int	Mactop;
 int	Wop;
 int	Short;
@@ -45,6 +56,7 @@ jmp_buf	Restart;
 void fatal(char *msg) {
 	remove(TMPCODE);
 	remove(TMPDATA);
+	remove(TMPRLOC);
 	printf("s86: %d: fatal error: %s\n", Line, msg);
 	exit(1);
 }
@@ -58,6 +70,18 @@ void warn(char *msg) {
 	printf("s86: %d: *Warning* %s\n", Line, msg);
 }
 
+void init(void) {
+	char	*nomem;
+
+	nomem = "out of memory";
+	if ((Symbols = malloc(SYMSZ)) == NULL)
+		fatal(nomem);
+	if ((Marks = malloc(MARKSZ)) == NULL)
+		fatal(nomem);
+	if ((Macpool = malloc(MACSZ)) == NULL)
+		fatal(nomem);
+}
+
 void dreloc(void) {
 	if (DosReltop >= NDOSREL) fatal("DOS relocation table overflow");
 	DosReloc[DosReltop++] = Ctop-2;
@@ -65,10 +89,10 @@ void dreloc(void) {
 }
 
 void reloc(int addr, int class) {
-	if (Reltop >= NRELOC) fatal("too many relocation entries");
-	Reloc[Reltop++] = class;
-	Reloc[Reltop++] = addr;
-	Reloc[Reltop++] = addr>>8;
+	fputc(class, Sreloc);
+	fputc(addr, Sreloc);
+	fputc(addr>>8, Sreloc);
+	Reltop += 3;
 }
 
 int findsym(char *name) {
@@ -96,15 +120,15 @@ void mark(char *name, int class, int addr, int shrt, int rel) {
 		if (Marks[i+MKADDR] == 0 && Marks[i+MKADDR+1] == 0) {
 			if ((sym = findsym(name)) == -1)
 				fatal("CE: bad name in mark()");
-			Marks[i+MKPTR] = Symbols[sym+SLLIST];
-			Marks[i+MKPTR+1] = Symbols[sym+SLLIST+1];
+			Marks[i+MKPTR] = Symbols[sym+SMARK];
+			Marks[i+MKPTR+1] = Symbols[sym+SMARK+1];
 			Marks[i+MKADDR] = addr;
 			Marks[i+MKADDR+1] = addr >> 8;
 			Marks[i+MKFLAG] = 0;
 			if (shrt) Marks[i+MKFLAG] |= MKSHORT;
 			if (rel) Marks[i+MKFLAG] |= MKREL;
-			Symbols[sym+SLLIST] = i;
-			Symbols[sym+SLLIST+1] = (i >> 8);
+			Symbols[sym+SMARK] = i;
+			Symbols[sym+SMARK+1] = (i >> 8);
 			if (debug)
 				printf(
 			 "addmark: %s\taddr=%04x\tflags=%02x\tptr=%4x\n",
@@ -121,7 +145,7 @@ void resolve(char *sym, int addr) {
 	int	a, ptr, disp, pt, h, l;
 	char	*cp;
 
-	ptr = sym[SLLIST] + (sym[SLLIST+1] << 8);
+	ptr = sym[SMARK] + (sym[SMARK+1] << 8);
 	if (debug) printf("resolve: [%04x] at", addr);
 	while (ptr != 0xffff) {
 		a = Marks[ptr+MKADDR] + (Marks[ptr+MKADDR+1]<<8);
@@ -176,8 +200,8 @@ void ckpubs(void) {
 
 	for (i=0; i<Symtop; i+=SSIZE) {
 		if (Symbols[i+SCLASS] == PUBLIC)
-			if (Symbols[i+SLLIST] != 0xff ||
-			    Symbols[i+SLLIST+1] != 0xff
+			if (Symbols[i+SMARK] != 0xff ||
+			    Symbols[i+SMARK+1] != 0xff
 		) {
 			printf("s86: undefined public symbol: %s\n",
 				&Symbols[i]);
@@ -203,10 +227,12 @@ void eject(char *srcname, char *objname) {
 	}
 	rewind(Sdata);
 	rewind(Scode);
+	rewind(Sreloc);
 	if ((outfile = fopen(objname, "wb")) == NULL) {
 		fclose(Sdata);
 		remove(TMPDATA);
-		remove(TMPCODE);
+		remove(TMPDATA);
+		remove(TMPRLOC);
 		fprintf(stderr, "cannot create output file: %s\n", objname);
 		exit(1);
 	}
@@ -227,7 +253,7 @@ void eject(char *srcname, char *objname) {
 		if (Symbols[i+SCLASS] == UNDEFD)
 			Symbols[i+SCLASS] = EXTRN;
 		if (Symbols[i+SCLASS] == EXTRN) {
-			ptr = Symbols[i+SLLIST] + (Symbols[i+SLLIST+1]<<8);
+			ptr = Symbols[i+SMARK] + (Symbols[i+SMARK+1]<<8);
 			if (ptr != 0xffff) {
 				cnt += fwrite(&Symbols[i], 1, SSIZE, outfile);
 				while (ptr != 0xffff) {
@@ -250,7 +276,12 @@ void eject(char *srcname, char *objname) {
 	/* write relocation table */
 	ohd[ORELOC] = cnt;
 	ohd[ORELOC+1] = cnt>>8;
-	cnt += fwrite(Reloc, 1, Reltop, outfile);
+	n = fread(buf, 1, 256, Sreloc);
+	while (n > 0) {
+		fwrite(buf, 1, n, outfile);
+		n = fread(buf, 1, 256, Sreloc);
+	}
+	cnt += Reltop;
 	/* append code area */
 	ohd[OCODE] = cnt;
 	ohd[OCODE+1] = cnt>>8;
@@ -277,8 +308,11 @@ void eject(char *srcname, char *objname) {
 	fwrite(ohd, 1, OHDSZ, outfile);
 	fclose(outfile);
 	fclose(Sdata);
-	remove(TMPDATA);
-	remove(TMPCODE);
+	if (!debug) {
+		remove(TMPDATA);
+		remove(TMPCODE);
+		remove(TMPRLOC);
+	}
 }
 
 void nosegment(void) {
@@ -294,12 +328,12 @@ void bigval(void) {
 }
 
 void csizechk(int len) {
-	if ((Ctop>>1) + (len>>1) > (CODESZ>>1))
+	if ((char *) (Ctop + len) > (char *) CODESZ)
 		fatal("code segment too big");
 }
 
 void dsizechk(int len) {
-	if ((Dtop>>1)+(len>>1) > (DATASZ>>1))
+	if ((char *) (Dtop + len) > (char *) DATASZ)
 		fatal("data segment too big");
 }
 
@@ -894,7 +928,7 @@ void mksym(char *name, int segmt, int class, int addr) {
 			if (class == LOCAL) {
 				Symbols[i+SSEGMT] = segmt;
 				resolve(&Symbols[i], addr);
-				Symbols[i+SLLIST] = Symbols[i+SLLIST+1] = 0xff;
+				Symbols[i+SMARK] = Symbols[i+SMARK+1] = 0xff;
 			}
 			if (class && Symbols[i+SCLASS] != PUBLIC)
 				Symbols[i+SCLASS] = class;
@@ -917,7 +951,7 @@ void mksym(char *name, int segmt, int class, int addr) {
 	Symbols[Symtop+SCLASS] = class;
 	Symbols[Symtop+SADDR] = (addr & 0xff);
 	Symbols[Symtop+SADDR+1] = (addr >> 8);
-	Symbols[Symtop+SLLIST] = Symbols[Symtop+SLLIST+1] = 0xff;
+	Symbols[Symtop+SMARK] = Symbols[Symtop+SMARK+1] = 0xff;
 	if ((Symtop += SSIZE) >= SYMSZ)
 		fatal("symbol table overflow");
 	if (debug) printf("newsym=%s\tsegmt=%c\tclass=%c\taddr=%04x\n",
@@ -1260,6 +1294,7 @@ int main(int argc, char **argv) {
 	char	of[81];
 	char	*objname;
 
+	init();
 	verbose = 0;
 	objname = NULL;
 	for (i=1; i<argc && *argv[i] == '-'; i++) {
@@ -1302,6 +1337,12 @@ int main(int argc, char **argv) {
 			if (Infile != stdin) fclose(Infile);
 			remove(TMPCODE);
 			notmp(TMPDATA);
+		}
+		if ((Sreloc = fopen(TMPRLOC, "wb+")) == NULL) {
+			if (Infile != stdin) fclose(Infile);
+			remove(TMPCODE);
+			remove(TMPDATA);
+			notmp(TMPRLOC);
 		}
 		Line = 0;
 		DosReltop = Reltop = Mactop = Ctop = Dtop = Symtop = 0;

@@ -1,11 +1,11 @@
 /*
- *	SLD -- A Small Loader
- *	Nils M Holm, 1993,2013
+ *	S86 -- A Simple 8086 Tool Chain
+ *	EXE header format
+ *	Nils M Holm, 1993,2013,2014
  *	In the public domain
  */
 
-
-/*	default values	*/
+/* Default values */
 
 #define	XMAGIC		"MZ"
 #define XMINAL		0
@@ -16,7 +16,7 @@
 #define XOVL		0
 #define XORELOC		0x1c
 
-/*	EXE header structure	*/
+/* EXE header structure */
 
 #define X_MAGIC		0	/* XMAGIC */
 #define X_NBYTES	2	/* bytes in last page */
@@ -32,6 +32,8 @@
 #define X_CSEG		22	/* initial entry point (CS) */
 #define X_ORELOC	24	/* offset of RELOC table */
 #define X_OVLID		26	/* overlay id (0) */
+
+/* EXE header size */
 
 #define XHDR_SZ		28
 

@@ -1,5 +1,5 @@
 SNAP=	20140311
-REL=	20140314
+REL=	20140320
 ARC=	subc-$(SNAP).tgz
 DIST=	subc-$(REL).tgz
 
@@ -17,7 +17,7 @@ version:
 
 clean:
 	cd src && make clean
-	cd bin86 && make clean
+	cd s86 && make clean
 	rm -f tests/ptest.c $(ARC) $(DIST)
 	rm -f tests/ptest tests/systest tests/libtest
 	if [ -f src/Makefile.ORIG ]; then \

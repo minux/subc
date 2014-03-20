@@ -65,10 +65,8 @@ setupheap:
 	xor	ax,ax
 	sub	ax,dx
 	sub	ax,STKLEN
-	cmp	ax,7fffh	; assert arena size <= INT_MAX
-	jbe	setmem
-	mov	ax,7fffh
-setmem:	mov	cs:maxmem,ax	; size of arena
+	add	ax,cs:break
+	mov	cs:maxmem,ax	; size of arena
 	mov	ax,DGROUP	; set DS = SS = DGROUP
 	mov	ds,ax
 	mov	ss,ax
@@ -240,6 +238,34 @@ nxcase: mov	dx,cs:[si]	; fetch value from table
 	mov	bx,cs:[si]
 docase:	jmp	bx
 
+; int setjmp(jmp_buf env);
+
+	public	Csetjmp
+Csetjmp:
+	mov	bx,sp
+	mov	bx,[bx+4]
+	mov	ax,sp
+	add	ax,2
+	mov	[bx],ax
+	mov	[bx+2],bp
+	mov	si,sp
+	mov	ax,[si]
+	mov	[bp+4],ax
+	xor	ax,ax
+	ret
+
+; void longjmp(jmp_buf env, int v);
+
+	public	Clongjmp
+Clongjmp:
+	mov	bx,sp
+	mov	ax,[bx+4]
+	mov	bx,[bx+6]
+	mov	sp,[bx]
+	mov	bp,[bx+2]
+	mov	si,[bp+4]
+	jmp	si
+
 ; void *_sbrk(int n);
 
 	public	C_sbrk
@@ -250,9 +276,8 @@ C_sbrk:	mov	bx,sp
 	ja	sbfail
 	mov	ax,cs:break
 	mov	dx,ax
-	add	ax,[bx+4]
-	mov	cs:break,ax
-	mov	ax,dx
+	add	dx,[bx+4]
+	mov	cs:break,dx
 	ret
 sbfail:	xor	ax,ax
 	dec	ax
@@ -339,7 +364,7 @@ wrok:	ret
 
 	.data
 
-abort	db	"crt0: program aborted.", 13, 10, '$'
+abort	db	"crt0: aborted.", 13, 10, '$'
 
 	.code
 
@@ -351,6 +376,13 @@ Craise:	mov	dx,offset abort
 	int	DOS
 	mov	ax,4c7fh
 	int	DOS
+	ret
+
+; int signal(int sig, int (*handler)())
+
+	public	Csignal
+Csignal:
+	mov	ax,-2		; dummy, return SIG_ERR
 	ret
 
 ; int _lseek(int fd, int where, int how);

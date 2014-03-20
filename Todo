@@ -1,6 +1,4 @@
 
-	- test Darwin port
-
 	- clean up sym.c
 
 	? add parameterized macros

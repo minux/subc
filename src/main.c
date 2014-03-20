@@ -167,7 +167,7 @@ static void link(void) {
 	k = strlen(cmd);
 	for (i=0; i<Nf; i++)
 		k = concat(k, cmd, Files[i]);
-	concat(k, cmd, SCCLIBC);
+	k = concat(k, cmd, SCCLIBC);
 	concat(k, cmd, SYSLIBC);
 	sprintf(cmd2, cmd, SCCDIR);
 	if (O_verbose > 1) printf("%s\n", cmd2);
@@ -242,7 +242,7 @@ int main(int argc, char *argv[]) {
 	O_componly = 0;
 	O_asmonly = 0;
 	O_testonly = 0;
-	O_outfile = "a.out";
+	O_outfile = AOUTNAME;
 	for (i=1; i<argc; i++) {
 		if (*argv[i] != '-') break;
 		if (!strcmp(argv[i], "-")) {
