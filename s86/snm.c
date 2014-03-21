@@ -77,7 +77,7 @@ void nm_obj(FILE *f) {
 	if (fread(ohd, 1, OHDSZ, f) != OHDSZ)
 		readerr();
 	off = ohd[OPUBP] + (ohd[OPUBP+1]<<8);
-	fseek(f, off, SEEK_SET);
+	ufseek(f, off, SEEK_SET);
 	nm_sym(f);
 }
 
@@ -98,7 +98,13 @@ void nm_exec(FILE *f) {
 		off -= 128;
 	}
 	off = --off * 512 + xh[X_NBYTES] + (xh[X_NBYTES+1]<<8);
-	fseek(f, 65536*p2+off, SEEK_SET);
+	rewind(f);
+	if (p2) {
+		fseek(f, 30000, SEEK_CUR);
+		fseek(f, 30000, SEEK_CUR);
+		fseek(f,  5536, SEEK_CUR);
+	}
+	fseek(f, off, SEEK_SET);
 	if (fread(&magic, 1, 2, f) != 2) {
 		error("stripped executable: %s", Fname);
 		return;
@@ -131,12 +137,12 @@ void nm_arc(FILE *f) {
 		if (fread(ohd, 1, OHDSZ, f) != OHDSZ)
 			readerr();
 		if (ohd[OMAGIC] == O_MAGIC) {
-			fseek(f, pos, SEEK_SET);
-			fseek(f, ohd[OPUBP] + (ohd[OPUBP+1]<<8), SEEK_CUR);
+			ufseek(f, pos, SEEK_SET);
+			ufseek(f, ohd[OPUBP] + (ohd[OPUBP+1]<<8), SEEK_CUR);
 			nm_sym(f);
 		}
-		fseek(f, pos, SEEK_SET);
-		fseek(f, 1*i, SEEK_CUR);
+		ufseek(f, pos, SEEK_SET);
+		ufseek(f, i, SEEK_CUR);
 		while (i++%16) fgetc(f);
 	}
 }

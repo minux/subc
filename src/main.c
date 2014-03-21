@@ -83,6 +83,7 @@ static void compile(char *file, char *def) {
 	char	*ofile;
 
 	init();
+	ofile = NULL;
 	defarg(def);
 	if (file) {
 		ofile = newfilename(file, 's');
@@ -120,10 +121,11 @@ static void compile(char *file, char *def) {
 	if (O_debug & D_STAT) stats();
 }
 
-static void collect(char *file) {
+static void collect(char *file, int temp) {
 	if (O_componly || O_asmonly) return;
 	if (Nf >= MAXFILES)
 		cmderror("too many input files", NULL);
+	Temp[Nf] = temp;
 	Files[Nf++] = file;
 }
 
@@ -132,7 +134,7 @@ static void assemble(char *file, int delete) {
 	char	cmd[TEXTLEN+1];
 
 	file = newfilename(file, 's');
-	collect(ofile = newfilename(file, 'o'));
+	collect(ofile = newfilename(file, 'o'), 1);
 	if (strlen(file) + strlen(ofile) + strlen(ASCMD) >= TEXTLEN)
 		cmderror("assembler command too long", NULL);
 	sprintf(cmd, ASCMD, ofile, file);
@@ -175,8 +177,10 @@ static void link(void) {
 		cmderror("linker invocation failed", NULL);
 	if (O_verbose > 2) printf("rm ");
 	for (i=0; i<Nf; i++) {
-		if (O_verbose > 2) printf(" %s", Files[i]);
-		remove(Files[i]);
+		if (Temp[i]) {
+			if (O_verbose > 2) printf(" %s", Files[i]);
+			remove(Files[i]);
+		}
 	}
 	if (O_verbose > 2) printf("\n");
 }
@@ -306,7 +310,7 @@ int main(int argc, char *argv[]) {
 		else {
 			if (!exists(argv[i])) cmderror("no such file: %s",
 							argv[i]);
-			collect(argv[i++]);
+			collect(argv[i++], 0);
 		}
 	}
 	if (!O_componly && !O_testonly) link();

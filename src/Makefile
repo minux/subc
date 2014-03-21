@@ -4,7 +4,7 @@ SCCDIR=	$(PREFIX)/scc
 BINDIR=	$(PREFIX)/bin
 SC86DIR=$(PREFIX)/scc86
 
-LINT=	gcc -c -o /dev/null -ansi -pedantic -Wall
+LINT=	gcc -O3 -c -o /dev/null -ansi -pedantic -Wall
 
 SRC=	cexpr.c cg.c decl.c error.c expr.c gen.c \
 	main.c misc.c prep.c scan.c stmt.c sym.c

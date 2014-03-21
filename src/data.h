@@ -64,6 +64,7 @@ _extern int	Q_cmp;
 _extern int	Q_bool;
 
 _extern char	*Files[MAXFILES];
+_extern char	Temp[MAXFILES];
 _extern int	Nf;
 
 _extern int	O_verbose;

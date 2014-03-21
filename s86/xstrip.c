@@ -60,7 +60,13 @@ void strip(char *name) {
 		off -= 128;
 	}
 	off = --off * 512 + xh[X_NBYTES] + (xh[X_NBYTES+1]<<8);
-	fseek(f, 65536*p2+off, SEEK_SET);
+	rewind(f);
+	if (p2) {
+		fseek(f, 30000, SEEK_CUR);
+		fseek(f, 30000, SEEK_CUR);
+		fseek(f,  5536, SEEK_CUR);
+	}
+	ufseek(f, off, SEEK_SET);
 	if (fread(magic, 1, 2, f) != 2) {
 		error("file has no symbol table: %s", name);
 		fclose(f);

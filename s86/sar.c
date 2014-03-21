@@ -94,7 +94,7 @@ void toc(FILE *arc, int v) {
 		else
 			printf("%s\n", &Arh[AR_NAME]);
 
-		fseek(arc, 1*i, SEEK_CUR);
+		ufseek(arc, 1*i, SEEK_CUR);
 		while (i++%16) fgetc(arc);
 	}
 }
@@ -153,7 +153,7 @@ void extract(FILE *arc, char **vlist, int verbose) {
 			fclose(out);
 		}
 		else {
-			fseek(arc, i, SEEK_CUR);
+			ufseek(arc, i, SEEK_CUR);
 		}
 		while (i++%16) fgetc(arc);
 	}
@@ -217,7 +217,7 @@ void ranlib(char *name, int verbose) {
 			}
 			isize += SSIZE;
 		}
-		fseek(arc, 1*size - rd, SEEK_CUR);
+		ufseek(arc, size - rd, SEEK_CUR);
 		while (size++%16) fgetc(arc);
 	}
 	fputc(0, tmp);

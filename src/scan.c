@@ -265,7 +265,7 @@ static int keyword(char *s) {
 		if (!strcmp(s, "while")) return WHILE;
 		break;
 	case '_':
-		if (!strcmp(s, "__argc")) return __ARGC;
+		if (!strcmp(s, "__argc")) return ARGC;
 		break;
 	}
 	return 0;

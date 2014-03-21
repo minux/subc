@@ -290,11 +290,11 @@ void load(char *name) {
 		t = fgetc(Rtmp);
 		a = fgetc(Rtmp);
 		a += fgetc(Rtmp) << 8;
-		fseek(Rbuf, a, SEEK_SET);
+		ufseek(Rbuf, a, SEEK_SET);
 		k = fgetc(Rbuf);
 		k += fgetc(Rbuf)<<8;
 		k += (t == SCODE? Codep: Datap);
-		fseek(Rbuf, a, SEEK_SET);
+		ufseek(Rbuf, a, SEEK_SET);
 		fputc(k, Rbuf);
 		fputc(k>>8, Rbuf);
 		if (debug) {
@@ -344,7 +344,7 @@ void resolve(int ptr, int addr, int class) {
 			printf(" %04x%s%s",
 				la, (Extsym[ptr+MKFLAG] & MKREL)? "R": "A",
 				!(++i%10)? "\n": "");
-		fseek(Ctmp, la, SEEK_SET);
+		ufseek(Ctmp, la, SEEK_SET);
 		if (Extsym[ptr+MKFLAG] & MKREL) {
 			va = addr-la-2;
 			fputc(va & 0xff, Ctmp);
@@ -354,7 +354,7 @@ void resolve(int ptr, int addr, int class) {
 			va = (fgetc(Ctmp) & 0xff);
 			va += (fgetc(Ctmp) << 8);
 			va += addr;
-			fseek(Ctmp, la, SEEK_SET);
+			ufseek(Ctmp, la, SEEK_SET);
 			fputc(va & 0xff, Ctmp);
 			fputc(va >> 8, Ctmp);
 		}
@@ -482,7 +482,7 @@ void bind(void) {
 		n += hdsz;
 		if (debug) printf(" %04x", n);
 		relp += 4;
-		fseek(Exef, n, SEEK_SET);
+		ufseek(Exef, n, SEEK_SET);
 		fputc(Codep&0xff, Exef);
 		fputc(Codep>>8, Exef);
 	}
@@ -550,7 +550,7 @@ void loadlib(char *name, int verbose) {
 		res_done = 0;
 		ptr = ARH_LEN;
 		for (; ptr < hdlen+ARH_LEN; ptr += SSIZE) {
-			fseek(libf, 1*ptr, SEEK_SET);
+			ufseek(libf, ptr, SEEK_SET);
 			if (fread(sym, 1, SSIZE, libf) != SSIZE) readerr();
 			for (i=0; i<SYM_SZ; i+=SSIZE) {
 				if (Symtab[i+SCLASS] == EXTRN) {
@@ -558,7 +558,7 @@ void loadlib(char *name, int verbose) {
 						ip = &sym[SADDR];
 						k = ip[0] + (ip[1]<<8);
 						pos = (k<<4) + hdlen;
-						fseek(libf, pos, SEEK_SET);
+						ufseek(libf, pos, SEEK_SET);
 						if (fread(Arh, 1, ARH_LEN,
 						    libf) != ARH_LEN)
 							readerr();

@@ -153,12 +153,12 @@ void resolve(char *sym, int addr) {
 			printf(" %04x%s",
 				a, (Marks[ptr+MKFLAG] & MKREL)? "R": "A");
 		if (!(Marks[ptr+MKFLAG] & MKREL)) {
-			fseek(Scode, a, SEEK_SET);
+			ufseek(Scode, a, SEEK_SET);
 			l = fgetc(Scode);
 			h = fgetc(Scode);
 			pt = (h << 8) | l;
 			pt += addr;
-			fseek(Scode, a, SEEK_SET);
+			ufseek(Scode, a, SEEK_SET);
 			fputc(pt, Scode);
 			fputc(pt>>8, Scode);
 			reloc(a, sym[SSEGMT]);
@@ -172,7 +172,7 @@ void resolve(char *sym, int addr) {
 			*/
 		}
 		else {
-			fseek(Scode, a, SEEK_SET);
+			ufseek(Scode, a, SEEK_SET);
 	 		disp = addr-a-((Marks[ptr+MKFLAG] & MKSHORT)? 1: 2);
 			if (Marks[ptr+MKFLAG] & MKSHORT) {
 				if (disp < -128 || disp > 127) {

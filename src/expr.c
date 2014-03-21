@@ -18,7 +18,7 @@ int expr(int *lv, int cvoid);
  *	  IDENT
  *	| INTLIT
  *	| string
- *	| __ARGC
+ *	| ARGC
  *	| ( expr )
  *
  * string :=
@@ -96,7 +96,7 @@ static int primary(int *lv) {
 		a = expr(lv, 0);
 		rparen();
 		return a;
-	case __ARGC:
+	case ARGC:
 		Token = scan();
 		genargc();
 		lv[LVPRIM] = PINT;
@@ -341,7 +341,7 @@ static int postfix(int *lv) {
 static int prefix(int *lv);
 
 void comp_size(void) {
-	int	k, y, lv[LV];
+	int	k = 0, y, lv[LV];
 
 	if (	CHAR == Token || INT == Token || VOID == Token ||
 		STRUCT == Token || UNION == Token
