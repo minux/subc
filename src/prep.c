@@ -177,7 +177,8 @@ void preproc(void) {
 	putback('#');
 	Token = scanraw();
 	if (	frozen(1) &&
-		(P_DEFINE == Token || P_INCLUDE == Token || P_UNDEF == Token)
+		P_IFDEF != Token && P_IFNDEF != Token &&
+		P_ELSE != Token && P_ENDIF != Token
 	) {
 		junkln();
 		return;

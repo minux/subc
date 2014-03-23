@@ -5,8 +5,8 @@
 void ufseek(FILE *fd, int pos, int how) {
 	if (pos < 0) {
 		fseek(fd, K16, how);
-		how = SEEK_CUR;
 		pos -= K16;
+		how = SEEK_CUR;
 		fseek(fd, K16, how);
 		pos -= K16;
 	}

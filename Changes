@@ -1,3 +1,7 @@
+2014-03-23 Fix: #error could be mistakenly executed in negative #ifdef.
+2014-03-22 Fix: fseek() could truncate files on DOS (zero-length _write()).
+2014-03-22 Fix: OpenBSD sys.h file had wrong name.
+2014-03-22 Changed default output file name for Windows.
 2014-03-21 Fix: sizeof(void) was not an error.
 2014-03-21 Made scc keep non-temporary object files.
 2014-03-21 Added ufseek() (unsigned fseek) function to S86.

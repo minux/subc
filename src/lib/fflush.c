@@ -20,7 +20,7 @@ static int _fflush(FILE *f) {
 	p = f->ptr;
 	e = f->end;
 	f->ptr = f->end = 0;
-	if (_write(f->fd, f->buf + p, e-p) == e-p)
+	if (e-p == 0 || _write(f->fd, f->buf + p, e-p) == e-p)
 		return 0;
 	errno = EIO;
 	return -1;

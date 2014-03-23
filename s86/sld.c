@@ -16,7 +16,7 @@
 
 /*
  * Resolve dependencies in memory;
- * fast but will not work on 16-bit systems.
+ * fast, but will not work on 16-bit systems.
  */
 /* #define INCORE	/**/
 
@@ -52,6 +52,8 @@ char	*Reloc;
 int	N_dosrel;
 
 char	Arh[ARH_LEN];
+
+#define LOGFILE	stdout
 
 void error(char *m, char *n) {
 	if (n)
@@ -141,7 +143,8 @@ int addsym(char *buf) {
 			memcpy(&Symtab[i], buf, SSIZE);
 			Symtab[i+SMARK] = Symtab[i+SMARK+1] = 0xff;
 			if (debug)
-				printf("add sym:\t%s (%c,%c) = %04x\n",
+				fprintf(LOGFILE,
+					"add sym:\t%s (%c,%c) = %04x\n",
 					buf, buf[SSEGMT], buf[SCLASS],
 					buf[SADDR] + (buf[SADDR+1] << 8));
 			add = i;
@@ -172,7 +175,8 @@ void mkmark(int si, char *ebuf) {
 			Extsym[i+MKADDR] = ebuf[MKADDR];
 			Extsym[i+MKADDR+1] = ebuf[MKADDR+1];
 			if (debug)
-				printf("mark:\t%s\tF=%02x\tA=%04x\tP=%04x\n",
+				fprintf(LOGFILE,
+					"mark:\t%s\tF=%02x\tA=%04x\tP=%04x\n",
 					&Symtab[si], Extsym[i+MKFLAG],
 					Extsym[i+MKADDR] +
 						(Extsym[i+MKADDR+1]<<8),
@@ -232,7 +236,7 @@ void load(char *name) {
 		if (fread(drel, 1, 2, Objf) != 2) readerr();
 		off += 2;
 		n = Codep + drel[0] + (drel[1]<<8);
-		if (debug) printf("DOS reloc:\t%04x\n", n);
+		if (debug) fprintf(LOGFILE, "DOS reloc:\t%04x\n", n);
 		drel[0] = n;
 		drel[1] = n>>8;
 		if (fwrite(drel, 1, 2, Exef) != 2) writeerr();
@@ -245,18 +249,18 @@ void load(char *name) {
 	nrel = n/3;
 	rewind(Rtmp);
 	for (i=n; i>0; ) {
-		k = i<BUFSIZ? i: BUFSIZ;
+		k = (char *) i < (char *) BUFSIZ? i: BUFSIZ;
 		if (fread(Buf, 1, k, Objf) != k) readerr();
 		if (fwrite(Buf, 1, k, Rtmp) != k) writeerr();
 		i -= k;
 	}
-	if (debug) printf("%d RELOC entries\n", nrel);
+	if (debug) fprintf(LOGFILE, "%d RELOC entries\n", nrel);
 	n = Ohd[ODATA] + (Ohd[ODATA+1]<<8) - off;
 	off += n;
 	if ((char *) n >= (char *) CODESZ) fatal("text area too large");
 	if (debug) {
-		printf("%d TEXT bytes\n", n);
-		printf("Relocating...\n");
+		fprintf(LOGFILE, "%d TEXT bytes\n", n);
+		fprintf(LOGFILE, "Relocating...\n");
 	}
 	rewind(Rtmp);
 #ifdef INCORE
@@ -271,17 +275,18 @@ void load(char *name) {
 		paddr[0] = k;
 		paddr[1] = k>>8;
 		if (debug) {
-			printf(" %04x%c%s",
+			fprintf(LOGFILE,
+				" %04x%c%s",
 				a, (char) t, !((i+1)%10)? "\n": "");
 			fflush(stdout);
 		}
 	}
-	if (debug) putchar('\n');
+	if (debug) fputc('\n', LOGFILE);
 	if (fwrite(Buffer, 1, n, Ctmp) != n) writeerr();
 #else
 	rewind(Rbuf);
-	for (i=n; i>0; ) {
-		k = i<BUFSIZ? i: BUFSIZ;
+	for (i=n; i; ) {
+		k = (char *) i < (char *) BUFSIZ? i: BUFSIZ;
 		if (fread(Buf, 1, k, Objf) != k) readerr();
 		if (fwrite(Buf, 1, k, Rbuf) != k) writeerr();
 		i -= k;
@@ -298,15 +303,16 @@ void load(char *name) {
 		fputc(k, Rbuf);
 		fputc(k>>8, Rbuf);
 		if (debug) {
-			printf(" %04x%c%s",
+			fprintf(LOGFILE,
+				" %04x%c%s",
 				a, (char) t, !((i+1)%10)? "\n": "");
 			fflush(stdout);
 		}
 	}
-	if (debug) putchar('\n');
+	if (debug) fputc('\n', LOGFILE);
 	rewind(Rbuf);
-	for (i=n; i>0; ) {
-		k = i<BUFSIZ? i: BUFSIZ;
+	for (i=n; i; ) {
+		k = (char *) i < (char *) BUFSIZ? i: BUFSIZ;
 		if (fread(Buf, 1, k, Rbuf) != k) readerr();
 		if (fwrite(Buf, 1, k, Ctmp) != k) writeerr();
 		i -= k;
@@ -330,7 +336,7 @@ void load(char *name) {
 	cmp = (Datap += size);
 	if ((char *) cmp < (char *) old || (char *) Datap > (char *) DATASZ)
 		fatal("data segment overflow");
-	if (debug) printf("%d DATA bytes\n", size);
+	if (debug) fprintf(LOGFILE, "%d DATA bytes\n", size);
 }
 
 void resolve(int ptr, int addr, int class) {
@@ -341,7 +347,8 @@ void resolve(int ptr, int addr, int class) {
 	while (ptr != 0xffff) {
 		la = Extsym[ptr+MKADDR] + (Extsym[ptr+MKADDR+1]<<8);
 		if (debug)
-			printf(" %04x%s%s",
+			fprintf(LOGFILE,
+				" %04x%s%s",
 				la, (Extsym[ptr+MKFLAG] & MKREL)? "R": "A",
 				!(++i%10)? "\n": "");
 		ufseek(Ctmp, la, SEEK_SET);
@@ -364,7 +371,7 @@ void resolve(int ptr, int addr, int class) {
 	}
 	fseek(Ctmp, 0, SEEK_END);
 	clearerr(Ctmp);
-	if (debug) putchar('\n');
+	if (debug) fputc('\n', LOGFILE);
 }
 
 void try_reslv(void) {
@@ -380,7 +387,7 @@ void try_reslv(void) {
 						addr = (Symtab[j+SADDR]&0xff)+
 						       (Symtab[j+SADDR+1]<<8);
 						if (debug)
-							printf(
+							fprintf(LOGFILE,
 						"resolving:\t%s (%04x) ...\n",
 							&Symtab[i], addr);
 						resolve(ptr, addr,
@@ -457,10 +464,14 @@ void bind(void) {
 	seg2 = 0;
 	o = t = Codep;
 	t += Datap;
-	if (o > t) seg2 = 1;
+	if ((char *) o > (char *) t) seg2 = 128;
 	t += hdsz;
-	if (o > t) seg2 = 1;
-	k = t/512+(seg2? 128: 0)+1;
+	if ((char *) o > (char *) t) seg2 = 128;
+	if (t & 0x8000) {
+		seg2 += 64;
+		t &= 0x7fff;
+	}
+	k = t/512 + seg2 + 1;
 	Xhd[X_NPAGES] = k;
 	Xhd[X_NPAGES+1] = k>>8;
 	k = t%512-1;
@@ -473,20 +484,20 @@ void bind(void) {
 	k = Codep + Datap + 1;
 	Xhd[X_SSEG] = k;
 	Xhd[X_SSEG+1] = k>>8;
-	if (debug) printf("DGROUP refs:");
+	if (debug) fprintf(LOGFILE, "DGROUP refs:");
 	fseek(Exef, XORELOC, SEEK_SET);
 	if (N_dosrel > NDOSREL) fatal("DOSRELOC overflow");
 	if (fread(DOSRel, 1, N_dosrel<<2, Exef) != N_dosrel<<2) readerr();
 	for (i=0, relp = DOSRel; i<N_dosrel; i++) {
 		n = relp[0] | (relp[1] << 8);
 		n += hdsz;
-		if (debug) printf(" %04x", n);
+		if (debug) fprintf(LOGFILE, " %04x", n);
 		relp += 4;
 		ufseek(Exef, n, SEEK_SET);
 		fputc(Codep&0xff, Exef);
 		fputc(Codep>>8, Exef);
 	}
-	if (debug) putchar('\n');
+	if (debug) fputc('\n', LOGFILE);
 }
 
 void wr_symtab(void) {
@@ -696,7 +707,7 @@ int main(int argc, char **argv) {
 	if (verbose) {
 		Codep <<= 4;
 		Datap <<= 4;
-		printf("%5d (0x%04x) code bytes\n%5d (0x%04x) data bytes\n",
+		printf("%5d (%#04x) code bytes\n%5d (%#04x) data bytes\n",
 			Codep, Codep, Datap, Datap);
 	}
 	return 0;
