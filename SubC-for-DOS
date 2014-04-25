@@ -1,36 +1,42 @@
 
 
-	SUBC CROSS COMPILER FOR DOS/8086
+	SUBC COMPILER FOR DOS/8086
 
-	**************************************************************
-	*** The DOS/8086 port is HIGHLY EXPERIMENTAL at the moment ***
-	**************************************************************
+	*************************************************************
+	*** The DOS/8086 port is still experimental at the moment ***
+	*************************************************************
 
-	As of version 2014-03-23, the SubC compiler has some limited
-	support for cross-compiling SubC to DOS/8086 EXE format. The
-	following limitations currently exist:
-
-	* The tool chain can only generate small-model EXE files.
-
-	  The SubC compiler itself is too big to fit in a small-model
-	  DOS executable.
+	The SubC compiler can now be cross-compiled for DOS with the
+	following limitations:
 
 	* There is no BSS segment, so static arrays are packed
 	  into the data segment, thereby increasing the size of
-	  the resulting EXE file unnecessarily. Note: this is
-	  unrelated to the above issues.
-
+	  the resulting EXE file unnecessarily.
 	  Workaround: use malloc() instead of static arrays.
 
 	* There are some subtle differences between S86 and popular
 	  DOS assemblers, e.g.: S86 assumes that undefined symbols
-	  are external, etc.
+	  are external. So SubC can only be bootstrapped with S86 for
+	  the time being.
 
-	The S86 tool chain and related utilities originally had quite
-	a few 16-bit dependencies. They have been modified to run on
-	32- and 64-bit hosts, and probably do not run on 16-bit
-	systems any longer, so bootstrapping the compiler on a DOS
-	system is currently not possible.
+	* The compiler consists of two separate executables: the
+	  compiler controller (scc.exe) and the compiler itself
+	  (sccmain.exe), because a combined executable would not
+	  fit in a 64K text segment.
+
+	* Pipe mode (-), test mode (-t), and debug mode (-d x) currently
+	  do not work.
+
+	* The library path of the compiler is hardwired into the
+	  binary and defaults to ".", i.e.: the compiler works only
+	  in its own base directory. You can re-compile it with a
+	  different path, though.
+
+	* The I/O functions of the compiler use Unix file format, i.e.
+	  LF instead of CR/LF to separate lines.
+
+	* All compiler and toolchain executables use Unix path names.
+	  Using \ the place of / will probably confuse them.
 
 
 	STATUS
@@ -41,46 +47,51 @@
 	be tested due to lack of _fork() and _execve(), but they can be
 	checked with the sys tool (also contained in tests/).
 
+	Scc86 also passes the triple test, but there is currently no
+	make target or script for this step.
 
-	COMPILING AND INSTALLING SCC86
 
-	First build and install the SubC compiler for your platform.
-	If your platform is not supported, you are currently out of
-	luck.
+	COMPILING AND INSTALLING SCC86 (UNIX->DOS CROSS COMPILER)
 
-	To build the DOS/8086 cross compiler, run:
+	First build and install the SubC compiler for your platform. If
+	your platform is not supported, you are currently out of luck.
+
+	Next build the DOS/8086 cross compiler. First configure the
+	build process for DOS:
 
 		./configure -m 8086 -s DOS
 
 	Then cd to src/ and run make:
 
+		cd src
 		make
 
-	This step will build the stage-zero cross compiler scc0, the
-	DOS crt0 file, and the DOS/8086 runtime library.
+	This step will build the stage-zero cross compiler scc0, the DOS
+	crt0 file, and the DOS/8086 runtime library.
 
-	You *cannot* triple-test this compiler on a Unix machine,
-	because it emits 8086 instructions in TASM format.
+	You *cannot* triple-test this compiler on a Unix machine, because
+	it emits 8086 instructions in TASM format.
 
 	To install the cross compiler, run
 
+		make dirs86          # make directories
 		make install-scc86
 
 	This step will install the include files and runtime support
 	in $(PREFIX)/scc86 and the cross compiler binary as scc86 in
 	$(BINDIR).
 
-	You also need to build and install the s86 tool chain, which
-	is contained in the s86 directory:
+	You also need to build and install the s86 tool chain, which is
+	contained in the s86 directory:
 
 		cd ../s86
 		make all
 
 	BTW, if you plan to compile these programs with a C compiler
-	other than SubC, you will have to make sure that the char
-	data type is unsigned.
+	other than SubC, you will at least have to make sure that the
+	char data type is unsigned.
 
-	Edit at least the BINDIR variable in Makefile before installing:
+	Edit the BINDIR variable in Makefile before installing:
 
 		vi Makefile   # change BINDIR
 		make install
@@ -91,4 +102,58 @@
 		scc86 file.c ...
 
 	The output will be placed in a file named "aout.exe" by default.
+
+
+	CROSS-COMPILING AND INSTALLING SUBC FOR DOS
+
+	The S86 tool chain can be cross-compiled by running "make exe"
+	in the s86/ directory:
+
+		(cd s86; make exe)
+
+	The next step is to compile the compiler itself. The process is
+	similar to building the cross compiler (as described above):
+
+		./configure -s DOS -m 8086
+		cd src
+		make
+
+	At this point the cross compiler and the runtime support files
+	have been built. The stage-0 cross compiler can now be used to
+	build the DOS-hosted compiler:
+
+		make exe
+
+	Installing the resulting stage-1 compiler does not make any
+	sense on a Unix system, but you can package the compiler in a
+	ZIP file using
+
+		make subc-dos.zip
+
+	and transfer that file to a DOS machine. On that machine, simply
+	unpack the ZIP archive.
+
+	NOTE: The SCC command can then be used to compile SubC programs,
+	but *only* inside of that directory, because the library and
+	include paths are hardwired to "./lib" and "./include".
+
+	To change the default paths of the compiler, edit the SCCDIR
+	variable in the src/defs.h file of the SubC installation on your
+	*DOS* system, and then run the dosbuild.bat file:
+
+		EDIT SRC\DEFS.H   # change SCCDIR to the CWD
+		DOSBUILD.BAT YES
+
+	Finally copy the new compiler binary into place (saving the old
+	one in case the build failed):
+
+		COPY SCCMAIN.EXE SCCMAIN.OLD
+		COPY SCCMAIN1.EXE SCCMAIN.EXE
+
+	At this point, you can just run the dosbuild.bat script once
+	again and then strip and compare sccmain.exe and sccmain1.exe.
+	If they are identical, the compiler has passed the triple test.
+	Use s86/xstrip (XSTRIP.EXE) to strip s86-generated EXE files.
+
+	You can now compile SubC programs on your DOS machine. Have fun!
 

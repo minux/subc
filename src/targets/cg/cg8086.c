@@ -28,7 +28,6 @@ void cgsynth(char *op) {
 	case addr_globl:	sgen("%s\tax,offset %s", op, s); break;
 	case addr_label:	lgen("%s\tax,offset %c%d", op, n); break;
 	case literal: 		ngen("%s\tax,%d", op, n); break;
-	case arg_count:		ngen("%s\tax,[bp%+d]", op, 4); break;
 	case auto_word:		ngen("%s\tax,[bp%+d]", op, n); break;
 	case static_word:	lgen("%s\tax,%c%d", op, n); break;
 	case globl_word:	sgen("%s\tax,%s", op, s); break;
@@ -59,7 +58,6 @@ int cgload2(void) {
 	case addr_globl:	sgen("%s\tcx,offset %s", op, s); break;
 	case addr_label:	lgen("%s\tcx,offset %c%d", op, n); break;
 	case literal: 		ngen("%s\tcx,%d", op, n); break;
-	case arg_count:		ngen("%s\tcx,[bp%+d]", op, 4); break;
 	case auto_byte:		cgclear2();
 				ngen("%s\tcl,[bp%+d]", op, n);
 				break;
@@ -98,7 +96,6 @@ void cgindb(void)	{ gen("mov\tbx,ax");
 			  gen("mov\tal,[bx]"); }
 void cgindw(void)	{ gen("mov\tbx,ax");
 			  gen("mov\tax,[bx]"); }
-void cgargc(void)	{ gen("mov\tax,[bp+4]"); }
 void cgldlab(int id)	{ lgen("%s\tax,offset %c%d", "mov", id); }
 
 void cgpush(void)	{ gen("push\tax"); }

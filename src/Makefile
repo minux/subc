@@ -38,9 +38,40 @@ RANLIB=	ranlib
 
 all:	scc0 crt0 lib
 
+scc:	scc1 $(SRC)
+	./scc1 -o scc $(SRC)
+
+scc1:	scc0 lib/crt0.o lib/libscc.a $(SRC)
+	./scc0 -o scc1 $(SRC)
+
+scc0:	$(SRC)
+	$(CC) -o scc0 $(SRC)
+
+$(SRC):	$(HDRS)
+
+lib/libscc.a:	$(LIBOBJS)
+	$(AR) lib/libscc.a $(LIBOBJS)
+	$(RANLIB) lib/libscc.a
+
+lib/crt0.o:	lib/crt0.s
+	$(AS) -o lib/crt0.o lib/crt0.s
+
+libscc.a:	$(OBJS)
+
 lib:	lib/libscc.a
 
 crt0:	lib/crt0.o
+
+exe:	scc.exe sccmain.exe
+
+scc.exe:	main.c
+	./scc0 -o scc.exe main.c
+
+sccmain.exe:	$(SRC) targets/lib/ulibc.c targets/dos-8086/dosmain.c
+	./scc0 -c *.c && rm -f main.o
+	./scc0 -o ulibc.o -c targets/lib/ulibc.c
+	./scc0 -o dosmain.o -c targets/dos-8086/dosmain.c
+	sld -o sccmain.exe lib/crt0.o *.o lib/libscc.a
 
 tests:	test ptest systest libtest
 
@@ -92,25 +123,31 @@ install-scc86:	all
 	cp include/* $(SC86DIR)/include
 	cp lib/libscc.a lib/crt0.o $(SC86DIR)/lib
 
-scc:	scc1 $(SRC)
-	./scc1 -o scc $(SRC)
-
-scc1:	scc0 lib/crt0.o lib/libscc.a $(SRC)
-	./scc0 -o scc1 $(SRC)
-
-scc0:	$(SRC)
-	$(CC) -o scc0 $(SRC)
-
-lib/libscc.a:	$(LIBOBJS)
-	$(AR) lib/libscc.a $(LIBOBJS)
-	$(RANLIB) lib/libscc.a
-
-lib/crt0.o:	lib/crt0.s
-	$(AS) -o lib/crt0.o lib/crt0.s
-
-libscc.a:	$(OBJS)
-
-$(SRC):	$(HDRS)
+subc-dos.zip:
+	mkdir subc-dos
+	mkdir subc-dos/include
+	mkdir subc-dos/lib
+	mkdir subc-dos/src
+	cp include/* subc-dos/include
+	cp lib/crt0.o lib/libscc.a subc-dos/lib
+	cp *.[ch] targets/lib/ulibc.c targets/dos-8086/dosmain.c subc-dos/src
+	cp targets/dos-8086/dosbuild.bat targets/dos-8086/link.lst subc-dos
+	cp scc.exe sccmain.exe subc-dos
+	cp ../s86/*.exe subc-dos
+	echo "This a binary-only archive of SubC for DOS/8086." \
+		> subc-dos/ABOUT.TXT
+	echo "You can find the source code at http://t3x.org." \
+		>> subc-dos/ABOUT.TXT
+	echo "The SubC compiler is in the public domain." \
+		>> subc-dos/ABOUT.TXT
+	echo "WARNING:" >> subc-dos/ABOUT.TXT
+	echo "Most text files in this archive are in Unix format!" \
+		>> subc-dos/ABOUT.TXT
+	echo "The compiler will not accept input in DOS format!" \
+		>> subc-dos/ABOUT.TXT
+	sed -e 's/$$/~/' <../README | tr '~' '\015' >subc-dos/README.TXT
+	zip -9r subc-dos.zip subc-dos
+	rm -r subc-dos
 
 .c.o:
 	./scc0 -c $<
@@ -131,4 +168,4 @@ lint:
 
 clean:
 	rm -f scc0 scc1 scc2 scc scc86 test.s *.o *.core core a.out \
-		lib/crt0.o *.tmp lib/*.o lib/libscc.a *.exe
+		lib/crt0.o *.tmp lib/*.o lib/libscc.a *.exe subc-dos.zip

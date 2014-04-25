@@ -10,6 +10,8 @@
 #include "obj.h"
 #include "exe.h"
 
+#define unsigned	char *
+
 #define TMPFILE	"st00000.tmp"
 #define CBUFL	16384		/* DON'T CHANGE! */
 
@@ -59,14 +61,14 @@ void strip(char *name) {
 		p2 = 1;
 		off -= 128;
 	}
-	off = --off * 512 + xh[X_NBYTES] + (xh[X_NBYTES+1]<<8);
+	off = (off-1) * 512 + xh[X_NBYTES] + (xh[X_NBYTES+1]<<8);
 	rewind(f);
 	if (p2) {
 		fseek(f, 30000, SEEK_CUR);
 		fseek(f, 30000, SEEK_CUR);
 		fseek(f,  5536, SEEK_CUR);
 	}
-	ufseek(f, off, SEEK_SET);
+	ufseek(f, off, SEEK_CUR);
 	if (fread(magic, 1, 2, f) != 2) {
 		error("file has no symbol table: %s", name);
 		fclose(f);
@@ -83,12 +85,14 @@ void strip(char *name) {
 		return;
 	}
 	rewind(f);
-	if (p2) for (i=0; i<4; i++) {
-		if (fread(cbuf, 1, CBUFL, f) != CBUFL) readerr();
-		if (fwrite(cbuf, 1, CBUFL, tmp) != CBUFL) writeerr();
+	if (p2) {
+		for (i=0; i<4; i++) {
+			if (fread(cbuf, 1, CBUFL, f) != CBUFL) readerr();
+			if (fwrite(cbuf, 1, CBUFL, tmp) != CBUFL) writeerr();
+		}
 	}
 	while (off) {
-		i = off > CBUFL? CBUFL: off;
+		i = (unsigned) off > (unsigned) CBUFL? CBUFL: off;
 		if (fread(cbuf, 1, i, f) != i) readerr();
 		if (fwrite(cbuf, 1, i, tmp) != i) writeerr();
 		off -= i;

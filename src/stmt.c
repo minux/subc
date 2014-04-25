@@ -280,7 +280,7 @@ static void while_stmt(void) {
 	Csp--;
 }
 
-void wrong_ctx(int t) {
+static void wrong_ctx(int t) {
 	if (DEFAULT == t) {
 		error("'default' not in 'switch' context", NULL);
 		Token = scan();

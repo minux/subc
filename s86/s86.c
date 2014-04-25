@@ -14,6 +14,8 @@
 #include "defs.h"
 #include "sym.h"
 
+#define unsigned	char *
+
 #define TMPDATA	"asd00000.tmp"
 #define TMPCODE	"asc00000.tmp"
 #define TMPRLOC	"asr00000.tmp"
@@ -23,6 +25,7 @@
 #define SYMSZ	32760
 #define MARKSZ	12280
 #define MACSZ	2048
+#define CACHESZ	1024
 
 char	*Marks;
 char	DosReloc[NDOSREL];
@@ -36,6 +39,8 @@ FILE	*Sdata;
 FILE	*Scode;
 FILE	*Sreloc;
 char	Linebuf[MAXLN+1];
+char	Cache[CACHESZ];
+int	Ncached, Cachebot;
 char	*Label, *Instr, *Oper1, *Oper2, *Aoper;
 int	Off1, Off2;
 int	Line;
@@ -113,6 +118,25 @@ int classof(char *name) {
 	return SNONE;
 }
 
+void flushcache(void) {
+	if (Ncached) {
+		fseek(Scode, 0, SEEK_END);
+		fwrite(Cache, 1, Ncached, Scode);
+	}
+	Cachebot += Ncached;
+	Ncached = 0;
+}
+
+void putcache(int v) {
+	if (Ncached >= CACHESZ)
+		flushcache();
+	Cache[Ncached++] = v;
+}
+
+int incache(int a) {
+	return (unsigned) a >= (unsigned) Cachebot;
+}
+
 void mark(char *name, int class, int addr, int shrt, int rel) {
 	int	i, sym;
 
@@ -153,38 +177,55 @@ void resolve(char *sym, int addr) {
 			printf(" %04x%s",
 				a, (Marks[ptr+MKFLAG] & MKREL)? "R": "A");
 		if (!(Marks[ptr+MKFLAG] & MKREL)) {
-			ufseek(Scode, a, SEEK_SET);
-			l = fgetc(Scode);
-			h = fgetc(Scode);
-			pt = (h << 8) | l;
-			pt += addr;
-			ufseek(Scode, a, SEEK_SET);
-			fputc(pt, Scode);
-			fputc(pt>>8, Scode);
-			reloc(a, sym[SSEGMT]);
-			/*
-			cp = &Code[a];
-			pt = cp[0] | (cp[1] << 8);
-			pt += addr;
-			cp[0] = pt;
-			cp[1] = pt >> 8;
-			reloc(a, sym[SSEGMT]);
-			*/
-		}
-		else {
-			ufseek(Scode, a, SEEK_SET);
-	 		disp = addr-a-((Marks[ptr+MKFLAG] & MKSHORT)? 1: 2);
-			if (Marks[ptr+MKFLAG] & MKSHORT) {
-				if (disp < -128 || disp > 127) {
-					printf(
-					 "short jump to %s out of range\n",
-					 sym);
-				}
-				fputc(disp, Scode);
+			if (incache(a)) {
+				cp = &Cache[a-Cachebot];
+				pt = cp[0] | (cp[1] << 8);
+				pt += addr;
+				cp[0] = pt;
+				cp[1] = pt >> 8;
 			}
 			else {
-				fputc(disp, Scode);
-				fputc(disp >> 8, Scode);
+				flushcache();
+				ufseek(Scode, a, SEEK_SET);
+				l = fgetc(Scode);
+				h = fgetc(Scode);
+				pt = (h << 8) | l;
+				pt += addr;
+				fseek(Scode, -2, SEEK_CUR);
+				fputc(pt, Scode);
+				fputc(pt>>8, Scode);
+			}
+			reloc(a, sym[SSEGMT]);
+		}
+		else {
+ 			disp = addr - a -
+ 				((Marks[ptr+MKFLAG] & MKSHORT)? 1: 2);
+			if (	Marks[ptr+MKFLAG] & MKSHORT &&
+				(disp < -128 || disp > 127))
+			{
+				printf("short jump to %s out of range\n",
+				 	sym);
+			}
+			if (incache(a)) {
+				cp = &Cache[a-Cachebot];
+				if (Marks[ptr+MKFLAG] & MKSHORT) {
+					cp[0] = disp;
+				}
+				else {
+					cp[0] = disp;
+					cp[1] = disp >> 8;
+				}
+			}
+			else {
+				flushcache();
+				ufseek(Scode, a, SEEK_SET);
+				if (Marks[ptr+MKFLAG] & MKSHORT) {
+					fputc(disp, Scode);
+				}
+				else {
+					fputc(disp, Scode);
+					fputc(disp >> 8, Scode);
+				}
 			}
 		}
 		a = ptr;
@@ -226,6 +267,7 @@ void eject(char *srcname, char *objname) {
 		strcat(objname, ".o");
 	}
 	rewind(Sdata);
+	flushcache();
 	rewind(Scode);
 	rewind(Sreloc);
 	if ((outfile = fopen(objname, "wb")) == NULL) {
@@ -328,12 +370,12 @@ void bigval(void) {
 }
 
 void csizechk(int len) {
-	if ((char *) (Ctop + len) > (char *) CODESZ)
+	if ((unsigned) (Ctop + len) > (unsigned) CODESZ)
 		fatal("code segment too big");
 }
 
 void dsizechk(int len) {
-	if ((char *) (Dtop + len) > (char *) DATASZ)
+	if ((unsigned) (Dtop + len) > (unsigned) DATASZ)
 		fatal("data segment too big");
 }
 
@@ -344,7 +386,7 @@ void emit(int val, int count) {
 	if (Segment == SCODE) {
 		csizechk(count);
 		for (i=count; i--; Ctop++)
-			fputc(val, Scode);
+			putcache(val);
 	}
 	else if (Segment == SDATA) {
 		dsizechk(count);
@@ -365,8 +407,8 @@ void emitword(int val, int count) {
 	if (Segment == SCODE) {
 		csizechk(count<<1);
 		for (i=count; i--; Ctop += 2) {
-			fputc(l, Scode);
-			fputc(h, Scode);
+			putcache(l);
+			putcache(h);
 		}
 	}
 	else if (Segment == SDATA) {
@@ -1346,6 +1388,8 @@ int main(int argc, char **argv) {
 		}
 		Line = 0;
 		DosReltop = Reltop = Mactop = Ctop = Dtop = Symtop = 0;
+		Ncached = 0;
+		Cachebot = 0;
 		Segment = SNONE;
 		Errcnt = 0;
 		process();

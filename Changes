@@ -1,3 +1,22 @@
+2014-04-25 Fix: sizeof(symbol) could generate wrong code.
+2014-04-25 Fix: sizeof(array) returned wrong size.
+2014-04-25 Added more tests for void type in expressions.
+2014-04-07 Fixed XSTRIP and SNM programs on 16-bit systems.
+2014-04-05 Made s86 cache code for faster resolution of forward references.
+2014-04-05 Fix: missing file name in error messages due to refactoring.
+2014-04-03 Added DOS build script (targets/dos-8086/dosbuild.bat).
+2014-04-02 Clean-up and misc. small fixes.
+2014-04-01 The compiler can now be cross-compiled to DOS.
+2014-04-01 Updated codumentation.
+2014-04-01 Added DOS/EXE targets to Makefiles.
+2014-03-31 Made compiler controller a separate executable on DOS.
+2014-03-31 Factored out compiler controller.
+2014-03-29 Documented bootstrapping of the DOS version.
+2014-03-28 Added minimal runtime for compiling SCC86 on DOS.
+2014-03-28 Added system() function for DOS.
+2014-03-28 Added heap limit check to DOS _sbrk().
+2014-03-27 Fix: struct_type[x] generated wrong offset.
+2014-03-25 Turned __argc keyword into a local variable.
 2014-03-23 Fix: #error could be mistakenly executed in negative #ifdef.
 2014-03-22 Fix: fseek() could truncate files on DOS (zero-length _write()).
 2014-03-22 Fix: OpenBSD sys.h file had wrong name.

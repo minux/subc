@@ -481,6 +481,8 @@ void decl(int clss, int prim) {
 				Thisfn = addglob(name, prim, type, clss, size,
 					0, NULL, 0);
 				Token = scan();
+				addloc("__argc", PINT, TVARIABLE, CAUTO, 1,
+					2*BPW, 0);
 				lsize = localdecls();
 				gentext();
 				if (CPUBLIC == clss) genpublic(name);
@@ -624,4 +626,39 @@ void top(void) {
 		Token = synch(SEMI);
 		break;
 	}
+}
+
+static void stats(void) {
+	printf(	"Memory usage: "
+		"Symbols: %5d/%5d, "
+		"Name pool: %5d/%5d\n",
+		Globs, NSYMBOLS,
+		Nbot, POOLSIZE);
+}
+
+void defarg(char *s) {
+	char	*p;
+
+	if (NULL == s) return;
+	if ((p = strchr(s, '=')) != NULL)
+		*p++ = 0;
+	else
+		p = "";
+	addglob(s, 0, TMACRO, 0, 0, 0, globname(p), 0);
+	if (*p) *--p = '=';
+}
+
+void program(char *name, FILE *in, FILE *out, char *def) {
+	init();
+	defarg(def);
+	Infile = in;
+	Outfile = out;
+	File = Basefile = name;
+	genprelude();
+	Token = scan();
+	while (XEOF != Token)
+		top();
+	genpostlude();
+	if (O_debug & D_GSYM) dumpsyms("GLOBALS", "", 1, Globs);
+	if (O_debug & D_STAT) stats();
 }

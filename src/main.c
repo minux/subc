@@ -9,38 +9,27 @@
 #undef _extern
 #include "decl.h"
 
-static void init(void) {
-	Line = 1;
-	Putback = '\n';
-	Rejected = -1;
-	Errors = 0;
-	Mp = 0;
-	Expandmac = 1;
-	Syntoken = 0;
-	Isp = 0;
-	Inclev = 0;
-	Globs = 0;
-	Locs = NSYMBOLS;
-	Nbot = 0;
-	Ntop = POOLSIZE;
-	Bsp = 0;
-	Csp = 0;
-	Q_type = empty;
-	Q_cmp = cnone;
-	Q_bool = bnone;
-	addglob("", 0, 0, 0, 0, 0, NULL, 0);
-	addglob("__SUBC__", 0, TMACRO, 0, 0, 0, globname(""), 0);
-	Infile = stdin;
-	File = "(stdin)";
-	Basefile = NULL;
-	Outfile = stdout;
-}
-
 static void cmderror(char *s, char *a) {
 	fprintf(stderr, "scc: ");
 	fprintf(stderr, s, a);
 	fputc('\n', stderr);
 	exit(EXIT_FAILURE);
+}
+
+void cleanup(void) {
+	if (!O_testonly && NULL != Basefile) {
+		remove(newfilename(Basefile, 's'));
+		remove(newfilename(Basefile, 'o'));
+	}
+}
+
+char *newfilename(char *file, int sfx) {
+	char	*ofile;
+
+	if ((ofile = strdup(file)) == NULL)
+		cmderror("too many file names", NULL);
+	ofile[strlen(ofile)-1] = sfx;
+	return ofile;
 }
 
 static int filetype(char *file) {
@@ -59,46 +48,52 @@ static int exists(char *file) {
 	return 1;
 }
 
-static void defarg(char *s) {
-	char	*p;
-
-	if (NULL == s) return;
-	if ((p = strchr(s, '=')) != NULL)
-		*p++ = 0;
-	else
-		p = "";
-	addglob(s, 0, TMACRO, 0, 0, 0, globname(p), 0);
-	if (*p) *--p = '=';
-}
-
-static void stats(void) {
-	printf(	"Memory usage: "
-		"Symbols: %5d/%5d, "
-		"Name pool: %5d/%5d\n",
-		Globs, NSYMBOLS,
-		Nbot, POOLSIZE);
-}
+#ifdef __dos
 
 static void compile(char *file, char *def) {
 	char	*ofile;
+	char	scc_cmd[129];
 
-	init();
+	if (!file)
+		cmderror("pipe mode not supported in DOS version", NULL);
+	if (O_testonly)
+		cmderror("test mode not supported in DOS version", NULL);
+	ofile = newfilename(file, 's');
+	if (O_verbose) {
+		if (O_verbose > 1)
+			printf("sccmain.exe %s %s\n", file, ofile);
+		else
+			printf("compiling %s\n", file);
+	}
+	if (strlen(file)*2 + (def? strlen(def): 0) + 16 > 128)
+		cmderror("file name too long", file);
+	sprintf(scc_cmd, "sccmain.exe %s %s %s", file, ofile, def? def: "");
+	if (system(scc_cmd))
+		cmderror("compiler invokation failed", NULL);
+}
+
+#else /* !__dos */
+
+static void compile(char *file, char *def) {
+	char	*ofile;
+	FILE	*in, *out;
+
+	in = stdin;
+	out = stdout;
 	ofile = NULL;
-	defarg(def);
 	if (file) {
 		ofile = newfilename(file, 's');
-		if ((Infile = fopen(file, "r")) == NULL)
+		if ((in = fopen(file, "r")) == NULL)
 			cmderror("no such file: %s", file);
-		Basefile = File = file;
 		if (!O_testonly) {
-			if ((Outfile = fopen(ofile, "r")) != NULL)
+			if ((out = fopen(ofile, "r")) != NULL)
 				cmderror("will not overwrite file: %s",
 					ofile);
-			if ((Outfile = fopen(ofile, "w")) == NULL)
+			if ((out = fopen(ofile, "w")) == NULL)
 				cmderror("cannot create file: %s", ofile);
 		}
 	}
-	if (O_testonly) Outfile = NULL;
+	if (O_testonly) out = NULL;
 	if (O_verbose) {
 		if (O_testonly)
 			printf("cc -t %s\n", file);
@@ -108,18 +103,14 @@ static void compile(char *file, char *def) {
 			else
 				printf("compiling %s\n", file);
 	}
-	genprelude();
-	Token = scan();
-	while (XEOF != Token)
-		top();
-	genpostlude();
+	program(file, in, out, def);
 	if (file) {
-		fclose(Infile);
-		if (Outfile) fclose(Outfile);
+		fclose(in);
+		if (out) fclose(out);
 	}
-	if (O_debug & D_GSYM) dumpsyms("GLOBALS", "", 1, Globs);
-	if (O_debug & D_STAT) stats();
 }
+
+#endif /* !__dos */
 
 static void collect(char *file, int temp) {
 	if (O_componly || O_asmonly) return;
@@ -134,7 +125,10 @@ static void assemble(char *file, int delete) {
 	char	cmd[TEXTLEN+1];
 
 	file = newfilename(file, 's');
-	collect(ofile = newfilename(file, 'o'), 1);
+	if (O_componly && O_outfile)
+		ofile = O_outfile;
+	else
+		collect(ofile = newfilename(file, 'o'), 1);
 	if (strlen(file) + strlen(ofile) + strlen(ASCMD) >= TEXTLEN)
 		cmderror("assembler command too long", NULL);
 	sprintf(cmd, ASCMD, ofile, file);
@@ -162,10 +156,12 @@ static void link(void) {
 	int	i, k;
 	char	cmd[TEXTLEN+1];
 	char	cmd2[TEXTLEN+1];
+	char	*ofile;
 
-	if (strlen(O_outfile) + strlen(LDCMD) + strlen(SCCDIR)*2 >= TEXTLEN)
+	ofile = O_outfile? O_outfile: AOUTNAME;
+	if (strlen(ofile) + strlen(LDCMD) + strlen(SCCDIR)*2 >= TEXTLEN)
 		cmderror("linker command too long", NULL);
-	sprintf(cmd, LDCMD, O_outfile, SCCDIR);
+	sprintf(cmd, LDCMD, ofile, SCCDIR);
 	k = strlen(cmd);
 	for (i=0; i<Nf; i++)
 		k = concat(k, cmd, Files[i]);
@@ -246,7 +242,7 @@ int main(int argc, char *argv[]) {
 	O_componly = 0;
 	O_asmonly = 0;
 	O_testonly = 0;
-	O_outfile = AOUTNAME;
+	O_outfile = NULL;
 	for (i=1; i<argc; i++) {
 		if (*argv[i] != '-') break;
 		if (!strcmp(argv[i], "-")) {

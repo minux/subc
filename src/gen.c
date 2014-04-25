@@ -154,7 +154,6 @@ void commit(void) {
 	case addr_globl:	cgldga(gsym(Q_name)); break;
 	case addr_label:	cgldlab(Q_val); break;
 	case literal:		cglit(Q_val); break;
-	case arg_count:		cgargc(); break;
 	case auto_byte:		cgclear(); cgldlb(Q_val); break;
 	case auto_word:		cgldlw(Q_val); break;
 	case static_byte:	cgclear(); cgldsb(Q_val); break;
@@ -193,11 +192,6 @@ void genldlab(int id) {
 void genlit(int v) {
 	gentext();
 	queue(literal, v, NULL);
-}
-
-void genargc(void) {
-	gentext();
-	queue(arg_count, 0, NULL);
 }
 
 /* binary ops */
@@ -460,6 +454,12 @@ void genscale2(void) {
 	gentext();
 	commit();
 	cgscale2();
+}
+
+void genscaleby(int v) {
+	gentext();
+	commit();
+	cgscaleby(v);
 }
 
 /* jump/call/function ops */

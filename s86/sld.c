@@ -29,6 +29,8 @@
 #define EXT_SZ	16384
 #define BUF_SZ	60000
 
+#define unsigned	char *
+
 int	debug = 0;
 
 FILE	*Objf, *Ctmp, *Dtmp, *Rtmp, *Rbuf, *Exef;
@@ -249,7 +251,7 @@ void load(char *name) {
 	nrel = n/3;
 	rewind(Rtmp);
 	for (i=n; i>0; ) {
-		k = (char *) i < (char *) BUFSIZ? i: BUFSIZ;
+		k = (unsigned) i < (unsigned) BUFSIZ? i: BUFSIZ;
 		if (fread(Buf, 1, k, Objf) != k) readerr();
 		if (fwrite(Buf, 1, k, Rtmp) != k) writeerr();
 		i -= k;
@@ -257,7 +259,7 @@ void load(char *name) {
 	if (debug) fprintf(LOGFILE, "%d RELOC entries\n", nrel);
 	n = Ohd[ODATA] + (Ohd[ODATA+1]<<8) - off;
 	off += n;
-	if ((char *) n >= (char *) CODESZ) fatal("text area too large");
+	if ((unsigned) n >= (unsigned) CODESZ) fatal("text area too large");
 	if (debug) {
 		fprintf(LOGFILE, "%d TEXT bytes\n", n);
 		fprintf(LOGFILE, "Relocating...\n");
@@ -286,7 +288,7 @@ void load(char *name) {
 #else
 	rewind(Rbuf);
 	for (i=n; i; ) {
-		k = (char *) i < (char *) BUFSIZ? i: BUFSIZ;
+		k = (unsigned) i < (unsigned) BUFSIZ? i: BUFSIZ;
 		if (fread(Buf, 1, k, Objf) != k) readerr();
 		if (fwrite(Buf, 1, k, Rbuf) != k) writeerr();
 		i -= k;
@@ -312,7 +314,7 @@ void load(char *name) {
 	if (debug) fputc('\n', LOGFILE);
 	rewind(Rbuf);
 	for (i=n; i; ) {
-		k = (char *) i < (char *) BUFSIZ? i: BUFSIZ;
+		k = (unsigned) i < (unsigned) BUFSIZ? i: BUFSIZ;
 		if (fread(Buf, 1, k, Rbuf) != k) readerr();
 		if (fwrite(Buf, 1, k, Ctmp) != k) writeerr();
 		i -= k;
@@ -320,7 +322,9 @@ void load(char *name) {
 #endif
 	old = Codep;
 	cmp = (Codep += n);
-	if ((char *) cmp < (char *) old || (char *) Codep > (char *) CODESZ)
+	if (	(unsigned) cmp < (unsigned) old ||
+		(unsigned) Codep > (unsigned) CODESZ
+	)
 		fatal("code segment overflow");
 	for (i=size=Ohd[ODATASZ] + (Ohd[ODATASZ+1]<<8); i; ) {
 		if (i >= BUFSIZ || i < 0)
@@ -334,7 +338,9 @@ void load(char *name) {
 	}
 	old = Datap;
 	cmp = (Datap += size);
-	if ((char *) cmp < (char *) old || (char *) Datap > (char *) DATASZ)
+	if (	(unsigned) cmp < (unsigned) old ||
+		(unsigned) Datap > (unsigned) DATASZ
+	)
 		fatal("data segment overflow");
 	if (debug) fprintf(LOGFILE, "%d DATA bytes\n", size);
 }
@@ -431,7 +437,7 @@ void mkxhdr(int valid) {
 		writeerr();
 }
 
-void bind(void) {
+void mkexe(void) {
 	int	i, n, hdsz, seg2;
 	int	t, o, k;
 	char	*relp, *slp;
@@ -439,7 +445,7 @@ void bind(void) {
 	for (i=0; i<SYM_SZ; i+=SSIZE) {
 		if (Symtab[i+SCLASS] == EXTRN) {
 			slp = &Symtab[i+SMARK];
-			if (*slp != 0xff || slp[0] != 0xff)
+			if (slp[0] != 0xff && slp[1] != 0xff)
 				error("unresolved symbol", &Symtab[i]);
 		}
 	}
@@ -464,13 +470,11 @@ void bind(void) {
 	seg2 = 0;
 	o = t = Codep;
 	t += Datap;
-	if ((char *) o > (char *) t) seg2 = 128;
+	if ((unsigned) o > (unsigned) t || t & 0x10000) seg2 = 128;
 	t += hdsz;
-	if ((char *) o > (char *) t) seg2 = 128;
-	if (t & 0x8000) {
-		seg2 += 64;
-		t &= 0x7fff;
-	}
+	if ((unsigned) o > (unsigned) t || t & 0x10000) seg2 = 128;
+	if (t & 0x8000) seg2 += 64;
+	t &= 0x7fff;
 	k = t/512 + seg2 + 1;
 	Xhd[X_NPAGES] = k;
 	Xhd[X_NPAGES+1] = k>>8;
@@ -689,7 +693,7 @@ int main(int argc, char **argv) {
 		if (verbose > 1) printf("loading library: %s\n", p);
 		loadlib(p, verbose);
 	}
-	bind();
+	mkexe();
 	if (!debug) {
 		remove(LDCODE);
 		remove(LDDATA);

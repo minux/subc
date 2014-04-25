@@ -1,4 +1,6 @@
 
+	- fgetpos()/fsetpos() should support longer seek.
+
 	- clean up sym.c
 
 	? add parameterized macros

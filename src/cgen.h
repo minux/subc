@@ -6,7 +6,6 @@
 void cgadd(void);
 void cgalign(void);
 void cgand(void);
-void cgargc(void);
 void cgbool(void);
 void cgbreq(int n);
 void cgbrfalse(int n);

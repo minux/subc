@@ -12,6 +12,8 @@
 #include "exe.h"
 #include "sym.h"
 
+#define unsigned	char *
+
 int	O_ext, O_all, O_verbose, O_marks;
 char	*Fname, *Aname;
 
@@ -97,14 +99,14 @@ void nm_exec(FILE *f) {
 		p2 = 1;
 		off -= 128;
 	}
-	off = --off * 512 + xh[X_NBYTES] + (xh[X_NBYTES+1]<<8);
+	off = (off-1) * 512 + xh[X_NBYTES] + (xh[X_NBYTES+1]<<8);
 	rewind(f);
 	if (p2) {
 		fseek(f, 30000, SEEK_CUR);
 		fseek(f, 30000, SEEK_CUR);
 		fseek(f,  5536, SEEK_CUR);
 	}
-	fseek(f, off, SEEK_SET);
+	ufseek(f, off, SEEK_CUR);
 	if (fread(&magic, 1, 2, f) != 2) {
 		error("stripped executable: %s", Fname);
 		return;

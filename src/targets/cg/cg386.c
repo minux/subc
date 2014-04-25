@@ -28,7 +28,6 @@ void cgsynth(char *op) {
 	case addr_globl:	sgen("%s\t$%s,%%eax", op, s); break;
 	case addr_label:	lgen("%s\t$%c%d,%%eax", op, n); break;
 	case literal: 		ngen("%s\t$%d,%%eax", op, n); break;
-	case arg_count:		ngen("%s\t%d(%%ebp),%%eax", op, 8); break;
 	case auto_word:		ngen("%s\t%d(%%ebp),%%eax", op, n); break;
 	case static_word:	lgen("%s\t%c%d,%%eax", op, n); break;
 	case globl_word:	sgen("%s\t%s,%%eax", op, s); break;
@@ -60,7 +59,6 @@ int cgload2(void) {
 	case addr_globl:	sgen("%s\t$%s,%%ecx", op, s); break;
 	case addr_label:	lgen("%s\t$%c%d,%%ecx", op, n); break;
 	case literal: 		ngen("%s\t$%d,%%ecx", op, n); break;
-	case arg_count:		ngen("%s\t%d(%ebp),%ecx", op, 8); break;
 	case auto_byte:		cgclear2();
 				ngen("%s\t%d(%%ebp),%%cl", opb, n);
 				break;
@@ -98,7 +96,6 @@ void cgindb(void)	{ gen("movl\t%eax,%edx");
 			  cgclear();
 			  gen("movb\t(%edx),%al"); }
 void cgindw(void)	{ gen("movl\t(%eax),%eax"); }
-void cgargc(void)	{ gen("movl\t8(%ebp),%eax"); }
 void cgldlab(int id)	{ lgen("%s\t$%c%d,%%eax", "movl", id); }
 
 void cgpush(void)	{ gen("pushl\t%eax"); }

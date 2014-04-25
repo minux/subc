@@ -1,6 +1,6 @@
 /*
  *	NMH's Simple C Compiler, 2013
- *	system() for Windows/386 via MinGW
+ *	system() for Windows/386
  */
 
 #include <unistd.h>

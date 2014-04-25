@@ -61,7 +61,8 @@ setupheap:
 	sub	dx,ax
 	mov	cl,4
 	shl	dx,cl
-	mov	cs:break,dx	; beginning of malloc() arena (heap)
+	mov	cs:minmem,dx	; beginning of malloc() arena (heap)
+	mov	cs:break,dx	; current break
 	xor	ax,ax
 	sub	ax,dx
 	sub	ax,STKLEN
@@ -274,6 +275,8 @@ C_sbrk:	mov	bx,sp
 	add	ax,cs:break
 	cmp	ax,cs:maxmem
 	ja	sbfail
+	cmp	ax,cs:minmem
+	jb	sbfail
 	mov	ax,cs:break
 	mov	dx,ax
 	add	dx,[bx+4]
@@ -456,6 +459,26 @@ C_execve:
 	dec	ax
 	ret
 
+; int _system(char *shell, void *parmb);
+
+	public	C_system
+C_system:
+	mov	bx,sp
+	mov	dx,[bx+6]
+	mov	bx,[bx+4]
+	mov	di,ds
+	mov	[bx+4],di
+	mov	[bx+8],di
+	mov	[bx+12],di
+	mov	ax,4b00h
+	int	DOS
+	jnc	syok
+	xor	ax,ax
+	dec	ax
+	ret
+syok:	xor	ax,ax
+	ret
+
 ; int _time(void);
 
 	public	C_time
@@ -466,6 +489,7 @@ C_time:
 ; internal data (in code segment)
 
 break:		dw	0
+minmem:		dw	0
 maxmem:		dw	0
 
 memerror:	db	"crt0: out of memory", 13, 10, '$'

@@ -74,10 +74,9 @@ DOS/8086)		os=dos     ; mac=8086   ; int=16
 			;;
 esac
 
-if [ $os = windows ]; then
-	(cd src; ln -fs ../targets/lib/init-windows.c lib/init.c)
-	(cd src; ln -fs ../targets/lib/system-windows.c lib/system.c)
-else
+if [ $os = dos ]; then
+	(cd src; ln -fs ../targets/lib/init-unix.c lib/init.c)
+	(cd src; ln -fs ../targets/lib/system-dos.c lib/system.c)
 	if [ "$as" != "" ]; then
 		if [ ! -f src/Makefile.ORIG ]; then
 			cp src/Makefile src/Makefile.ORIG
@@ -87,6 +86,10 @@ else
 			-e "s/^RANLIB=.*/RANLIB=	$ranlib/" \
 		<src/Makefile.ORIG >src/Makefile
 	fi
+elif [ $os = windows ]; then
+	(cd src; ln -fs ../targets/lib/init-windows.c lib/init.c)
+	(cd src; ln -fs ../targets/lib/system-windows.c lib/system.c)
+else
 	(cd src; ln -fs ../targets/lib/init-unix.c lib/init.c)
 	(cd src; ln -fs ../targets/lib/system-unix.c lib/system.c)
 fi

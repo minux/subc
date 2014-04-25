@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2012
+ *	NMH's Simple C Compiler, 2012,2014
  *	fseek()
  */
 
@@ -9,7 +9,6 @@
 
 int fseek(FILE *f, int pos, int how) {
 	int	adjust = 0;
-	char	b[101];
 
 	if (how != SEEK_SET && how != SEEK_CUR && how != SEEK_END) {
 		errno = EINVAL;
@@ -23,7 +22,6 @@ int fseek(FILE *f, int pos, int how) {
 		}
 	}
 	if (fflush(f) < 0) return -1;
-	f->ch = EOF;
 	if ((pos = _lseek(f->fd, pos + adjust, how)) < 0) {
 		errno = EIO;
 		return -1;

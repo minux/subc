@@ -7,13 +7,6 @@
 #include "data.h"
 #include "decl.h"
 
-static void cleanup(void) {
-	if (!O_testonly && NULL != Basefile) {
-		remove(newfilename(Basefile, 's'));
-		remove(newfilename(Basefile, 'o'));
-	}
-}
-
 void error(char *s, char *a) {
 	if (Syntoken) return;
 	if (!Errors) cleanup();

@@ -126,7 +126,6 @@ int cgload2(void) {
 	case addr_globl:	cgglobaddr(s, 1); break;
 	case addr_label:	cgstataddr(n, 1); break;
 	case literal: 		cglit2(n, 1); break;
-	case arg_count:		gen("ldr\tr1,[r11,#8]"); break;
 	case auto_byte:		cglocladdr(n, 1);
 				cgind2b();
 				break;
@@ -174,7 +173,6 @@ void cgldsa(int n)	{ cgstataddr(n, 0); }
 void cgldga(char *s)	{ cgglobaddr(s, 0); }
 void cgindb(void)	{ gen("ldrb\tr0,[r0]"); }
 void cgindw(void)	{ gen("ldr\tr0,[r0]"); }
-void cgargc(void)	{ gen("ldr\tr0,[r11,#8]"); }
 void cgldlab(int id)	{ cgstataddr(id, 0); }
 
 void cgpush(void)	{ gen("push\t{r0}"); }

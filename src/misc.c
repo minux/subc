@@ -1,11 +1,42 @@
 /*
- *	NMH's Simple C Compiler, 2011,2012
+ *	NMH's Simple C Compiler, 2011,2014
  *	Miscellanea
  */
 
 #include "defs.h"
 #include "data.h"
 #include "decl.h"
+
+void init(void) {
+	Line = 1;
+	Putback = '\n';
+	Rejected = -1;
+	Errors = 0;
+	Mp = 0;
+	Expandmac = 1;
+	Syntoken = 0;
+	Isp = 0;
+	Inclev = 0;
+	Globs = 0;
+	Locs = NSYMBOLS;
+	Nbot = 0;
+	Ntop = POOLSIZE;
+	Bsp = 0;
+	Csp = 0;
+	Q_type = empty;
+	Q_cmp = cnone;
+	Q_bool = bnone;
+	addglob("", 0, 0, 0, 0, 0, NULL, 0);
+	addglob("__SUBC__", 0, TMACRO, 0, 0, 0, globname(""), 0);
+	if (!strcmp(OS, "DOS"))
+		addglob("__dos", 0, TMACRO, 0, 0, 0, globname(""), 0);
+	else
+		addglob("__unix", 0, TMACRO, 0, 0, 0, globname(""), 0);
+	Infile = stdin;
+	File = "(stdin)";
+	Basefile = NULL;
+	Outfile = stdout;
+}
 
 int chrpos(char *s, int c) {
 	char	*p;
@@ -19,24 +50,21 @@ void copyname(char *name, char *s) {
 	name[NAMELEN] = 0;
 }
 
-char *newfilename(char *file, int sfx) {
-	char	*ofile;
-
-	ofile = strdup(file);
-	ofile[strlen(ofile)-1] = sfx;
-	return ofile;
-}
-
 static FILE	*suspended;
+static int	susp_acc;
+extern int	Acc;
 
 void suspend(void) {
+	commit();
 	suspended = Outfile;
+	susp_acc = Acc;
 	Outfile = NULL;
 }
 
 void resume(void) {
 	Outfile = suspended;
 	clear(1);
+	Acc = susp_acc;
 }
 
 void match(int t, char *what) {
@@ -95,4 +123,9 @@ int inttype(int p) {
 int comptype(int p) {
 	p &= STCMASK;
 	return p == PSTRUCT || p == PUNION;
+}
+
+void notvoid(int p) {
+	if (PVOID == p)
+		error("void value in expression", NULL);
 }

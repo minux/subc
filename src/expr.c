@@ -96,11 +96,6 @@ static int primary(int *lv) {
 		a = expr(lv, 0);
 		rparen();
 		return a;
-	case ARGC:
-		Token = scan();
-		genargc();
-		lv[LVPRIM] = PINT;
-		return 0;
 	default:
 		error("syntax error at: %s", Text);
 		Token = synch(SEMI);
@@ -272,8 +267,12 @@ static int postfix(int *lv) {
 					CHARPTR == p || VOIDPTR == p ||
 					STCPTR == (p & STCMASK) ||
 					UNIPTR == (p & STCMASK)
-				)
+				) {
 					genscale();
+				}
+				else if (comptype(p)) {
+					genscaleby(objsize(p, TVARIABLE, 1));
+				}
 				genadd(PINT, PINT, 1);
 				rbrack();
 				lv[LVSYM] = 0;
@@ -366,7 +365,8 @@ void comp_size(void) {
 	}
 	else {
 		suspend();
-		y = prefix(lv)? lv[LVSYM]: 0;
+		prefix(lv);
+		y = lv[LVSYM]? lv[LVSYM]: 0;
 		k = y? objsize(Prims[y], Types[y], Sizes[y]):
 			objsize(lv[LVPRIM], TVARIABLE, 1);
 		if (0 == k)
@@ -622,10 +622,11 @@ static int binexpr(int *lv) {
 
 static int cond2(int *lv, int op) {
 	int	a, a2 = 0, lv2[LV];
-	int	lab = 0;
+	int	lab = 0, tv = 1;
 
 	a = op == LOGOR? cond2(lv, LOGAND): binexpr(lv);
 	while (Token == op) {
+		if (tv) notvoid(lv[LVPRIM]), tv = 0;
 		if (!lab) lab = label();
 		if (a) rvalue(lv);
 		if (a2) rvalue(lv2);
@@ -657,11 +658,12 @@ static int cond2(int *lv, int op) {
 
 static int cond3(int *lv) {
 	int	a, lv2[LV], p;
-	int	l1 = 0, l2 = 0;
+	int	l1 = 0, l2 = 0, tv = 1;
 
 	a = cond2(lv, LOGOR);
 	p = 0;
 	while (QMARK == Token) {
+		if (tv) notvoid(lv[LVPRIM]), tv = 0;
 		l1 = label();
 		if (!l2) l2 = label();
 		if (a) rvalue(lv);
@@ -669,7 +671,7 @@ static int cond3(int *lv) {
 		genbrfalse(l1);
 		clear(0);
 		Token = scan();
-		if (expr(lv, 1))
+		if (expr(lv, 0))
 			rvalue(lv);
 		if (!p) p = lv[LVPRIM];
 		if (!typematch(p, lv[LVPRIM]))
@@ -744,21 +746,18 @@ static int asgmnt(int *lv) {
  */
 
 int expr(int *lv, int cvoid) {
-	int	a, a2 = 0, lv2[LV];
-	char	*msg;
+	int	a, a2 = 0, lv2[LV], p;
 
-	msg = "void value in expression";
 	a = asgmnt(lv);
-	if (cvoid && PVOID == lv2[LVPRIM])
-		error(msg, NULL);
+	p = lv[LVPRIM];
 	while (COMMA == Token) {
 		Token = scan();
 		clear(0);
 		a2 = asgmnt(lv2);
-		if (PVOID == lv2[LVPRIM])
-			error(msg, NULL);
+		p = lv2[LVPRIM];
 		a = 0;
 	}
+	if (cvoid) notvoid(p);
 	if (a2) rvalue(lv2);
 	return a;
 }
@@ -766,9 +765,7 @@ int expr(int *lv, int cvoid) {
 int rexpr(int com) {
 	int	lv[LV];
 
-	if (expr(lv, 0)) rvalue(lv);
-	if (PVOID == lv[LVPRIM])
-		error("void value in expression", NULL);
+	if (expr(lv, 1)) rvalue(lv);
 	if (com) commit();
 	return lv[LVPRIM];
 }

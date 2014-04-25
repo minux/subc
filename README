@@ -1,5 +1,5 @@
 
-	SubC Compiler, Version 2014-03-23
+	SubC Compiler, Version 2014-04-25
 	By Nils M Holm, 2011--2014
 	Placed in the public domain
 
@@ -43,7 +43,7 @@
 
 		+ does *not* use the syscall layer of the host libc
 		* untested
-		! unfinished / experimental
+		! experimental
 
 	Platforms tagged "untested" are not regularly tested by myself
 	and are therefore subject to potential bit rot. You can help
@@ -54,10 +54,9 @@
 	quite straight-forward. See the file "Porting" and/or the book
 	for a general road map.
 
-	There is also an in-slow-progress port to DOS on 8086-based
-	processors. It currently works as a cross compiler, but with
-	rather limited capabilities. See the file SubC-for-DOS for
-	details.
+	The DOS version brings its own toolchain, which can be found in
+	the s86/ directory, so no pre-existing DOS assembler or linker
+	is required to compile SubC programs on DOS.
 
 
 	CHANGES TO THE BOOK VERSION
@@ -65,7 +64,7 @@
 	Note: The book version runs on FreeBSD/386 exclusively.
 
 	The current version uses an improved code generator, which
-	emits about 10% smaller and faster code than the compiler
+	emits about 10% smaller and 20% faster code than the compiler
 	described in the book.
 
 	This version of the SubC compiler adds support for the
@@ -317,9 +316,14 @@
 		rm scc && scc -o scc *.c
 
 
+	DOS SUPPORT
+
+	Please see the file SubC-for-DOS.
+
+
 	WINDOWS SUPPORT
 
-	There is a build script (build.bat) in the base directory
+	There is a build script (winbuild.bat) in the base directory
 	of the package, but I have never tried it. Caveat utilitor!
 
 	All Windows-related code in the runtime system has been
