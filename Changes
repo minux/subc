@@ -1,6 +1,49 @@
-2014-04-25 Fix: sizeof(symbol) could generate wrong code.
-2014-04-25 Fix: sizeof(array) returned wrong size.
-2014-04-25 Added more tests for void type in expressions.
+2014-06-03 Fix: syntax errors in constexprs could crash the compiler.
+2014-05-25 Updated and re-organized documentation.
+2014-05-24 Added operation reordering (tree skewing), e.g.: a+b*c --> b*c+a.
+2014-05-24 Added strength reduction 2/2^N --> 2>>N.
+2014-05-24 Added strength reduction 2*2^N --> 2<<N.
+2014-05-20 Fix: convert '/' in all commands paths in Windows system().
+2014-05-19 Applied patch for fixing system() on Windows. Thanks, Jean-Marc!
+2014-05-18 Added OpenBSD ELF note.
+2014-05-18 Fix: missed some functions when adapting OpenBSD crt0 to R-L calls.
+2014-05-18 Applied more Windows patches by Jean-Marc Lienher. Thanks!
+2014-05-17 Updated documentation.
+2014-05-17 Changed random number test in libtest.c.
+2014-05-17 Made kprintf() convert '\n' on descriptors 1,2 on DOS.
+2014-05-16 Made some stdio functions emit CR,LF for '\n' on stdout/err on DOS.
+2014-05-14 Added triple test script to gather data in case of failure.
+2014-05-14 Added some DOS #ifdef:s to libtest.c (./file vs .\file).
+2014-05-14 Adapted printf test in libtest.c for 16-bit systems.
+2014-05-13 Fixed setjmp() function in DOS port (overwrote caller's memory).
+2014-05-12 Updated documentation.
+2014-05-10 Fix: added installation of (non-stdio) ncrt0.o to Makefile.
+2014-05-10 Applied a load of Windows patches by Jean-Marc Lienher. Thanks!
+2014-05-09 Fix: wrong Opt_sum_lim when BPW != sizeof(int).
+2014-05-09 Removed constant expr parser, using constant folding instead.
+2014-05-05 Increased NODEPOOLSZ.
+2014-05-05 Windows port builds, but programs crash; back to EXPERIMENTAL.
+2014-05-05 Changed winbuild.bat to print instructions, using make again.
+2014-05-04 Changed triple test to use assembly output instead of binaries.
+2014-05-04 Added -N (don't use stdio) flag and generation of ncrt0's.
+2014-05-03 Removed "make" from winbuild.bat script (probably still broken).
+2014-05-03 Fix: remove trailing '\r' in preprocessor lines.
+2014-05-03 Gave up writing a signal(3) function for NetBSD. Using libc for now.
+2014-05-03 Removed almost all libc dependencies from NetBSD-x86-64 crt0.
+2014-05-02 Removed libc dependencies from FreeBSD-x86-64 crt0.
+2014-05-01 Fixed order of argc/argv on DOS port (due to changed calling conv).
+2014-05-01 Marked all untested ports "untested".
+2014-05-01 Added removal of zero offsets from address computation.
+2014-04-30 Adapted all remaining ports to new calling convention.
+2014-04-29 Adapted NetBSD-x86-64 crt0 to new calling convention.
+2014-04-29 Adapted FreeBSD-x86-64 crt0, build failed, marked BROKEN.
+2014-04-28 Adapted FreeBSD-armv6 crt0 to new calling convention.
+2014-04-28 Adapted FreeBSD-386 crt0 to new calling convention.
+2014-04-28 Removed varargs redefinition hack (no longer needed).
+2014-04-28 Changed calling convention to standard C (right-to-left).
+2014-04-27 Added optimizer.
+2014-04-26 Added tree abstraction.
+2014-04-20 Forked this version.
 2014-04-07 Fixed XSTRIP and SNM programs on 16-bit systems.
 2014-04-05 Made s86 cache code for faster resolution of forward references.
 2014-04-05 Fix: missing file name in error messages due to refactoring.

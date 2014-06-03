@@ -1,9 +1,9 @@
 #
 #	NMH's Simple C Compiler, 2012--2014
-#	C runtime module for NetBSD/x86-64
+#	C runtime module for FreeBSD/x86-64
 #
 
-# Calling conventions: %rdi,%rsi,%rdx,stack return in %rax
+# Calling conventions: %rdi,%rsi,%rdx,%r10,%r8,%r9,stack; return in %rax
 
 # NetBSD voodoo stuff
 
@@ -30,7 +30,8 @@ Cenviron:
 
 	.text
 	.globl	_start
-_start:	call	C_init
+_start:
+	call	C_init		#INIT
 	leaq	8(%rsp),%rsi	# argv
 	movq	0(%rsp),%rcx	# argc
 	movq	%rcx,%rax	# environ = &argv[argc+1]
@@ -38,14 +39,12 @@ _start:	call	C_init
 	shlq	$3,%rax
 	addq	%rsi,%rax
 	movq	%rax,Cenviron
-	pushq	%rcx
 	pushq	%rsi
-	pushq	$2		# __argc
+	pushq	%rcx
 	call	Cmain
-	addq	$24,%rsp
+	addq	$16,%rsp
 	pushq	%rax
-	pushq	$1
-x:	call	Cexit
+x:	call	Cexit		#EXIT
 	xorq	%rbx,%rbx
 	divq	%rbx
 	jmp	x
@@ -76,7 +75,7 @@ no:	loop	next
 
 	.globl	Csetjmp
 Csetjmp:
-	movq	16(%rsp),%rdx
+	movq	8(%rsp),%rdx	# env
 	movq	%rsp,(%rdx)
 	addq	$8,(%rdx)
 	movq	%rbp,8(%rdx)
@@ -89,8 +88,8 @@ Csetjmp:
 
 	.globl	Clongjmp
 Clongjmp:
-	movq	16(%rsp),%rax
-	movq	24(%rsp),%rdx
+	movq	16(%rsp),%rax	# v
+	movq	8(%rsp),%rdx	# env
 	movq	(%rdx),%rsp
 	movq	8(%rdx),%rbp
 	movq	16(%rdx),%rdx
@@ -99,164 +98,232 @@ Clongjmp:
 # void _exit(int rc);
 
 	.globl	C_exit
-C_exit:	movq	16(%rsp),%rdi
-	call	_exit
+C_exit:	movq	8(%rsp),%rdi	# rc
+	movq	$1,%rax		# SYS_exit
+	syscall
 	ret
 
 # int _sbrk(int size);
 
+	.data
+	.extern	end
+curbrk:	.quad	end
+	.text
 	.globl	C_sbrk
-C_sbrk:	movq	16(%rsp),%rdi
-	xorq	%rax,%rax
-	call	sbrk
+C_sbrk:	movq	curbrk,%rdi
+	addq	8(%rsp),%rdi	# size
+	movq	$17,%rax	# SYS_break
+	syscall
+	jnc	brkok
+	movq	$-1,%rax
+	ret
+brkok:	movq	curbrk,%rax
+	movq	8(%rsp),%rbx	# size
+	addq	%rbx,curbrk
 	ret
 
 # int _write(int fd, void *buf, int len);
 
 	.globl	C_write
 C_write:
-	movq	16(%rsp),%rdx
-	movq	24(%rsp),%rsi
-	movq	32(%rsp),%rdi
-	xorq	%rax,%rax
-	call	write
-	ret
+	movq	24(%rsp),%rdx	# len
+	movq	16(%rsp),%rsi	# buf
+	movq	8(%rsp),%rdi	# fd
+	movq	$4,%rax		# SYS_write
+	syscall
+	jnc	wrtok
+	negq	%rax
+wrtok:	ret
 
 # int _read(int fd, void *buf, int len);
 
 	.globl	C_read
-C_read:	movq	16(%rsp),%rdx
-	movq	24(%rsp),%rsi
-	movq	32(%rsp),%rdi
-	xorq	%rax,%rax
-	call	read
-	ret
+C_read:	movq	24(%rsp),%rdx	# len
+	movq	16(%rsp),%rsi	# buf
+	movq	8(%rsp),%rdi	# fd
+	movq	$3,%rax		# SYS_read
+	syscall
+	jnc	redok
+	negq	%rax
+redok:	ret
 
 # int _lseek(int fd, int pos, int how);
 
 	.globl	C_lseek
 C_lseek:
-	movq	16(%rsp),%rdx
-	movq	24(%rsp),%rsi
-	movq	32(%rsp),%rdi
-	xorq	%rax,%rax
-	call	lseek
-	ret
+	movq	24(%rsp),%rdx	# how
+	movq	16(%rsp),%rsi	# pos
+	movq	8(%rsp),%rdi	# fd
+	movq	$19,%rax	# SYS_compat43_olseek
+	syscall
+	jnc	lskok
+	negq	%rax
+lskok:	ret
 
 # int _creat(char *path, int mode);
 
 	.globl	C_creat
 C_creat:
-	movq	16(%rsp),%rsi
-	movq	24(%rsp),%rdi
-	xorq	%rax,%rax
-	call	creat
-	ret
+	movq	16(%rsp),%rdx	# mode
+	movq	$0x601,%rsi	# O_CREAT | O_TRUNC | O_WRONLY
+	movq	8(%rsp),%rdi	# path
+	movq	$5,%rax		# SYS_open
+	syscall
+	jnc	crtok
+	negq	%rax
+crtok:	ret
 
 # int _open(char *path, int flags);
 
 	.globl	C_open
-C_open: movq	16(%rsp),%rsi
-	movq	24(%rsp),%rdi
+C_open: movq	16(%rsp),%rsi	# flags
+	movq	8(%rsp),%rdi	# path
 	xorq	%rax,%rax
-	call	open
-	ret
+	movq	$5,%rax		# SYS_open
+	syscall
+	jnc	opnok
+	negq	%rax
+opnok:	ret
 
 # int _close(int fd);
 
 	.globl	C_close
 C_close:
-	movq	16(%rsp),%rdi
-	xorq	%rax,%rax
-	call	close
-	ret
+	movq	8(%rsp),%rdi	# fd
+	movq	$6,%rax		# SYS_close
+	syscall
+	jnc	clsok
+	negq	%rax
+clsok:	ret
 
 # int _unlink(char *path);
 
 	.globl	C_unlink
 C_unlink:
-	movq	16(%rsp),%rdi
-	xorq	%rax,%rax
-	call	unlink
-	ret
+	movq	8(%rsp),%rdi	# path
+	movq	$10,%rax	# SYS_unlink
+	syscall
+	jnc	unlok
+	negq	%rax
+unlok:	ret
 
 # int _rename(char *old, char *new);
 
 	.globl	C_rename
 C_rename:
-	movq	16(%rsp),%rsi
-	movq	24(%rsp),%rdi
-	xorq	%rax,%rax
-	call	rename
-	ret
+	movq	16(%rsp),%rsi	# new
+	movq	8(%rsp),%rdi	# old
+	movq	$128,%rax	# SYS_rename
+	syscall
+	jnc	renok
+	negq	%rax
+renok:	ret
 
 # int _fork(void);
 
 	.globl	C_fork
-C_fork:	call	fork
-	ret
+C_fork:	movq	$2,%rax
+	syscall
+	jnc	frkok
+	negq	%rax
+frkok:	ret
 
 # int _wait(int *rc);
 
-	.data
-w:	.long	0
 	.text
 	.globl	C_wait
-C_wait:	movq	$w,%rdi
-	xorq	%rax,%rax
-	call	wait
-	movl	w,%eax
-	cdq
-	movq	16(%rsp),%rdx
-	movq	%rax,(%rdx)
+C_wait:	movq	$0,%r10		# rusage
+	movq	$0,%rdx		# options
+	movq	8(%rsp),%rsi	# rc
+	movq	$-1,%rdi	# wpid
+	movq	$7,%rax		# SYS_compat_50_wait4
+	syscall
+	jnc	watok
+	negq	%rax
+watok:	movq	$0xffffffff,%rbx
+	movq	8(%rsp),%rsi	# rc
+	andq	%rbx,(%rsi)
 	ret
 
 # int _execve(char *path, char *argv[], char *envp[]);
 
 	.globl	C_execve
 C_execve:
-	movq	16(%rsp),%rdx
-	movq	24(%rsp),%rsi
-	movq	32(%rsp),%rdi
-	xorq	%rax,%rax
-	call	execve
-	ret
+	movq	24(%rsp),%rdx	# envp
+	movq	16(%rsp),%rsi	# argv
+	movq	8(%rsp),%rdi	# path
+	movq	$59,%rax	# SYS_execve
+	syscall
+	jnc	excok
+	negq	%rax
+excok:	ret
 
 # int _time(void);
 
 	.globl	C_time
-#C_time:	xorq	%rdi,%rdi
-#	xorq	%rax,%rax
-#	call	time
-#	ret
-C_time:	subq	$16,%rsp	# struct timespec
+C_time:	subq	$16,%rsp
+	movq	%rsp,%rsi	# struct timespec
 	movq	$0,%rdi		# CLOCK_REALTIME
-	movq	%rsp,%rsi
-	xorq	%rax,%rax
-	call	__clock_gettime50	# alt: clock_gettime
-	movq	(%rsp),%rax
+	movq	$232,%rax	# SYS_compat_50_clock_gettime
+	syscall
+	jnc	timok
+	negq	%rax
 	addq	$16,%rsp
 	ret
-
+timok:	xorq	%rax,%rax
+	movl	(%rsp),%eax
+	addq	$16,%rsp
+	ret
 
 # int raise(int sig);
 
 	.globl	Craise
 Craise:
-	xorq	%rax,%rax
-	call	getpid
+	movq	$20,%rax	# SYS_getpid
+	syscall
 	movq	%rax,%rdi
-	movq	16(%rsp),%rsi
-	xorq	%rax,%rax
-	call	kill
-	ret
+	movq	8(%rsp),%rsi	# sig
+	movq	$37,%rax	# SYS_kill
+	syscall
+	jnc	rasok
+	negq	%rax
+rasok:	ret
 
 # int signal(int sig, int (*fn)());
 
 	.globl	Csignal
 Csignal:
-	movq	16(%rsp),%rsi
-	movq	24(%rsp),%rdi
-	xorq	%rax,%rax
-	call	signal
+
+#	If your signal handlers segfault, uncomment the below code
+#	and link against /usr/lib/libc.a.
+#
+#	movq	8(%rsp),%rdi	# sig
+#	movq	16(%rsp),%rsi	# fn /act
+#	call	signal
+#	ret
+
+	movq	8(%rsp),%rdi	# sig
+	movq	16(%rsp),%rax	# fn /act
+	subq	$32,%rsp	# struct sigaction oact
+	subq	$32,%rsp	# struct sigaction act
+	movq	%rax,(%rsp)	# act.sa_handler / sa_action
+	movq	$0,%rax
+	movl	%eax,8(%rsp)	# act.sa_flags / act.sa_mask
+	movl	%eax,12(%rsp)
+	movl	%eax,16(%rsp)
+	movl	%eax,20(%rsp)
+	movl	%eax,24(%rsp)
+	movl	%eax,28(%rsp)
+	movq	%rsp,%rsi	# act
+	movq	%rsp,%rdx	# oact
+	addq	$32,%rdx
+	movq	$291,%rax	# SYS_compat_16___sigaction14
+	syscall
+	jnc	sacok
+	addq	$64,%rsp
+	movq	$2,%rax		# SIG_ERR
 	ret
+sacok:	movq	32(%rsp),%rax	# oact.sa_handler / sa_action
+	addq	$64,%rsp
+	ret
+

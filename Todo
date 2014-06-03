@@ -1,14 +1,10 @@
 
+	- Rewrite crt0 module to remove GLIBC system call layer:
+		OpenBSD-386
+		Darwin-x86-64
+	  (Can't do this, don't know enough about these systems.)
+
 	- fgetpos()/fsetpos() should support longer seek.
 
-	- clean up sym.c
-
-	? add parameterized macros
-		- add assert()
-		- fix & in setjmp() and longjmp()
-		? add stdio macros: getc(), putchar(), etc
-
-	? add dynamic local initializers
-
-	? add GOTO and labels
+	? clean up sym.c
 

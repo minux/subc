@@ -34,7 +34,8 @@ Cenviron:
 
 	.text
 	.globl	_start
-_start:	call	C_init
+_start:
+	call	C_init		#INIT
 	leal	4(%esp),%esi	# argv
 	movl	0(%esp),%ecx	# argc
 	movl	%ecx,%eax	# environ = &argv[argc+1]
@@ -42,14 +43,12 @@ _start:	call	C_init
 	shll	$2,%eax
 	addl	%esi,%eax
 	movl	%eax,Cenviron
-	pushl	%ecx
 	pushl	%esi
-	pushl	$2		# __argc
+	pushl	%ecx
 	call	Cmain
-	addl	$12,%esp
+	addl	$8,%esp
 	pushl	%eax
-	pushl	$1
-x:	call	Cexit
+x:	call	Cexit		#EXIT
 	xorl	%ebx,%ebx
 	divl	%ebx
 	jmp	x
@@ -80,7 +79,7 @@ no:	loop	next
 
 	.globl	Csetjmp
 Csetjmp:
-	movl	8(%esp),%edx
+	movl	4(%esp),%edx	# env
 	movl	%esp,(%edx)
 	addl	$4,(%edx)
 	movl	%ebp,4(%edx)
@@ -93,8 +92,8 @@ Csetjmp:
 
 	.globl	Clongjmp
 Clongjmp:
-	movl	8(%esp),%eax
-	movl	12(%esp),%edx
+	movl	8(%esp),%eax	# v
+	movl	4(%esp),%edx	# env
 	movl	(%edx),%esp
 	movl	4(%edx),%ebp
 	movl	8(%edx),%edx
@@ -103,7 +102,7 @@ Clongjmp:
 # void _exit(int rc);
 
 	.globl	C_exit
-C_exit:	pushl	8(%esp)
+C_exit:	pushl	4(%esp)		# rc
 	pushl	$0
 	movl	$1,%eax		# SYS_exit
 	int	$0x80
@@ -119,7 +118,7 @@ curbrk:	.long	end
 	.text
 	.globl	C_sbrk
 C_sbrk:	movl	curbrk,%eax
-	addl	8(%esp),%eax
+	addl	4(%esp),%eax	# size
 	pushl	%eax
 	pushl	%eax
 	movl	$17,%eax	# SYS_break
@@ -130,7 +129,7 @@ C_sbrk:	movl	curbrk,%eax
 	ret
 brkok:	addl	$8,%esp
 	movl	curbrk,%eax
-	movl	8(%esp),%ebx
+	movl	4(%esp),%ebx	# size
 	addl	%ebx,curbrk
 	ret
 
@@ -138,9 +137,9 @@ brkok:	addl	$8,%esp
 
 	.globl	C_write
 C_write:
-	pushl	8(%esp)
-	pushl	16(%esp)
-	pushl	24(%esp)
+	pushl	12(%esp)	# len
+	pushl	12(%esp)	# buf
+	pushl	12(%esp)	# fd
 	pushl	$0
 	movl	$4,%eax		# SYS_write
 	int	$0x80
@@ -152,9 +151,9 @@ wrtok:	addl	$16,%esp
 # int _read(int fd, void *buf, int len);
 
 	.globl	C_read
-C_read:	pushl	8(%esp)
-	pushl	16(%esp)
-	pushl	24(%esp)
+C_read:	pushl	12(%esp)	# len
+	pushl	12(%esp)	# buf
+	pushl	12(%esp)	# fd
 	pushl	$0
 	movl	$3,%eax		# SYS_read
 	int	$0x80
@@ -167,12 +166,12 @@ reaok:	addl	$16,%esp
 
 	.globl	C_lseek
 C_lseek:
-	pushl	8(%esp)
-	movl	16(%esp),%eax
+	pushl	12(%esp)	# how
+	movl	12(%esp),%eax	# pos
 	cdq
 	pushl	%edx		# off_t, high word
 	pushl	%eax		# off_t, low word
-	pushl	28(%esp)
+	pushl	16(%esp)	# fd
 	pushl	$0
 	movl	$478,%eax	# SYS_lseek
 	int	$0x80
@@ -185,9 +184,9 @@ lskok:	addl	$20,%esp
 
 	.globl	C_creat
 C_creat:
-	pushl	8(%esp)
+	pushl	8(%esp)		# mode
 	pushl	$0x601		# O_CREAT | O_TRUNC | O_WRONLY
-	pushl	20(%esp)
+	pushl	12(%esp)	# path
 	pushl	$0
 	movl	$5,%eax		# SYS_open
 	int	$0x80
@@ -199,8 +198,8 @@ crtok:	addl	$16,%esp
 # int _open(char *path, int flags);
 
 	.globl	C_open
-C_open:	pushl	8(%esp)
-	pushl	16(%esp)
+C_open:	pushl	8(%esp)		# flags
+	pushl	8(%esp)		# path
 	pushl	$0
 	movl	$5,%eax		# SYS_open
 	int	$0x80
@@ -213,7 +212,7 @@ opnok:	addl	$12,%esp
 
 	.globl	C_close
 C_close:
-	pushl	8(%esp)
+	pushl	4(%esp)		# fd
 	pushl	$0
 	movl	$6,%eax		# SYS_close
 	int	$0x80
@@ -226,7 +225,7 @@ clsok:	addl	$8,%esp
 
 	.globl	C_unlink
 C_unlink:
-	pushl	8(%esp)
+	pushl	4(%esp)		# path
 	pushl	$0
 	movl	$10,%eax	# SYS_unlink
 	int	$0x80
@@ -239,8 +238,8 @@ unlok:	addl	$8,%esp
 
 	.globl	C_rename
 C_rename:
-	pushl	8(%esp)
-	pushl	16(%esp)
+	pushl	8(%esp)		# new
+	pushl	8(%esp)		# old
 	pushl	$0
 	movl	$128,%eax	# SYS_rename
 	int	$0x80
@@ -265,7 +264,7 @@ frkok:	addl	$4,%esp
 	.globl	C_wait
 C_wait:	pushl	$0		# rusage
 	pushl	$0		# options
-	pushl	16(%esp)
+	pushl	12(%esp)	# rc
 	pushl	$-1		# wpid
 	pushl	$0
 	movl	$7,%eax		# SYS_wait4
@@ -279,9 +278,9 @@ watok:	addl	$20,%esp
 
 	.globl	C_execve
 C_execve:
-	pushl	8(%esp)
-	pushl	16(%esp)
-	pushl	24(%esp)
+	pushl	12(%esp)	# envp
+	pushl	12(%esp)	# argv
+	pushl	12(%esp)	# path
 	pushl	$0
 	movl	$59,%eax	# SYS_execve
 	int	$0x80
@@ -315,7 +314,7 @@ Craise:
 	movl	$20,%eax	# SYS_getpid
 	int	$0x80
 	addl	$4,%esp
-	pushl	8(%esp)
+	pushl	4(%esp)		# sig
 	pushl	%eax
 	pushl	%eax
 	movl	$37,%eax	# SYS_kill
@@ -329,9 +328,10 @@ rasok:	addl	$12,%esp
 
 	.globl	Csignal
 Csignal:
+	movl	4(%esp),%ebx	# sig
+	movl	8(%esp),%eax	# fn /act
 	subl	$24,%esp	# struct sigaction oact
 	subl	$24,%esp	# struct sigaction act
-	movl	56(%esp),%eax	# fn /act
 	movl	%eax,(%esp)	# act.sa_handler / sa_action
 	movl	$0,%eax
 	movl	%eax,4(%esp)	# act.sa_flags
@@ -339,7 +339,6 @@ Csignal:
 	movl	%eax,12(%esp)
 	movl	%eax,16(%esp)
 	movl	%eax,20(%esp)
-	movl	60(%esp),%ebx
 	movl	%esp,%esi
 	movl	%esi,%edi	# oact
 	addl	$24,%edi

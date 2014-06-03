@@ -312,7 +312,7 @@ int objsize(int prim, int type, int size) {
 	else if (FUNPTR == prim)
 		k = PTRSIZE;
 	if (TFUNCTION == type || TCONSTANT == type || TMACRO == type)
-		return 0;
+		return -1;
 	if (TARRAY == type)
 		k *= size;
 	return k;

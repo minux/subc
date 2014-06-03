@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2013
+ *	NMH's Simple C Compiler, 2013,2014
  *	Windows/386 API
  */
 
@@ -57,68 +57,72 @@ struct _FILETIME {
 };
 
 EXPORT int __stdcall GetExitCodeProcess(
-  void *hProcess,
-  int *lpExitCode
+	void *hProcess,
+	int *lpExitCode
 );
 
 EXPORT int __stdcall MoveFileA(
-  char *lpExistingFileName,
-  char *lpNewFileName
+	char *lpExistingFileName,
+	char *lpNewFileName
 );
 
 EXPORT int __stdcall WaitForSingleObject(
-  void *hHandle,
-  int dwMilliseconds
+	void *hHandle,
+	int dwMilliseconds
 );
 
 EXPORT int __stdcall CreateProcessA(
-  char *lpApplicationName,
-  char *lpCommandLine,
-  void *lpProcessAttributes,
-  void *lpThreadAttributes,
-  int bInheritHandles,
-  int dwCreationFlags,
-  void *lpEnvironment,
-  char *lpCurrentDirectory,
-  void *lpStartupInfo,
-  void *lpProcessInformation
+	char *lpApplicationName,
+	char *lpCommandLine,
+	void *lpProcessAttributes,
+	void *lpThreadAttributes,
+	int bInheritHandles,
+	int dwCreationFlags,
+	void *lpEnvironment,
+	char *lpCurrentDirectory,
+	void *lpStartupInfo,
+	void *lpProcessInformation
 );
 
 EXPORT int __stdcall DeleteFileA(
-  char *lpFileName
+	char *lpFileName
 );
 
 EXPORT int __stdcall WriteFile(
-  void *hFile,
-  void *lpBuffer,
-  int nNumberOfBytesToWrite,
-  int *lpNumberOfBytesWritten,
-  void *lpOverlapped
+	void *hFile,
+	void *lpBuffer,
+	int nNumberOfBytesToWrite,
+	int *lpNumberOfBytesWritten,
+	void *lpOverlapped
 );
 
 EXPORT int __stdcall ReadFile(
-  void *hFile,
-  char *lpBuffer,
-  int nNumberOfBytesToRead,
-  int *lpNumberOfBytesRead,
-  void *lpOverlapped
+	void *hFile,
+	char *lpBuffer,
+	int nNumberOfBytesToRead,
+	int *lpNumberOfBytesRead,
+	void *lpOverlapped
 );
 
 EXPORT int __stdcall SetFilePointer(
-  void *hFile,
-  int lDistanceToMove,
-  int *lpDistanceToMoveHigh,
-  int dwMoveMethod
+	void *hFile,
+	int lDistanceToMove,
+	int *lpDistanceToMoveHigh,
+	int dwMoveMethod
+);
+
+EXPORT int __stdcall SetEndOfFile(
+	void *hFile
 );
 
 EXPORT void * __stdcall CreateFileA(
-  char *lpFileName,
-  int dwDesiredAccess,
-  int dwShareMode,
-  void *lpSecurityAttributes,
-  int dwCreationDisposition,
-  int dwFlagsAndAttributes,
-  void *hTemplateFile
+	char *lpFileName,
+	int dwDesiredAccess,
+	int dwShareMode,
+	void *lpSecurityAttributes,
+	int dwCreationDisposition,
+	int dwFlagsAndAttributes,
+	void *hTemplateFile
 );
 
 EXPORT int __stdcall CloseHandle(void *handle);
@@ -126,6 +130,12 @@ EXPORT int __stdcall CloseHandle(void *handle);
 EXPORT void * __stdcall GetStdHandle(int id);
 
 EXPORT void * __stdcall GetProcessHeap(void);
+
+EXPORT void * __stdcall HeapCreate(
+	int flOptions,
+	int dwInitialSize,
+	int dwMaximumSize
+);
 
 EXPORT void __stdcall ExitProcess(int errorcode);
 
@@ -135,23 +145,23 @@ EXPORT char * __stdcall GetCommandLineA(void);
 EXPORT char * __stdcall GetEnvironmentA(void);
 
 EXPORT void * __stdcall HeapReAlloc(
-  void *hHeap,
-  int dwFlags,
-  void *lpMem,
-  int dwBytes
+	void *hHeap,
+	int dwFlags,
+	void *lpMem,
+	int dwBytes
 );
 
 EXPORT void * __stdcall HeapAlloc(
-  void *hHeap,
-  int dwFlags,
-  int dwBytes
+	void *hHeap,
+	int dwFlags,
+	int dwBytes
 );
 
 EXPORT void __stdcall GetSystemTime(
-  void *lpSystemTime
+	void *lpSystemTime
 );
 
 EXPORT int __stdcall SystemTimeToFileTime(
-  void *lpSystemTime,
-  void *lpFileTime
+	void *lpSystemTime,
+	void *lpFileTime
 );

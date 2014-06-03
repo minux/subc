@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2013
+ *	NMH's Simple C Compiler, 2013,2014
  *	CRT initialization and Windows to posix wrapper.
  */
 
@@ -157,7 +157,7 @@ void mainCRTStartup(void) {
 	argv = (void*)cmd2arg((char*) e, (int*) &argc);
 	_init();
 	ret = main(argc, argv);
-	ExitProcess(ret);
+	exit(ret);
 }
 
 int _unlink(char *path) {
@@ -176,7 +176,7 @@ int _creat(char *path, int mode) {
 		fd++;
 	if (fd >= OPENMAX) return -1;
 	_openfiles[fd] = CreateFileA(path, 0x10000000, 0, (void*)0,
-					1, 0, (void*)0);
+					2, 0, (void*)0);
 	if ((int)_openfiles[fd] == -1)
 		return -1;
 	return fd;
@@ -196,7 +196,7 @@ int _open(char *path, int flags) {
 		rw = 0x80000000;
 		break;
 	case 1: /*write*/
-		create = 2;
+		create = 4;
 		rw = 0x40000000;
 		break;
 	case 2: /*read/write*/
@@ -212,11 +212,17 @@ int _open(char *path, int flags) {
 }
 
 int _lseek(int fd, int pos, int how) {
-	int	ret;
+ 	int	ret;
+	int	end;
+	int 	n;
 
-	if (fd >= OPENMAX) return -1;
-	ret = SetFilePointer(_openfiles[fd], pos, (void*)0, how);
-	return ret;
+ 	if (fd >= OPENMAX) return -1;
+	n = SetFilePointer(_openfiles[fd], pos, (void*)0, how);
+	end = SetFilePointer(_openfiles[fd], 0, (void*)0, 2);
+	ret = SetFilePointer(_openfiles[fd], n, (void*)0, 0);
+	if (ret > end) 
+		SetEndOfFile(_openfiles[fd]);
+ 	return ret;
 }
 
 int _read(int fd, void *buf, int len) {
@@ -271,13 +277,17 @@ int _rename(char *old, char *new) {
 
 void *_sbrk(int size) {
 	int	osize;
-	void	*h;
+	static void	*h = 0;
 	static int	heap_size = 0;
 	static char	*heap_mem;
 
 	osize = heap_size;
 	heap_size = heap_size + size;
-	h = GetProcessHeap();
+	if (h == (void *) 0) {
+		h = HeapCreate(1, 0x40000000, 0);
+		if (h == (void*) 0)
+			h = GetProcessHeap();
+	}
 	if (osize == 0) {
 		heap_mem = HeapAlloc(h, 0, size);
 	}

@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2012
+ *	NMH's Simple C Compiler, 2012,2014
  *	kprintf()
  */
 
@@ -7,14 +7,6 @@
 
 extern int _vformat(int mode, int max, void *dest, char *fmt, void **varg);
 
-int kprintf(void *last, ...) {
-	void	**args;
-	int	fd;
-	char	*fmt, *p;
-
-	args = &last;
-	args += __argc;
-	fd = (int) *--args;
-	fmt = *--args;
-	return _vformat(-1, 0, (void *) fd, fmt, --args);
+int kprintf(int fd, char *fmt, ...) {
+	return _vformat(-1, 0, (void *) fd, fmt, (void **) &fmt + 1);
 }

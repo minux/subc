@@ -4,9 +4,9 @@
  */
 
 #include "defs.h"
-#define _extern
+#define extern_
  #include "data.h"
-#undef _extern
+#undef extern_
 #include "decl.h"
 
 static void cmderror(char *s, char *a) {
@@ -154,14 +154,14 @@ static int concat(int k, char *buf, char *s) {
 
 static void link(void) {
 	int	i, k;
-	char	cmd[TEXTLEN+1];
-	char	cmd2[TEXTLEN+1];
+	char	cmd[TEXTLEN+2];
+	char	cmd2[TEXTLEN+2];
 	char	*ofile;
 
 	ofile = O_outfile? O_outfile: AOUTNAME;
 	if (strlen(ofile) + strlen(LDCMD) + strlen(SCCDIR)*2 >= TEXTLEN)
 		cmderror("linker command too long", NULL);
-	sprintf(cmd, LDCMD, ofile, SCCDIR);
+	sprintf(cmd, LDCMD, ofile, SCCDIR, O_stdio? "": "n");
 	k = strlen(cmd);
 	for (i=0; i<Nf; i++)
 		k = concat(k, cmd, Files[i]);
@@ -182,7 +182,7 @@ static void link(void) {
 }
 
 static void usage(void) {
-	printf("Usage: scc [-h] [-ctvSV] [-d opt] [-o file] [-D macro[=text]]"
+	printf("Usage: scc [-h] [-ctvNSV] [-d opt] [-o file] [-D macro[=text]]"
 		" file [...]\n");
 }
 
@@ -196,6 +196,7 @@ static void longusage(void) {
 		"-t       test only, generate no code\n"
 		"-v       verbose, more v's = more verbose\n"
 		"-D m=v   define macro M with optional value V\n"
+		"-N       do not use stdio (can't use printf, etc)\n"
 		"-S       compile to assembly language\n"
 		"-V       print version and exit\n"
 		"\n" );
@@ -238,10 +239,12 @@ int main(int argc, char *argv[]) {
 	char	*def;
 
 	def = NULL;
+	O_debug = 0;
 	O_verbose = 0;
 	O_componly = 0;
 	O_asmonly = 0;
 	O_testonly = 0;
+	O_stdio = 1;
 	O_outfile = NULL;
 	for (i=1; i<argc; i++) {
 		if (*argv[i] != '-') break;
@@ -273,6 +276,9 @@ int main(int argc, char *argv[]) {
 			case 'D':
 				if (def) cmderror("too many -D's", NULL);
 				def = nextarg(argc, argv, &i, &j);
+				break;
+			case 'N':
+				O_stdio = 0;
 				break;
 			case 'S':
 				O_componly = O_asmonly = 1;

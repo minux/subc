@@ -5,6 +5,17 @@
 
 # Calling conventions: stack, return in %eax
 
+# OpenBSD voodoo stuff
+
+.section ".note.openbsd.ident", "a"
+	.p2align	2
+	.long		8,4,1
+	.ascii		"OpenBSD\0"
+	.long		0
+	.p2align	2
+
+# End of voodoo stuff
+
 	.section	.rodata
 .LC0:
 	.string	""
@@ -59,19 +70,17 @@ ___start:
 	call	populate_progname
 	addl	$4, %esp
 	
-	call	C_init
+	call	C_init		#INIT
 	
 	movl	12(%ebp), %esi	# argv
 	movl	8(%ebp), %ecx	# argc
-	pushl	%ecx
 	pushl	%esi
-	pushl	$2		# __argc
+	pushl	%ecx
 	call	Cmain
-	addl	$12,%esp
+	addl	$8,%esp
 	
 	pushl	%eax
-	pushl	$1
-x:	call	Cexit
+x:	call	Cexit		#EXIT
 	xorl	%ebx,%ebx
 	divl	%ebx
 	jmp	x
@@ -188,7 +197,7 @@ no:	loop	next
 	.text
 	.globl	Csetjmp
 Csetjmp:
-	movl	8(%esp),%edx
+	movl	4(%esp),%edx	# env
 	movl	%esp,(%edx)
 	addl	$4,(%edx)
 	movl	%ebp,4(%edx)
@@ -201,8 +210,8 @@ Csetjmp:
 	.text
 	.globl	Clongjmp
 Clongjmp:
-	movl	8(%esp),%eax
-	movl	12(%esp),%edx
+	movl	8(%esp),%eax	# v
+	movl	4(%esp),%edx	# env
 	movl	(%edx),%esp
 	movl	4(%edx),%ebp
 	movl	8(%edx),%edx
@@ -212,7 +221,7 @@ Clongjmp:
 	.text
 	.globl	C_exit
 C_exit:
-	pushl	8(%esp)
+	pushl	4(%esp)		# rc
 	call	_exit
 	addl	$4,%esp
 	ret
@@ -221,7 +230,7 @@ C_exit:
 	.text
 	.globl	C_sbrk
 C_sbrk:
-	pushl	8(%esp)
+	pushl	4(%esp)		# size
 	call	sbrk
 	addl	$4,%esp
 	ret
@@ -230,9 +239,9 @@ C_sbrk:
 	.text
 	.globl	C_write
 C_write:
-	pushl	8(%esp)
-	pushl	16(%esp)
-	pushl	24(%esp)
+	pushl	12(%esp)	# len
+	pushl	12(%esp)	# buf
+	pushl	12(%esp)	# fd
 	call	write
 	addl	$12,%esp
 	ret
@@ -241,9 +250,9 @@ C_write:
 	.text
 	.globl	C_read
 C_read:
-	pushl	8(%esp)
-	pushl	16(%esp)
-	pushl	24(%esp)
+	pushl	12(%esp)	# buf
+	pushl	12(%esp)	# len
+	pushl	12(%esp)	# fd
 	call	read
 	addl	$12,%esp
 	ret
@@ -252,12 +261,12 @@ C_read:
 	.text
 	.globl	C_lseek
 C_lseek:
-	pushl	8(%esp)
-	movl	16(%esp),%eax
+	pushl	12(%esp)	# how
+	movl	12(%esp),%eax	# pos
 	cdq
 	pushl	%edx		# off_t, high word
 	pushl	%eax		# off_t, low word
-	pushl	28(%esp)
+	pushl	16(%esp)	# fd
 	call	lseek
 	addl	$16,%esp
 	ret
@@ -266,8 +275,8 @@ C_lseek:
 	.text
 	.globl	C_creat
 C_creat:
-	pushl	8(%esp)
-	pushl	16(%esp)
+	pushl	8(%esp)		# mode
+	pushl	8(%esp)		# path
 	call	creat
 	addl	$8,%esp
 	ret
@@ -276,8 +285,8 @@ C_creat:
 	.text
 	.globl	C_open
 C_open:
-	pushl	8(%esp)
-	pushl	16(%esp)
+	pushl	8(%esp)		# flags
+	pushl	8(%esp)		# path
 	call	open
 	addl	$8,%esp
 	ret
@@ -286,7 +295,7 @@ C_open:
 	.text
 	.globl	C_close
 C_close:
-	pushl	8(%esp)
+	pushl	4(%esp)		# fd
 	call	close
 	addl	$4,%esp
 	ret
@@ -295,7 +304,7 @@ C_close:
 	.text
 	.globl	C_unlink
 C_unlink:
-	pushl	8(%esp)
+	pushl	4(%esp)		# path
 	call	unlink
 	addl	$4,%esp
 	ret
@@ -304,8 +313,8 @@ C_unlink:
 	.text
 	.globl	C_rename
 C_rename:
-	pushl	8(%esp)
-	pushl	16(%esp)
+	pushl	8(%esp)		# new
+	pushl	8(%esp)		# old
 	call	rename
 	addl	$8,%esp
 	ret
@@ -321,7 +330,7 @@ C_fork:
 	.text
 	.globl	C_wait
 C_wait:
-	pushl	8(%esp)
+	pushl	4(%esp)		# rc
 	call	wait
 	addl	$4,%esp
 	ret
@@ -330,9 +339,9 @@ C_wait:
 	.text
 	.globl	C_execve
 C_execve:
-	pushl	8(%esp)
-	pushl	16(%esp)
-	pushl	24(%esp)
+	pushl	12(%esp)	# envp
+	pushl	12(%esp)	# argv
+	pushl	12(%esp)	# argc
 	call	execve
 	addl	$12,%esp
 	ret
@@ -351,7 +360,7 @@ C_time:
 	.globl	Craise
 Craise:
 	call	getpid
-	pushl	8(%esp)
+	pushl	4(%esp)		# sig
 	pushl	%eax
 	call	kill
 	addl	$8,%esp
@@ -361,8 +370,8 @@ Craise:
 	.text
 	.globl	Csignal
 Csignal:
-	pushl	8(%esp)
-	pushl	16(%esp)
+	pushl	8(%esp)		# fn
+	pushl	8(%esp)		# sig
 	call	signal
 	addl	$8,%esp
 	ret

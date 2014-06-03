@@ -37,7 +37,8 @@ Cenviron:
 	.text
 	.align	2
 	.globl	_start
-_start:	bl	C_init
+_start:
+	bl	C_init		@INIT
 	add	r2,sp,#4	@ argv
 	ldr	r1,[sp]		@ argc
 	mov	r0,r1		@ environ = &argv[argc+1]
@@ -48,22 +49,16 @@ _start:	bl	C_init
 	b	env
 Lenv:	.long	Cenviron
 env:	str	r0,[r3]
-	push	{r1}
 	push	{r2}
-	mov	r0,#2		@ __argc
-	push	{r0}
+	push	{r1}
  	bl	Cmain
-	add	sp,sp,#12
+	add	sp,sp,#8
 	push	{r0}
-	mov	r0,#1
-	push	{r0}
-x:	bl	Cexit
+x:	bl	Cexit		@EXIT
 	mov	r0,#6		@ SIGABRT
 	push	{r0}
-	mov	r0,#1
-	push	{r0}
 	bl	Craise
-	add	sp,sp,#8
+	add	sp,sp,#4
 	b	x
 
 # unsigned integer divide
@@ -147,7 +142,7 @@ match:	add	r1,r1,#4
 	.globl	Csetjmp
 	.align	2
 Csetjmp:
-	ldr	r1,[sp,#4]
+	ldr	r1,[sp]		@ env
 	mov	r2,sp
 	add	r2,r2,#4
 	str	sp,[r1]
@@ -161,8 +156,8 @@ Csetjmp:
 	.globl	Clongjmp
 	.align	2
 Clongjmp:
-	ldr	r0,[sp,#4]
-	ldr	r1,[sp,#8]
+	ldr	r0,[sp,#4]	@ v
+	ldr	r1,[sp]		@ env
 	ldr	sp,[r1]
 	ldr	r11,[r1,#4]
 	ldr	lr,[r1,#8]
@@ -173,7 +168,7 @@ Clongjmp:
 	.globl	C_exit
 	.align	2
 C_exit:	push	{lr}
-	ldr	r0,[sp,#8]
+	ldr	r0,[sp,#4]	@ rc
 	mov	r7,#1		@ SYS_exit
 	svc	0
 	pop	{pc}
@@ -191,7 +186,7 @@ cbaddr:	.long	curbrk
 C_sbrk:	push	{lr}
 	ldr	r0,cbaddr
 	ldr	r0,[r0]
-	ldr	r1,[sp,#8]
+	ldr	r1,[sp,#4]	@ size
 	add	r0,r0,r1
 	mov	r7,#17		@ SYS_break
 	svc	0
@@ -200,7 +195,7 @@ C_sbrk:	push	{lr}
 	pop	{pc}
 brkok:	ldr	r1,cbaddr
 	ldr	r0,[r1]
-	ldr	r2,[sp,#8]
+	ldr	r2,[sp,#4]	@ size
 	add	r2,r0,r2
 	str	r2,[r1]
 	pop	{pc}
@@ -211,9 +206,9 @@ brkok:	ldr	r1,cbaddr
 	.align	2
 C_write:
 	push	{lr}
-	ldr	r2,[sp,#8]
-	ldr	r1,[sp,#12]
-	ldr	r0,[sp,#16]
+	ldr	r2,[sp,#12]	@ len
+	ldr	r1,[sp,#8]	@ buf
+	ldr	r0,[sp,#4]	@ fd
 	mov	r7,#4		@ SYS_write
 	svc	0
 	bcc	wrtok
@@ -225,9 +220,9 @@ wrtok:	pop	{pc}
 	.globl	C_read
 	.align	2
 C_read:	push	{lr}
-	ldr	r2,[sp,#8]
-	ldr	r1,[sp,#12]
-	ldr	r0,[sp,#16]
+	ldr	r2,[sp,#12]	@ len
+	ldr	r1,[sp,#8]	@ buf
+	ldr	r0,[sp,#4]	@ fd
 	mov	r7,#3		@ SYS_read
 	svc	0
 	bcc	redok
@@ -240,11 +235,11 @@ redok:	pop	{pc}
 	.align	2
 C_lseek:
 	push	{lr}
-	ldr	r3,[sp,#8]
+	ldr	r3,[sp,#12]	@ how
 	push	{r3}
-	ldr	r2,[sp,#16]	@ off_t, low word
-	asr	r3,r2,#31	@ off_t, high word
-	ldr	r0,[sp,#20]
+	ldr	r2,[sp,#12]	@ pos, off_t, low word
+	asr	r3,r2,#31	@      off_t, high word
+	ldr	r0,[sp,#8]	@ fd
 	ldr	r7,L_lseek
 	svc	0
 	bcc	lskok
@@ -260,9 +255,9 @@ L_lseek:
 	.align	2
 C_creat:
 	push	{lr}
-	ldr	r2,[sp,#8]
+	ldr	r2,[sp,#8]	@ mode
 	ldr	r1,L_flags
-	ldr	r0,[sp,#12]
+	ldr	r0,[sp,#4]	@ path
 	mov	r7,#5		@ SYS_open
 	svc	0
 	bcc	crtok
@@ -276,8 +271,8 @@ L_flags:
 	.globl	C_open
 	.align	2
 C_open:	push	{lr}
-	ldr	r1,[sp,#8]
-	ldr	r0,[sp,#12]
+	ldr	r1,[sp,#8]	@ flags
+	ldr	r0,[sp,#4]	@ path
 	mov	r7,#5		@ SYS_open
 	svc	0
 	bcc	opnok
@@ -290,7 +285,7 @@ opnok:	pop	{pc}
 	.align	2
 C_close:
 	push	{lr}
-	ldr	r0,[sp,#8]
+	ldr	r0,[sp,#4]	@ fd
 	mov	r7,#6		@ SYS_close
 	svc	0
 	bcc	clsok
@@ -303,7 +298,7 @@ clsok:	pop	{pc}
 	.align	2
 C_unlink:
 	push	{lr}
-	ldr	r0,[sp,#8]
+	ldr	r0,[sp,#4]	@ path
 	mov	r7,#10		@ SYS_unlink
 	svc	0
 	bcc	unlok
@@ -316,8 +311,8 @@ unlok:	pop	{pc}
 	.align	2
 C_rename:
 	push	{lr}
-	ldr	r1,[sp,#8]
-	ldr	r0,[sp,#12]
+	ldr	r1,[sp,#8]	@ new
+	ldr	r0,[sp,#4]	@ old
 	mov	r7,#128		@ SYS_rename
 	svc	0
 	bcc	renok
@@ -342,7 +337,7 @@ frkok:	pop	{pc}
 C_wait:	push	{lr}
 	mov	r3,#0		@ rusage
 	mov	r2,#0		@ options
-	ldr	r1,[sp,#8]
+	ldr	r1,[sp,#4]	@ rc
 	mov	r0,#-1		@ wpid
 	mov	r7,#7		@ SYS_wait4
 	svc	0
@@ -356,9 +351,9 @@ watok:	pop	{pc}
 	.align	2
 C_execve:
 	push	{lr}
-	ldr	r2,[sp,#8]
-	ldr	r1,[sp,#12]
-	ldr	r0,[sp,#16]
+	ldr	r2,[sp,#12]	@ envp
+	ldr	r1,[sp,#8]	@ argv
+	ldr	r0,[sp,#4]	@ path
 	mov	r7,#59		@ SYS_execve
 	svc	0
 	bcc	excok
@@ -390,7 +385,7 @@ timok:	ldr	r0,[sp]
 Craise:	push	{lr}
 	mov	r7,#20		@ SYS_getpid
 	svc	0
-	ldr	r1,[sp,#8]
+	ldr	r1,[sp,#4]	@ sig
 	mov	r7,#37		@ SYS_kill
 	svc	0
 	bcc	rasok
@@ -403,9 +398,10 @@ rasok:	pop	{pc}
 	.align	2
 Csignal:
 	push	{lr}
+	ldr	r0,[sp,#8]	@ fn / act
+	ldr	r3,[sp,#4]	@ sig
 	sub	sp,sp,#24	@ struct sigaction oact
 	sub	sp,sp,#24	@ struct sigaction act
-	ldr	r0,[sp,#56]	@ fn / act
 	str	r0,[sp]		@ act.sa_handler / sa_action
 	mov	r0,#0
 	str	r0,[sp,#4]	@ act.sa_flags
@@ -416,7 +412,7 @@ Csignal:
 	mov	r2,sp		@ oact
 	add	r2,r2,#24
 	mov	r1,sp		@ act
-	ldr	r0,[sp,#60]	@ sig
+	mov	r0,r3		@ sig
 	ldr	r7,L_sigaction
 	svc	0
 	bcc	sacok

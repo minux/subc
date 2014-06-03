@@ -140,12 +140,13 @@ int primtype(int t, char *s) {
 
 static int pmtrdecls(void) {
 	char	name[NAMELEN+1];
-	int	prim, type, size, na, y, addr;
+	int	prim, type, size, na, addr;
 	int	dummy;
 
 	if (RPAREN == Token)
 		return 0;
 	na = 0;
+	addr = 2*BPW;
 	for (;;) {
 		if (na > 0 && ELLIPSIS == Token) {
 			Token = scan();
@@ -173,17 +174,13 @@ static int pmtrdecls(void) {
 		size = 1;
 		type = declarator(1, CAUTO, name, &prim, &size, &dummy,
 				&dummy);
-		addloc(name, prim, type, CAUTO, size, 0, 0);
+		addloc(name, prim, type, CAUTO, size, addr, 0);
+		addr += BPW;
 		na++;
 		if (COMMA == Token)
 			Token = scan();
 		else
 			break;
-	}
-	addr = INTSIZE*2;
-	for (y = Locs; y < NSYMBOLS; y++) {
-		addr += INTSIZE;
-		Vals[y] = addr;
 	}
 	return na;
 }
@@ -310,9 +307,9 @@ static int declarator(int pmtr, int scls, char *name, int *pprim, int *psize,
 		}
 		else {
 			*psize = constexpr();
-			if (*psize <= 0) {
+			if (*psize < 0) {
 				error("invalid array size", NULL);
-				*psize = 1;
+				*psize = 0;
 			}
 			type = TARRAY;
 			rbrack();
@@ -440,7 +437,7 @@ static void signature(int fn, int from, int to) {
 	for (i=0; i<MAXFNARGS && from < to; i++)
 		types[i] = Prims[--to];
 	types[i] = 0;
-	if (Sizes[fn] < 0 || NULL == Mtext[fn]) {
+	if (NULL == Mtext[fn]) {
 		Mtext[fn] = galloc((i+1) * sizeof(int), 1);
 		memcpy(Mtext[fn], types, (i+1) * sizeof(int));
 	}
@@ -481,8 +478,6 @@ void decl(int clss, int prim) {
 				Thisfn = addglob(name, prim, type, clss, size,
 					0, NULL, 0);
 				Token = scan();
-				addloc("__argc", PINT, TVARIABLE, CAUTO, 1,
-					2*BPW, 0);
 				lsize = localdecls();
 				gentext();
 				if (CPUBLIC == clss) genpublic(name);
@@ -561,7 +556,7 @@ void structdecl(int clss, int uniondecl) {
 			addglob(name, prim, type, CMEMBER, size, addr,
 				NULL, 0);
 			size = objsize(prim, type, size);
-			if (0 == size)
+			if (size < 0)
 				error("size of struct/union member"
 					" is unknown: %s",
 					name);
@@ -631,9 +626,11 @@ void top(void) {
 static void stats(void) {
 	printf(	"Memory usage: "
 		"Symbols: %5d/%5d, "
-		"Name pool: %5d/%5d\n",
+		"Names: %5d/%5d, "
+		"Nodes: %5d/%5d\n",
 		Globs, NSYMBOLS,
-		Nbot, POOLSIZE);
+		Nbot, POOLSIZE,
+		Ndmax, NODEPOOLSZ);
 }
 
 void defarg(char *s) {

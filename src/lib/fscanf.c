@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2012
+ *	NMH's Simple C Compiler, 2012,2014
  *	fscanf()
  */
 
@@ -8,14 +8,6 @@
 
 extern int _vscan(int mode, void *src, char *fmt, void **varg);
 
-int fscanf(void *last, ...) {
-	void	**args;
-	FILE	*f;
-	char	*fmt, *p;
-
-	args = &last;
-	args += __argc;
-	f = *--args;
-	fmt = *--args;
-	return _vscan(1, f, fmt, --args);
+int fscanf(FILE *f, char *fmt, ...) {
+	return _vscan(1, f, fmt, (void **) &fmt + 1);
 }

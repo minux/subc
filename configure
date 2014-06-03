@@ -4,6 +4,7 @@ os=`uname`
 mac=`uname -m`
 opt=""
 as=""
+stat=""
 
 usage() {
 	sed -e 's/^.//' <<EOT
@@ -54,25 +55,31 @@ Linux/i686)		os=linux   ; mac=386    ; int=32 ;;
 Linux/x86_64)		os=linux   ; mac=x86-64 ; int=64 ;;
 MINGW32_NT-6.1/i686)	os=windows ; mac=386    ; int=32 ;;
 MINGW32_NT-5.1/i686)	os=windows ; mac=386    ; int=32 ;;
-windows/386)		os=windows ; mac=386    ; int=32 ;;
-Darwin/x86_64)		os=darwin  ; mac=x86-64 ; int=64
+Darwin/x86_64)		os=darwin  ; mac=x86-64 ; int=64 ; stat=untested
 			opt="-darwin"
-			echo
-			echo "Warning: this back-end is experimental!"
-			echo
 			;;
-DOS/8086)		os=dos     ; mac=8086   ; int=16
+DOS/8086)		os=dos     ; mac=8086   ; int=16 ; stat=EXPERIMENTAL
 			as=s86
 			ar="sar -c"
 			ranlib="sar -r"
-			echo
-			echo "Warning: this back-end is experimental!"
-			echo
 			;;
 *)			echo "Sorry, $os/$mac is currently not supported."
 			exit 1
 			;;
 esac
+
+if [ "$stat" != "" ]; then
+	echo
+	echo "WARNING: this port is "$stat"!"
+	echo
+fi
+
+if [ -f "src/targets/$os-$mac/NOTE" ]; then
+	if [ "$stat" = "" ]; then echo; fi
+	echo NOTE:
+	cat src/targets/$os-$mac/NOTE
+	echo
+fi
 
 if [ $os = dos ]; then
 	(cd src; ln -fs ../targets/lib/init-unix.c lib/init.c)
@@ -84,7 +91,7 @@ if [ $os = dos ]; then
 		sed	-e "s/^AS=.*/AS=	$as/" \
 			-e "s/^AR=.*/AR=	$ar/" \
 			-e "s/^RANLIB=.*/RANLIB=	$ranlib/" \
-		<src/Makefile.ORIG >src/Makefile
+			<src/Makefile.ORIG >src/Makefile
 	fi
 elif [ $os = windows ]; then
 	(cd src; ln -fs ../targets/lib/init-windows.c lib/init.c)

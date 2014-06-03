@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011--2013
+ *	NMH's Simple C Compiler, 2011--2014
  *	_vformat()
  */
 
@@ -163,7 +163,7 @@ int _vformat(int mode, int max, void *dest, char *fmt, void **varg) {
 				}
 			}
 			if ('*' == *fmt)
-				len = (int) *varg--, fmt++;
+				len = (int) *varg++, fmt++;
 			else
 				while (isdigit(*fmt))
 					len = len * 10 + *fmt++ - '0';
@@ -171,32 +171,32 @@ int _vformat(int mode, int max, void *dest, char *fmt, void **varg) {
 			case 'c':
 				*pad = ' ';
 				*sgnch = 0;
-				lbuf[0] = (char) *varg--;
+				lbuf[0] = (char) *varg++;
 				lbuf[1] = 0;
 				p = lbuf;
 				na++;
 				break;
 			case 'd':
-				p = itoa(end, (int) *varg--, 10, sgnch);
+				p = itoa(end, (int) *varg++, 10, sgnch);
 				na++;
 				break;
 			case 'n':
 				p = itoa(end, olen, 10, sgnch);
 				break;
 			case 'o':
-				p = itoa(end, (int) *varg--, 8, sgnch);
+				p = itoa(end, (int) *varg++, 8, sgnch);
 				if (alt) pfx = "0";
 				na++;
 				break;
 			case 's':
 				*sgnch = 0;
 				*pad = ' ';
-				p = *varg--;
+				p = *varg++;
 				if (NULL == p) p = "(NULL)";
 				na++;
 				break;
 			case 'p':
-				p = ptoa(end, (int) *varg--);
+				p = ptoa(end, (int) *varg++);
 				pfx = "0x";
 				len = BPW*2+2;
 				*pad = '0';
@@ -205,7 +205,7 @@ int _vformat(int mode, int max, void *dest, char *fmt, void **varg) {
 			case 'x':
 			case 'X':
 				k = 'X' == fmt[-1]? -16: 16;
-				p = itoa(end, (int) *varg--, k, sgnch);
+				p = itoa(end, (int) *varg++, k, sgnch);
 				if (alt) pfx = k<0? "0X": "0x";
 				na++;
 				break;
@@ -219,6 +219,16 @@ int _vformat(int mode, int max, void *dest, char *fmt, void **varg) {
 		else {
 			lbuf[0] = *fmt++;
 			lbuf[1] = 0;
+#ifdef __dos
+			if (_faddcr && '\n' == *lbuf &&
+			    (outf == stdout || outf == stderr ||
+			     1 == ofd || 2 == ofd))
+			{
+				lbuf[0] = '\r';
+				lbuf[1] = '\n';
+				lbuf[2] = 0;
+			}
+#endif
 			p = lbuf;
 		}
 		k = strlen(p) + strlen(pfx) + strlen(sgnch);

@@ -1,5 +1,5 @@
 
-	SubC Compiler, Version 2014-04-25
+	SubC Compiler, Version 2014-06-03
 	By Nils M Holm, 2011--2014
 	Placed in the public domain
 
@@ -21,10 +21,9 @@
 	the gcc version used). Of course, you can also bootstrap it with
 	other C compilers, such as Clang or PCC.
 
-	SubC is fast and simple. Its output is typically small (due to
-	a non-bloated library), but not very runtime-efficient, because
-	it employs none of the optimization strategies explained in the
-	book.
+	SubC is fast and simple. Its output is statically linked (where
+	available) and typically small due to a non-bloated library). It
+	uses a simple optimizer on per-expression basis.
 
 
 	SUPPORTED SYSTEMS
@@ -33,30 +32,39 @@
 	DOS version, which emits TASM-style syntax). It targets the
 	following processors and operating systems:
 
-		FreeBSD		386+	armv6+	x86-64
-		Linux		386+*	-	x86-64+*
+		FreeBSD		386	armv6	x86-64
+		Linux		386	-	x86-64
 		NetBSD		-	-	x86-64
-		OpenBSD		386*	-	-
-		Windows/MinGW	386*	-	-
-		Darwin		-	-	x86-64*
-		DOS		8086+!
+		OpenBSD		386%	-	-
+		Windows/MinGW	386	-	-
+		Darwin		-	-	x86-64*%
+		DOS		8086!
 
-		+ does *not* use the syscall layer of the host libc
-		* untested
-		! experimental
+		  %  uses the syscall layer of the host libc
+		  *  untested
+		  !  experimental
+		 (/) broken
 
 	Platforms tagged "untested" are not regularly tested by myself
 	and are therefore subject to potential bit rot. You can help
 	me improve SubC by running "make tests" on an "untested"
-	platform and inform me about the result.
+	platform and let me know about the results.
 
-	Porting SubC to other 32-bit or 64-bit platforms should be
-	quite straight-forward. See the file "Porting" and/or the book
-	for a general road map.
+	Platforms using the system's libc as a thin system call layer
+	often cause build/stability problems due to the omnipresence of
+	the GNU libc, which is not "thin" at all. Expect trouble on
+	those systems!
+
+	Platforms tagged "broken" currently will not compile or run
+	properly for some reason. See the Todo file for details.
 
 	The DOS version brings its own toolchain, which can be found in
 	the s86/ directory, so no pre-existing DOS assembler or linker
 	is required to compile SubC programs on DOS.
+
+	Porting SubC to other 32-bit or 64-bit platforms should be
+	quite straight-forward. See the file "Porting" and/or the book
+	for a general road map.
 
 
 	CHANGES TO THE BOOK VERSION
@@ -64,12 +72,12 @@
 	Note: The book version runs on FreeBSD/386 exclusively.
 
 	The current version uses an improved code generator, which
-	emits about 10% smaller and 20% faster code than the compiler
-	described in the book.
+	emits much smaller and faster code than the book compiler.
+	The techniques are described in the book, though.
 
-	This version of the SubC compiler adds support for the
-	following parts of C language to the version described in
-	"Practical Compiler Construction":
+	The current version of the SubC compiler adds support for
+	the following parts of C language to the version described
+	in "Practical Compiler Construction":
 
 	o  &array is now valid syntax (you no longer have to write
 	   &array[0]).
@@ -102,24 +110,22 @@
 
 		#include <varargs.h>
 
-		void p(void *last, ...) {
-			void	*ap;
+		void p(int a, int b, ...) {
 			int	first;
+			void	*ap;
 
-			ap = _va_start(&last);
+			ap = _va_start(&b);
 			first = (int) _va_arg(&ap);
 			vprintf("other args: %d %d %d\n", ap);
 			_va_end(&ap);
 		}
 
-		int p(int x, int y, ...);
-
-	   There may only be one argument in front of the "...", but
-	   the signature of the function can later be modified with a
-	   prototype.
-
 	o  The vprintf(), vfprintf(), and vsprintf() functions have
 	   been added to the runtime library.
+
+	o  A broader subset of C expression syntax is accepted
+	   in constant expression contexts. For example, pointer
+	   variables can be initialized with NULL.
 
 
 	DIFFERENCES BETWEEN SUBC (THIS VERSION) AND FULL C89
@@ -137,9 +143,9 @@
 	   arrays are limited to one dimension, i.e. valid declarators
 	   are limited to x, x[], *x, *x[], **x (and (*x)()).
 
-	o  K&R-style function declarations (with parameter
-	   declarations between the parameter list and function body)
-	   are not accepted.
+	o  K&R-style function declarations (with parameter declarations
+	   between the parameter list and function body) are not
+	   accepted.
 
 	o  There are no ``const'' variables.
 
@@ -157,9 +163,9 @@
 
 	o  There is no support for bit fields.
 
-	o  Only ints, chars and arrays of int and char can be
+	o  Only ints, chars, and arrays of int and char can be
 	   initialized in their declarations; pointers can be
-	   initialized with 0 (but not with NULL).
+	   initialized with 0 or NULL.
 
 	o  Local arrays cannot have initializers.
 
@@ -298,7 +304,7 @@
 	If you want to install the SubC compiler manually, you will
 	have to change the SCCDIR variable in the compiler itself.
 	It points to the base directory which will contain the SubC
-	headers and runtime library. SCCDIR defaults to "." but can
+	headers and runtime library. SCCDIR defaults to ".", but can
 	be overridden on the command line:
 
 		./scc1 -o scc -D 'SCCDIR="INSTALLDIR"' *.c
@@ -318,37 +324,12 @@
 
 	DOS SUPPORT
 
-	Please see the file SubC-for-DOS.
+	Please see the NOTES-DOS file!
 
 
 	WINDOWS SUPPORT
 
-	There is a build script (winbuild.bat) in the base directory
-	of the package, but I have never tried it. Caveat utilitor!
-
-	All Windows-related code in the runtime system has been
-	generously supplied by Jean-Marc Lienher (http://cod5.org).
-	I am afraid I am not able to answer any questions about it,
-	because I know nothing about Windows.
-
-	The Windows version of SubC requires the MinGW infrastructure,
-	but, like the Linux version, does not use the GNU libc. To
-	compile SubC on Windows, just run configure and make, like
-	on a Unix system.
-
-	In case you have to configure it manually, you also have to
-	do the following:
-
-	Replace or symlink the following files:
-
-		ln -fs targets/lib/init-windows.c lib/init.c
-		ln -fs targets/lib/system-windows.c lib/system.c
-
-	Finally change the EXESFX (executable suffix) variable in
-	src/Makefile to ".exe" (without quotes).
-
-	After installing these changes, the compiler should bootstrap
-	as usual and pass the triple test.
+	Please see the NOTES-WINDOWS file!
 
 
 	THANKS
@@ -368,7 +349,9 @@
 	and Darwin/x86-64 as well as for modifying the x86-64 code
 	generator to emit proper code for Darwin.
 
-	To The Unknown Hacker for various minor and not so minor
+	To everybody who test-drove SubC and submitted bug reports.
+
+	To the Unknown Hacker for various minor and not so minor
 	contributions.
 
 

@@ -9,8 +9,6 @@
 #include <errno.h>
 
 int _openmode(char *mode) {
-	int	n;
-
 	if (strchr(mode, '+')) return _FREAD | _FWRITE;
 	else if ('r' == *mode) return _FREAD;
 	else if ('w' == *mode) return _FWRITE;

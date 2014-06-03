@@ -105,7 +105,7 @@
 
 		vi src/targets/OS-CPU/crt0-OS-CPU.s
 
-	There is a usefull tool called "sys" in the tests/ directory of
+	There is a useful tool called "sys" in the tests/ directory of
 	the SubC directory tree. When compiled with SubC, it can be used
 	to test the system call wrapper, program argument passing and
 	environment access in the crt0 module.
@@ -133,6 +133,10 @@
 
 	In a similar way, most parts of the C library can be tested
 	by running "make libtest".
+
+	Signal handling is particurlarly nasty and almost impossible
+	to get right these days. "make sigtest" will help you find out
+	if your signal() implementation blows up.
 
 
 	(8) Add your back-end to the configure script

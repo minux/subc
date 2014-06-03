@@ -5,5 +5,5 @@
 
 #define OS		"FreeBSD"
 #define ASCMD		"as -o %s %s"
-#define LDCMD		"ld -o %s %s/lib/crt0.o"
-#define SYSLIBC		"/usr/lib/libc.a"
+#define LDCMD		"ld -o %s %s/lib/%scrt0.o"
+#define SYSLIBC		""

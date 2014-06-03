@@ -29,14 +29,17 @@
 #include <setjmp.h>
 #include <errno.h>
 #include <limits.h>
-#include <signal.h>
 
+int	Verbose = 0;
 int	Errors = 0;
 
 void fail(char *name) {
-	fputs(name, stdout);
-	puts(" failed!");
+	kprintf(1, "%s failed\n", name);
 	Errors++;
+}
+
+void pr(char *s) {
+	if (Verbose) kprintf(1, "%s\n", s);
 }
 
 void test_memfn(void) {
@@ -44,6 +47,7 @@ void test_memfn(void) {
 	char	v1[128];
 	int	i;
 
+	pr("memcmp");
 	c1 = "test01";
 	c2 = "test03";
 	if (memcmp(c1, c2, 5)) fail("memcmp-1");
@@ -51,6 +55,7 @@ void test_memfn(void) {
 	if (memcmp(c1, c2, 6) != -2) fail("memcmp-3");
 	if (memcmp(c2, c1, 6) != 2) fail("memcmp-4");
 
+	pr("memcpy");
 	c1 = "abcdefghijklmnopqrstuvwxyz0123456789";
 	memcpy(v1, c1, 36);
 	if (memcmp(c1, v1, 36)) fail("memcpy-1");
@@ -59,6 +64,7 @@ void test_memfn(void) {
 	memcpy(v1, v1+18, 36);
 	if (memcmp(c1, v1, 18)) fail("memcpy-3");
 
+	pr("memmove");
 	memcpy(v1, c1, 36);
 	memmove(v1+1, v1, 35);
 	if (memcmp(v1+1, c1, 35) || *v1 != 'a') fail("memmove-1");
@@ -66,6 +72,7 @@ void test_memfn(void) {
 	memmove(v1, v1+1, 35);
 	if (memcmp(v1, c1+1, 35) || v1[35] != '9') fail("memmove-2");
 
+	pr("memset");
 	for (i=0; i<128; i++) v1[i] = -1;
 	memset(v1, 0, 64);
 	if (v1[63]) fail("memset-1");
@@ -75,6 +82,7 @@ void test_memfn(void) {
 	if (v1[63] != 123) fail("memset-3");
 	if (v1[64] == 123) fail("memset-4");
 
+	pr("memchr");
 	c1 = "...............X1";
 	p = memchr(c1, 'X', 16);
 	if (!p || *p != 'X' || p[1] != '1') fail("memchr-1");
@@ -92,15 +100,18 @@ void test_chrfn(void) {
 	char	*num, *low, *upc, *gra, *wsp, *pun;
 	char	alpha[128], alnum[128], xnum[128];
 
+	pr("strchr");
 	c1 = "...............X1..............X2";
 	p1 = strchr(c1, 'X');
 	if (!p1 || *p1 != 'X' || p1[1] != '1') fail("strchr-1");
 	if (strchr(c1, 'Z')) fail("strchr-2");
 
+	pr("strrchr");
 	p1 = strrchr(c1, 'X');
 	if (!p1 || *p1 != 'X' || p1[1] != '2') fail("strrchr-1");
 	if (strrchr(c1, 'Z')) fail("strchr-2");
 
+	pr("is*");
 	num = "0123456789";
 	low = "abcdefghijklmnopqrstuvwxyz";
 	upc = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -146,25 +157,28 @@ void test_dmem(void) {
 	char	*segp[64], *a;
 	int	i, j;
 
-	for (i=0; i<32; i++) {
+	pr("malloc");
+	for (i=0; i<20; i++) {
 		if ((segp[i] = malloc(1024)) == NULL)
 			break;
 		for (j=0; j<1024; j++)
 			segp[i][j] = i;
 	}
-	if (i < 32) fail("malloc-1");
-	for (i=0; i<32; i++) {
+	if (i < 20) fail("malloc-1");
+	for (i=0; i<20; i++) {
 		for (j=0; j<1024; j++)
 			if (segp[i][j] != i)
 				break;
 		if (j != 1024)
 			break;
 	}
-	if (i < 32) fail("malloc-2");
+	if (i < 20) fail("malloc-2");
 
+	pr("free");
 	for (j=0; j<i; j++)
 		free(segp[j]);
 
+	pr("calloc");
 	if ((a = calloc(i, 1024)) == NULL)
 		fail("calloc-1");
 	for (i=0; i<1024; i++)
@@ -173,6 +187,7 @@ void test_dmem(void) {
 		fail("calloc-2");
 	free(a);
 
+	pr("realloc");
 	if ((a = malloc(123)) == NULL)
 		fail("malloc-3");
 	for (i=0; i<123; i++)
@@ -200,6 +215,7 @@ void test_sort(void) {
 	int	array[128];
 	int	i, j;
 
+	pr("qsort");
 	for (i=0; i<128; i++)
 		array[i] = 128-i;
 	qsort(array, 128, sizeof(int), qcmp);
@@ -218,6 +234,7 @@ void test_search(void) {
 	int	key;
 	int	*p;
 
+	pr("bsearch");
 	key = 13;
 	if ((p = bsearch(&key, test_array, 10, sizeof(int), qcmp)) == NULL)
 		fail("bsearch-1");
@@ -238,26 +255,31 @@ void test_mem(void) {
 void test_str(void) {
 	char	v1[128], *sep;
 
+	pr("strlen");
 	if (strlen("\0") != 0) fail("strlen-1");
 	if (strlen("0123456789abcdef") != 16) fail("strlen-2");
 
+	pr("strcmp");
 	if (strcmp("\0", "\0")) fail("strcmp-1");
 	if (strcmp("abcdef", "abcdef")) fail("strcmp-2");
 	if (strcmp("abcdef", "abcdefg") != -'g') fail("strcmp-3");
 	if (strcmp("abcdefg", "abcdef") != 'g') fail("strcmp-4");
 	if (strcmp("abcdef0", "abcdef3") != -3) fail("strcmp-5");
 
+	pr("strcpy");
 	strcpy(v1, "0123456789ABCDEF");
 	if (strcmp(v1, "0123456789ABCDEF")) fail("strcpy-1");
 	strcpy(v1, "ABCDEF");
 	if (strcmp(v1, "ABCDEF")) fail("strcpy-2");
 	if (v1[7] != '7') fail("strcpy-3");
 
+	pr("strcat");
 	strcpy(v1, "abcXXXXX"); v1[3] = 0;
 	strcat(v1, "DEF");
 	if (strcmp(v1, "abcDEF")) fail("strcat-1");
 	if (v1[7] != 'X') fail("strcat-2");
 
+	pr("strncmp");
 	if (strncmp("abcdef", "abcdef", 6)) fail("strncmp-1");
 	if (strncmp("abcdxx", "abcdyy", 4)) fail("strncmp-2");
 	if (strncmp("abcdx0", "abcdy9", 5) != -1) fail("strncmp-3");
@@ -268,6 +290,7 @@ void test_str(void) {
 	if (strncmp("abcdefg", "abcdef", 10) != 'g') fail("strncmp-8");
 	if (strncmp("abcdef", "abcdefg", 10) != -'g') fail("strncmp-9");
 
+	pr("strncpy");
 	strcpy(v1, "0123456789");
 	strncpy(v1, "abcdef", 6);
 	if (strcmp(v1, "abcdef6789")) fail("strncpy-1");
@@ -277,26 +300,31 @@ void test_str(void) {
 	strncpy(v1, "0123", 10);
 	if (memcmp(v1, "0123\00056789", 10)) fail("strncpy-3");
 
+	pr("strncat");
 	strcpy(v1, "012345");
 	strncat(v1, "6789", 5);
 	if (strcmp(v1, "0123456789")) fail("strncat-1");
 	strncat(v1, "abcdef0000", 6);
 	if (strcmp(v1, "0123456789abcdef")) fail("strncat-2");
 
+	pr("strspn");
 	if (strspn("abcdefg", "abc") != 3) fail("strspn-1");
 	if (strspn("abcabcabcdefg", "abc") != 9) fail("strspn-2");
 	if (strspn("abcdefg", "") != 0) fail("strspn-3");
 
+	pr("strcspn");
 	if (strcspn("abcdefg", "def") != 3) fail("strcspn-1");
 	if (strcspn("abcabcabcdefg", "def") != 9) fail("strcspn-2");
 	if (strcspn("abcdefg", "") != 7) fail("strcspn-2");
 	if (strcspn("abcdefg", "xyz") != 7) fail("strcspn-3");
 
+	pr("strpbrk");
 	if (strcmp(strpbrk("abcdef", "def"), "def")) fail("strpbrk-1");
 	if (strcmp(strpbrk("abcabcabcdef", "def"), "def")) fail("strpbrk-2");
 	if (strpbrk("abcdef", "") != NULL) fail("strpbrk-2");
 	if (strpbrk("abcdef", "xyz") != NULL) fail("strpbrk-3");
 
+	pr("strtok");
 	sep = "+-*";
 	strcpy(v1, "foo++bar---baz*goo");
 	if (strcmp(strtok(v1, sep), "foo")) fail("strtok-1");
@@ -334,6 +362,7 @@ void spfs_test(char *id, char *fmt, char *v, char *res) {
 }
 
 void test_sprintf(void) {
+	pr("sprintf");
 	spfn_test("1", "%d", 12345, "12345");
 	spfn_test("2", "%d", -12345, "-12345");
 	spfn_test("3", "%+d", 12345, "+12345");
@@ -403,8 +432,12 @@ void test_sprintf(void) {
 }
 
 void test_math(void) {
-	int	i, j;
+	#define unsigned	char *
+	#define MAX		100
+	int	i, j, k;
+	int	rns[MAX];
 
+	pr("atoi");
 	i = 12345;
 	if (i != atoi("   12345")) fail("atoi-1");
 	if (i != atoi("\t+12345")) fail("atoi-2");
@@ -413,14 +446,21 @@ void test_math(void) {
 	if (i != atoi("  -12345")) fail("atoi-4");
 	if (i != atoi("\t-12345")) fail("atoi-5");
 
+	pr("abs");
 	if (abs(0) != 0) fail("abs-1");
 	if (abs(123) != 123) fail("abs-2");
 	if (abs(-456) != 456) fail("abs-3");
 	if (abs(INT_MIN) != INT_MIN) fail("abs-4"); /* man page says so */
 
-	for (i=0; i<100; i++) {
-		j = rand();
-		if (j < 0 || j > RAND_MAX) fail("rand-1");
+	for (i=0; i<MAX; i++) {
+		k = rand();
+		for (j=0; j<i; j++)
+			if (rns[j] == k) {
+				fail("rand-1");
+				break;
+			}
+		rns[i] = k;
+		if ((unsigned) k > (unsigned) RAND_MAX) fail("rand-2");
 	}
 }
 
@@ -433,6 +473,7 @@ void jump(void) {
 }
 
 void test_ljmp(void) {
+	pr("setjmp/longjmp");
 	count = 0;
 	if (setjmp(&here)) {
 		if (count != 1) fail("setjmp-1");
@@ -442,25 +483,8 @@ void test_ljmp(void) {
 	jump();
 }
 
-volatile caught = 0;
-
-int catch(void) {
-	caught = 1;
-}
-
-void test_signal(void) {
-	signal(SIGABRT, catch);
-	raise(SIGABRT);
-	if (!caught) fail("signal-1");
-	caught = 0;
-	signal(SIGABRT, SIG_IGN);
-	raise(SIGABRT);
-	if (caught) fail("signal-2");
-}
-
 void test_proc(void) {
 	test_ljmp();
-	test_signal();
 }
 
 void test_sio1(void) {
@@ -469,10 +493,12 @@ void test_sio1(void) {
 	int	i, j;
 	int	fd;
 
+	pr("fopen");
 	if ((f = fopen(TMPFILE, "w+")) == NULL) {
 		fail("fopen-1");
 	}
 	else {
+		pr("feof");
 		fgetc(f);
 		if (!feof(f)) fail("feof-1");
 		fclose(f);
@@ -481,12 +507,14 @@ void test_sio1(void) {
 		fail("fopen-2");
 	}
 	else {
+		pr("fputs");
 		if (fputs("1111111111\n", f) == EOF) fail("fputs-1");
 		if (fputs("2222222222\n", f) == EOF) fail("fputs-2");
 		if (fputs("3333333333\n", f) == EOF) fail("fputs-3");
 		if (fputs("4444444444\n", f) == EOF) fail("fputs-4");
 		if (fputs("5555555555\n", f) == EOF) fail("fputs-5");
 		fd = fileno(f);
+		pr("fclose");
 		if (fclose(f)) fail("fclose-1");
 		if (_close(fd) == 0) fail("fclose-2");
 
@@ -494,6 +522,7 @@ void test_sio1(void) {
 			fail("fopen-3");
 		}
 		else {
+			pr("fgets");
 			fgets(buf, 80, f);
 			i = '1';
 			while (!feof(f)) {
@@ -518,6 +547,7 @@ void test_sio2(void) {
 	FILE	*f;
 	int	i;
 
+	pr("fileno");
 	if (fileno(stdin) != 0) fail("fileno-1");
 	if (fileno(stdout) != 1) fail("fileno-2");
 	if (fileno(stderr) != 2) fail("fileno-3");
@@ -527,17 +557,21 @@ void test_sio2(void) {
 		return;
 	}
 
+	pr("fputc");
 	for (i='A'; i<='Z'; i++)
 		if (fputc(i, f) != i)
 			fail("fputc-1");
 
+	pr("fflush");
 	if (fflush(f) < 0) fail("fflush-1");
 	if (_lseek(fileno(f), 0, SEEK_END) != 26) fail("fflush-2");
 
+	pr("rewind");
 	rewind(f);
 	if (_lseek(fileno(f), 0, SEEK_CUR) != 0)
 		fail("rewind-1");
 
+	pr("fgets");
 	for (i='A'; i<='Z'; i++) {
 		if (fgetc(f) != i) {
 			fail("fgetc-1");
@@ -546,6 +580,7 @@ void test_sio2(void) {
 	}
 	if (fgetc(f) != EOF) fail("fgetc-2");
 	
+	pr("ungetc");
 	clearerr(f);
 	if (ungetc('X', f) != 'X') fail("ungetc-1");
 	if (fgetc(f) != 'X') fail("ungetc-2");
@@ -567,12 +602,14 @@ void test_sio3(void) {
 		fail("fopen-5");
 		return;
 	}
+	pr("fwrite");
 	for (i=31; i<=527; i += 31) {
 		memset(buf, i, i);
 		if (fwrite(buf, 1, i, f) != i)
 			fail("fwrite-1");
 	}
 	rewind(f);
+	pr("fread");
 	for (i=31; i<=527; i += 31) {
 		memset(buf, i, i);
 		if (fread(buf, 1, i, f) != i)
@@ -586,6 +623,8 @@ void test_sio3(void) {
 			break;
 		}
 	}
+
+	if (fclose(f)) fail("fclose-5");
 
 	if ((f = fopen(TMPFILE, "w+")) == NULL) {
 		fail("fopen-5");
@@ -610,6 +649,7 @@ void test_sio3(void) {
 
 	clearerr(f);
 	rewind(f);
+	pr("fseek/ftell");
 	if (fseek(f, 0, SEEK_END) != 16384) fail("fseek-1");
 	if (ftell(f) != 16384) fail("ftell-1");
 	if (fseek(f, 8100, SEEK_SET) != 8100) fail("fseek-2");
@@ -624,6 +664,9 @@ void test_sio3(void) {
 void test_stdout(void) {
 	int	i;
 
+#ifdef __dos
+	_faddcr = 0; /* don't convert LF-->CR,LF */
+#endif
 	puts("0---|----1----|----2----|----3----|----4----|----5");
 	for (i=0; i<50; i++) putc('A', stdout);
 	puts("");
@@ -639,7 +682,7 @@ void test_stdout(void) {
 	printf("%50d\n", -12345);
 	printf("%-49d|\n", -12345);
 	printf("%050d\n", 12345);
-	printf("0x%x %15s%d%15s 0%o\n", 0xABCD, "", 0xABCD, "", 0xABCD);
+	printf("0x%x %15s%d%16s 0%o\n", 0x7BCD, "", 0x7BCD, "", 0x7BCD);
 	for (i=0; i<5; i++) printf("%%%%%%%%%%%%%%%%%%%%");
 	puts("");
 	puts("0---|----1----|----2----|----3----|----4----|----5");
@@ -651,7 +694,12 @@ void test_sio4(void) {
 	int	err, lno;
 
 	err = lno = 0;
+	pr("stdout");
+#ifdef __dos
+	system(".\\libtest.exe test-stdout >stdio.tmp");
+#else
 	system("./libtest test-stdout >stdio.tmp");
+#endif
 	if ((f = fopen("stdio.ok", "r")) == NULL) {
 		fputs("missing file: stdio.ok\n", stdout);
 		Errors++;
@@ -697,21 +745,25 @@ void test_file(void) {
 	char	tn1[L_tmpnam], tn2[L_tmpnam];
 
 	fclose(fopen(TMPFILE, "w"));
+	pr("remove");
 	if (remove(TMPFILE) < 0) fail("remove-1");
 	if (remove(TMPFILE) >= 0) fail("remove-2");
 
+	pr("rename");
 	if (rename(TMPFILE, TMPFILE2) >= 0) fail("rename-1");
 	fclose(fopen(TMPFILE, "w"));
 	if (rename(TMPFILE, TMPFILE2) < 0) fail("rename-2");
 	if (rename(TMPFILE, TMPFILE2) >= 0) fail("rename-3");
 	remove(TMPFILE2);
 
+	pr("tmpfile");
 	if ((f = tmpfile()) == NULL) fail("tmpfile-1");
 	memset(buf, 0xa5, 1024);
 	if (fwrite(buf, 1, 1024, f) != 1024) fail("tmpfile-2");
 	rewind(f);
 	if (fread(buf, 1, 1024, f) != 1024) fail("tmpfile-3");
 
+	pr("tmpnam");
 	if (tmpnam(tn1) == NULL) fail("tmpnam-1");
 	fclose(fopen(tn1, "w"));
 	if (tmpnam(tn2) == NULL) fail("tmpnam-2");
@@ -724,13 +776,19 @@ void doexit(void) {
 }
 
 void test_atexit(void) {
+	pr("atexit");
 	atexit(doexit);
 	exit(0);
 }
 
 void test_exit(void) {
+	pr("exit");
 	remove(TMPFILE);
+#ifdef __dos
+	system(".\\libtest.exe test-atexit");
+#else
 	system("./libtest test-atexit");
+#endif
 	if (fclose(fopen(TMPFILE, "r")) == EOF)
 		fail("atexit-1");
 	remove(TMPFILE);
@@ -740,9 +798,17 @@ void test_exit(void) {
 
 int main(int argc, char **argv) {
 	if (argc > 1) {
-		if (!strcmp(argv[1], "test-stdout")) test_stdout();
-		if (!strcmp(argv[1], "test-atexit")) test_atexit();
-		return EXIT_SUCCESS;
+		if (!strcmp(argv[1], "v")) {
+			Verbose = 1;
+		}
+		else if (!strcmp(argv[1], "test-stdout")) {
+			test_stdout();
+			return EXIT_SUCCESS;
+		}
+		if (!strcmp(argv[1], "test-atexit")) {
+			test_atexit();
+			return EXIT_SUCCESS;
+		}
 	}
 	test_mem();
 	test_str();

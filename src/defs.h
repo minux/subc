@@ -10,7 +10,7 @@
 #include "cg.h"
 #include "sys.h"
 
-#define VERSION		"2014-04-25"
+#define VERSION		"2014-06-03"
 
 #ifndef SCCDIR
  #define SCCDIR		"."
@@ -44,6 +44,7 @@
 /* assert(NSYMBOLS < PSTRUCT) */
 #define NSYMBOLS	1024
 #define POOLSIZE	16384
+#define NODEPOOLSZ	4096	/* ints */
 
 /* types */
 enum {
@@ -92,6 +93,7 @@ enum {
 enum {
 	LVSYM,
 	LVPRIM,
+	LVADDR,
 	LV
 };
 
@@ -140,6 +142,15 @@ enum {
 	normalize
 };
 
+/* AST node */
+struct node_stc {
+	int		op;
+	struct node_stc	*left, *right;
+	int		args[1];
+};
+
+#define node	struct node_stc
+
 /* tokens */
 enum {
 	SLASH, STAR, MOD, PLUS, MINUS, LSHIFT, RSHIFT,
@@ -157,3 +168,15 @@ enum {
 	P_DEFINE, P_ELSE, P_ELSENOT, P_ENDIF, P_ERROR, P_IFDEF,
 	P_IFNDEF, P_INCLUDE, P_LINE, P_PRAGMA, P_UNDEF
 };
+
+/* AST operators */
+enum {
+	OP_GLUE, OP_ADD, OP_ADDR, OP_ASSIGN, OP_BINAND, OP_BINIOR,
+	OP_BINXOR, OP_BOOL, OP_BRFALSE, OP_BRTRUE, OP_CALL, OP_CALR,
+	OP_COMMA, OP_DEC, OP_DIV, OP_EQUAL, OP_GREATER, OP_GTEQ,
+	OP_IDENT, OP_IFELSE, OP_LAB, OP_LDLAB, OP_LESS, OP_LIT,
+	OP_LOGNOT, OP_LSHIFT, OP_LTEQ, OP_MOD, OP_MUL, OP_NEG,
+	OP_NOT, OP_NOTEQ, OP_PLUS, OP_PREDEC, OP_PREINC, OP_POSTDEC,
+	OP_POSTINC, OP_RSHIFT, OP_RVAL, OP_SCALE, OP_SCALEBY, OP_SUB
+};
+

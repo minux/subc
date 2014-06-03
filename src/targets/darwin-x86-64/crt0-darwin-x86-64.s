@@ -38,20 +38,19 @@ _main:
         movq    %rdx, -24(%rbp)	# envp
 
 	pushq	%rdi
-	call	C_init
+	call	C_init	#INIT
 	popq	%rdi
 	
 	movq	-24(%rbp),%rax
 	movq	%rax,Cenviron(%rip)
 	
 	xorq	%rcx,%rcx
-	movl	-4(%rbp),%ecx
-	pushq	%rcx		# argc
 	movq	-16(%rbp), %rsi
 	pushq	%rsi		# argv
-	pushq	$2		# __argc
+	movl	-4(%rbp),%ecx
+	pushq	%rcx		# argc
 	call	Cmain
-	addq	$24,%rsp
+	addq	$16,%rsp
 
         addq    $32, %rsp
         popq    %rbp
@@ -84,7 +83,7 @@ no:	loop	next
 	.text
 	.globl	Csetjmp
 Csetjmp:
-	movq	16(%rsp),%rdx
+	movq	8(%rsp),%rdx	# env
 	movq	%rsp,(%rdx)
 	addq	$8,(%rdx)
 	movq	%rbp,8(%rdx)
@@ -97,8 +96,8 @@ Csetjmp:
 	.text
 	.globl	Clongjmp
 Clongjmp:
-	movq	16(%rsp),%rax
-	movq	24(%rsp),%rdx
+	movq	16(%rsp),%rax	# v
+	movq	8(%rsp),%rdx	# env
 	movq	(%rdx),%rsp
 	movq	8(%rdx),%rbp
 	movq	16(%rdx),%rdx
@@ -108,7 +107,7 @@ Clongjmp:
 	.text
 	.globl	C_exit
 C_exit:
-	movq	16(%rsp),%rdi
+	movq	8(%rsp),%rdi			# rc
 	movq	%rax,StackAlignmentRAX(%rip)
 	movq 	%rsp,StackAlignment(%rip)
 	subq	$16,%rsp
@@ -125,7 +124,7 @@ C_exit:
 	.text
 	.globl	C_sbrk
 C_sbrk:
-	movq	16(%rsp),%rdi
+	movq	8(%rsp),%rdi			# size
 	movq	%rax,StackAlignmentRAX(%rip)
 	movq 	%rsp,StackAlignment(%rip)
 	subq	$16,%rsp
@@ -143,9 +142,9 @@ C_sbrk:
 	.text
 	.globl	C_write
 C_write:
-	movq	16(%rsp),%rdx
-	movq	24(%rsp),%rsi
-	movq	32(%rsp),%rdi
+	movq	24(%rsp),%rdx			# len
+	movq	16(%rsp),%rsi			# buf
+	movq	8(%rsp),%rdi			# fd
 	movq	%rax,StackAlignmentRAX(%rip)
 	movq 	%rsp,StackAlignment(%rip)
 	subq	$16,%rsp
@@ -163,9 +162,9 @@ C_write:
 	.text
 	.globl	C_read
 C_read:
-	movq	16(%rsp),%rdx
-	movq	24(%rsp),%rsi
-	movq	32(%rsp),%rdi
+	movq	24(%rsp),%rdx			# len
+	movq	16(%rsp),%rsi			# buf
+	movq	8(%rsp),%rdi			# fd
 	movq	%rax,StackAlignmentRAX(%rip)
 	movq 	%rsp,StackAlignment(%rip)
 	subq	$16,%rsp
@@ -183,9 +182,9 @@ C_read:
 	.text
 	.globl	C_lseek
 C_lseek:
-	movq	16(%rsp),%rdx
-	movq	24(%rsp),%rsi
-	movq	32(%rsp),%rdi
+	movq	24(%rsp),%rdx			# how
+	movq	16(%rsp),%rsi			# pos
+	movq	8(%rsp),%rdi			# fd
 	movq	%rax,StackAlignmentRAX(%rip)
 	movq 	%rsp,StackAlignment(%rip)
 	subq	$16,%rsp
@@ -203,8 +202,8 @@ C_lseek:
 	.text
 	.globl	C_creat
 C_creat:
-	movq	16(%rsp),%rsi
-	movq	24(%rsp),%rdi
+	movq	16(%rsp),%rsi			# mode
+	movq	8(%rsp),%rdi			# path
 	movq	%rax,StackAlignmentRAX(%rip)
 	movq 	%rsp,StackAlignment(%rip)
 	subq	$16,%rsp
@@ -222,8 +221,8 @@ C_creat:
 	.text
 	.globl	C_open
 C_open:
-	movq	16(%rsp),%rsi
-	movq	24(%rsp),%rdi
+	movq	16(%rsp),%rsi			# flags
+	movq	8(%rsp),%rdi			# path
 	movq	%rax,StackAlignmentRAX(%rip)
 	movq 	%rsp,StackAlignment(%rip)
 	subq	$16,%rsp
@@ -241,7 +240,7 @@ C_open:
 	.text
 	.globl	C_close
 C_close:
-	movq	16(%rsp),%rdi
+	movq	8(%rsp),%rdi			# fd
 	movq	%rax,StackAlignmentRAX(%rip)
 	movq 	%rsp,StackAlignment(%rip)
 	subq	$16,%rsp
@@ -259,7 +258,7 @@ C_close:
 	.text
 	.globl	C_unlink
 C_unlink:
-	movq	16(%rsp),%rdi
+	movq	8(%rsp),%rdi			# path
 	movq	%rax,StackAlignmentRAX(%rip)
 	movq 	%rsp,StackAlignment(%rip)
 	subq	$16,%rsp
@@ -277,8 +276,8 @@ C_unlink:
 	.text
 	.globl	C_rename
 C_rename:
-	movq	16(%rsp),%rsi
-	movq	24(%rsp),%rdi
+	movq	16(%rsp),%rsi			# new
+	movq	8(%rsp),%rdi			# old
 	movq	%rax,StackAlignmentRAX(%rip)
 	movq 	%rsp,StackAlignment(%rip)
 	subq	$16,%rsp
@@ -326,7 +325,7 @@ C_wait:
 	xorq	%rax,%rax
 	call	_wait
 	movq 	StackAlignment(%rip),%rsp
-	movq	16(%rsp),%rdx
+	movq	8(%rsp),%rdx			# rc
 	pushq	%rax
 	pushq	%rbx
 	movq	ww(%rip),%rax
@@ -346,9 +345,9 @@ wait_bye:
 	.text
 	.globl	C_execve
 C_execve:
-	movq	16(%rsp),%rdx
-	movq	24(%rsp),%rsi
-	movq	32(%rsp),%rdi
+	movq	24(%rsp),%rdx			# envp
+	movq	16(%rsp),%rsi			# argv
+	movq	8(%rsp),%rdi			# path
 	movq	%rax,StackAlignmentRAX(%rip)
 	movq 	%rsp,StackAlignment(%rip)
 	subq	$16,%rsp
@@ -396,7 +395,7 @@ Craise:
 	call	_getpid
 	movq 	StackAlignment(%rip),%rsp
 	movq	%rax,%rdi
-	movq	16(%rsp),%rsi
+	movq	8(%rsp),%rsi			# sig
 	movq	%rax,StackAlignmentRAX(%rip)
 	movq 	%rsp,StackAlignment(%rip)
 	subq	$16,%rsp
@@ -414,8 +413,8 @@ Craise:
 	.text
 	.globl	Csignal
 Csignal:
-	movq	16(%rsp),%rsi
-	movq	24(%rsp),%rdi
+	movq	16(%rsp),%rsi			# fn
+	movq	8(%rsp),%rdi			# sig
 	movq	%rax,StackAlignmentRAX(%rip)
 	movq 	%rsp,StackAlignment(%rip)
 	subq	$16,%rsp

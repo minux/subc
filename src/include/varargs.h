@@ -8,6 +8,6 @@
  * because we don't have parameterized macros.
  */
 
-void	**_va_start(void **last);
+void	**_va_start(void *last);
 void	 *_va_arg(void **ap);
 void	  _va_end(void **ap);

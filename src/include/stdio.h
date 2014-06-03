@@ -39,6 +39,10 @@ struct _file {
 
 extern FILE	*stdin, *stdout, *stderr;
 
+#ifdef __dos
+extern int	_faddcr;
+#endif
+
 #define getc	fgetc
 #define putc	fputc
 

@@ -9,6 +9,7 @@
 #include <errno.h>
 
 #define THRESHOLD	128
+#define OVERALLOC	10
 
 int		*_arena = 0;
 int		_asize;
@@ -36,7 +37,7 @@ void *malloc(int size) {
 		if (size >= THRESHOLD)
 			_asize = size + 1;
 		else
-			_asize = size * 10;
+			_asize = size * OVERALLOC;
 		_arena = _sbrk(_asize * sizeof(int));
 		if ((int *) -1 == _arena) {
 			errno = ENOMEM;
@@ -68,13 +69,14 @@ void *malloc(int size) {
 				abort();
 			}
 		} while (p != freep);
-		if (0 == tries)
+		if (0 == tries) {
 			defrag();
+		}
 		else {
 			if (size >= THRESHOLD)
 				n = size + 1;
 			else
-				n = size * 50;
+				n = size * OVERALLOC;
 			if (_sbrk(n * sizeof(int)) == (void *)-1) {
 				errno = ENOMEM;
 				return NULL;

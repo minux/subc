@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011,2012
+ *	NMH's Simple C Compiler, 2011,2012,2014
  *	Preprocessor
  */
 
@@ -13,10 +13,20 @@ void playmac(char *s) {
 	Macp[Mp++] = s;
 }
 
+int getln(char *buf, int max) {
+	int	k;
+
+	if (fgets(buf, max, Infile) == NULL) return 0;
+	k = strlen(buf);
+	if (k) buf[--k] = 0;
+	if (k && '\r' == buf[k-1]) buf[--k] = 0;
+	return k;
+}
+
 static void defmac(void) {
 	char	name[NAMELEN+1];
 	char	buf[TEXTLEN+1], *p;
-	int	k, y;
+	int	y;
 
 	Token = scanraw();
 	if (Token != IDENT)
@@ -25,9 +35,7 @@ static void defmac(void) {
 	if ('\n' == Putback)
 		buf[0] = 0;
 	else
-		fgets(buf, TEXTLEN-1, Infile);
-	k = strlen(buf);
-	if (k) buf[k-1] = 0;
+		getln(buf, TEXTLEN-1);
 	for (p = buf; isspace(*p); p++)
 		;
 	if ((y = findmac(name)) != 0) {
@@ -61,13 +69,11 @@ static void include(void) {
 
 	if ((c = skip()) == '<')
 		c = '>';
-	fgets(file, TEXTLEN-strlen(SCCDIR)-9, Infile);
+	k = getln(file, TEXTLEN-strlen(SCCDIR)-9);
 	Line++;
-	k = strlen(file);
-	file[k-1] = 0;
-	if (file[k-2] != c)
+	if (!k || file[k-1] != c)
 		error("missing delimiter in '#include'", NULL);
-	file[k-2] = 0;
+	if (k) file[k-1] = 0;
 	if (c == '"')
 		strcpy(path, file);
 	else {
@@ -139,14 +145,11 @@ static void endif(void) {
 
 static void pperror(void) {
 	char	buf[TEXTLEN+1];
-	int	k;
 
 	if ('\n' == Putback)
 		buf[0] = 0;
 	else
-		fgets(buf, TEXTLEN-1, Infile);
-	k = strlen(buf);
-	if (k) buf[k-1] = 0;
+		getln(buf, TEXTLEN-1);
 	error("#error: %s", buf);
 	exit(1);
 }
@@ -157,7 +160,7 @@ static void setline(void) {
 	if ('\n' == Putback)
 		buf[0] = 0;
 	else
-		fgets(buf, TEXTLEN-1, Infile);
+		getln(buf, TEXTLEN-1);
 	Line = atoi(buf) - 1;
 }
 

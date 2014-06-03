@@ -3,7 +3,7 @@
 #	C runtime module for Linux/amd64
 #
 
-# Calling conventions: %rdi,%rsi,%rdx,stack return in %rax
+# Calling conventions: %rdi,%rsi,%rdx,%r10,%r8,%r9,stack; return in %rax
 # System call: %rax=call#, arguments as above,
 #              carry indicates error,
 #              return/error value in %rax
@@ -16,7 +16,7 @@ Cenviron:
 	.text
 	.globl	_start
 _start:
-	call	C_init
+	call	C_init		#INIT
 	leaq	8(%rsp),%rsi	# argv
 	movq	0(%rsp),%rcx	# argc
 	movq	%rcx,%rax	# environ = &argv[argc+1]
@@ -24,15 +24,13 @@ _start:
 	shlq	$3,%rax
 	addq	%rsi,%rax
 	movq	%rax,Cenviron
-	pushq	%rcx
 	pushq	%rsi
-	pushq	$2		# __argc
+	pushq	%rcx
 	call	Cmain
-	addq	$12,%rsp
+	addq	$16,%rsp
 	pushq	%rax
-	pushq	$1
 x:
-	call	Cexit
+	call	Cexit		#EXIT
 	xorq	%rbx,%rbx
 	divq	%rbx
 	jmp	x
@@ -66,7 +64,7 @@ no:
 
 	.globl	Csetjmp
 Csetjmp:
-	movq	16(%rsp),%rdx
+	movq	8(%rsp),%rdx	# env
 	movq	%rsp,(%rdx)
 	addq	$8,(%rdx)
 	movq	%rbp,8(%rdx)
@@ -79,8 +77,8 @@ Csetjmp:
 
 	.globl	Clongjmp
 Clongjmp:
-	movq	16(%rsp),%rax
-	movq	24(%rsp),%rdx
+	movq	16(%rsp),%rax	# v
+	movq	8(%rsp),%rdx	# env
 	movq	(%rdx),%rsp
 	movq	8(%rdx),%rbp
 	movq	16(%rdx),%rdx
@@ -90,7 +88,7 @@ Clongjmp:
 
 	.globl	C_exit
 C_exit:
-	movq	16(%rsp),%rdi
+	movq	8(%rsp),%rdi	# rc
 	movq	$231,%rax
 	syscall
 	ret
@@ -111,13 +109,13 @@ C_sbrk:
 	syscall
 	movq	%rax,curbrk
 sbrk:
-	cmpq	$0,16(%rsp)
+	cmpq	$0,8(%rsp)	# size
 	jnz	setbrk
 	mov	curbrk,%rax	# size==0, return break
 	ret
 setbrk:
 	movq	curbrk,%rdi	# set new break
-	addq	16(%rsp),%rdi
+	addq	8(%rsp),%rdi	# size
 	movq	$12,%rax	# brk
 	syscall
 	cmpq	%rax,curbrk	# brk(x)==curbrk -> error
@@ -134,9 +132,9 @@ sbrkok:
 
 	.globl	C_write
 C_write:
-	movq	16(%rsp),%rdx
-	movq	24(%rsp),%rsi
-	movq	32(%rsp),%rdi
+	movq	24(%rsp),%rdx	# len
+	movq	16(%rsp),%rsi	# buf
+	movq	8(%rsp),%rdi	# fd
 	movq	$1,%rax
 	syscall
 	ret
@@ -145,9 +143,9 @@ C_write:
 
 	.globl	C_read
 C_read:
-	movq	16(%rsp),%rdx
-	movq	24(%rsp),%rsi
-	movq	32(%rsp),%rdi
+	movq	24(%rsp),%rdx	# len
+	movq	16(%rsp),%rsi	# buf
+	movq	8(%rsp),%rdi	# fd
 	movq	$0,%rax
 	syscall
 	ret
@@ -156,9 +154,9 @@ C_read:
 
 	.globl	C_lseek
 C_lseek:
-	movq	16(%rsp),%rdx
-	movq	24(%rsp),%rsi
-	movq	32(%rsp),%rdi
+	movq	24(%rsp),%rdx	# how
+	movq	16(%rsp),%rsi	# pos
+	movq	8(%rsp),%rdi	# fd
 	movq	$8,%rax
 	syscall
 	ret
@@ -167,8 +165,8 @@ C_lseek:
 
 	.globl	C_creat
 C_creat:
-	movq	16(%rsp),%rsi
-	movq	24(%rsp),%rdi
+	movq	16(%rsp),%rsi	# mode
+	movq	8(%rsp),%rdi	# path
 	movq	$85,%rax
 	syscall
 	ret
@@ -177,8 +175,8 @@ C_creat:
 
 	.globl	C_open
 C_open:
-	movq	16(%rsp),%rsi
-	movq	24(%rsp),%rdi
+	movq	16(%rsp),%rsi	# flags
+	movq	8(%rsp),%rdi	# path
 	movq	$2,%rax
 	syscall
 	ret
@@ -187,7 +185,7 @@ C_open:
 
 	.globl	C_close
 C_close:
-	movq	16(%rsp),%rdi
+	movq	8(%rsp),%rdi	# fd
 	movq	$3,%rax
 	syscall
 	ret
@@ -196,7 +194,7 @@ C_close:
 
 	.globl	C_unlink
 C_unlink:
-	movq	16(%rsp),%rdi
+	movq	8(%rsp),%rdi	# path
 	movq	$87,%rax
 	syscall
 	ret
@@ -205,8 +203,8 @@ C_unlink:
 
 	.globl	C_rename
 C_rename:
-	movq	16(%rsp),%rsi
-	movq	24(%rsp),%rdi
+	movq	16(%rsp),%rsi	# new
+	movq	8(%rsp),%rdi	# old
 	mov	$82,%rax
 	syscall
 	ret
@@ -224,7 +222,7 @@ C_fork:
 	.globl	C_wait
 C_wait:
 	movq	$-1,%rdi
-	movq	16(%rsp),%rsi
+	movq	8(%rsp),%rsi	# rc
 	movq	$0, (%rsi)
 	xorq	%rdx,%rdx
 	xorq	%r10,%r10
@@ -236,9 +234,9 @@ C_wait:
 
 	.globl	C_execve
 C_execve:
-	movq	16(%rsp),%rdx
-	movq	24(%rsp),%rsi
-	movq	32(%rsp),%rdi
+	movq	24(%rsp),%rdx	# envp
+	movq	16(%rsp),%rsi	# argv
+	movq	8(%rsp),%rdi	# path
 	movq	$59,%rax
 	syscall
 	ret
@@ -261,7 +259,7 @@ Craise:
 	movq	$39,%rax	# getpid
 	syscall
 	movq	%rax,%rdi
-	movq	16(%rsp),%rsi
+	movq	8(%rsp),%rsi	# sig
 	movq	$62,%rax
 	syscall
 	ret
@@ -270,14 +268,22 @@ Craise:
 
 	.globl	Csignal
 Csignal:
-	# prepare a struct sigaction
-	movq	16(%rsp),%rax
+
+#	If your signal handlers segfault, uncomment the below code
+#	and link against /usr/lib/libc.a.
+#
+#	movq	8(%rsp),%rdi	# sig
+#	movq	16(%rsp),%rsi	# fn /act
+#	call	signal
+#	ret
+
+	movq	16(%rsp),%rax	# fn
 	movq	%rax,-32(%rsp)
 	movq	$0x10000000,-24(%rsp)	# SA_RESTART
 	xorq	%rax,%rax
 	movq	%rax,-16(%rsp)
 	movq	%rax,-8(%rsp)
-	movq	24(%rsp),%rdi
+	movq	8(%rsp),%rdi	# sig
 	leaq	-32(%rsp),%rsi
 	leaq	-64(%rsp),%rdx
 	movq	$8,%r10

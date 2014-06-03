@@ -21,6 +21,7 @@ void init(void) {
 	Locs = NSYMBOLS;
 	Nbot = 0;
 	Ntop = POOLSIZE;
+	Ndmax = 0;
 	Bsp = 0;
 	Csp = 0;
 	Q_type = empty;
@@ -36,6 +37,7 @@ void init(void) {
 	File = "(stdin)";
 	Basefile = NULL;
 	Outfile = stdout;
+	opt_init();
 }
 
 int chrpos(char *s, int c) {
@@ -48,23 +50,6 @@ int chrpos(char *s, int c) {
 void copyname(char *name, char *s) {
 	strncpy(name, s, NAMELEN);
 	name[NAMELEN] = 0;
-}
-
-static FILE	*suspended;
-static int	susp_acc;
-extern int	Acc;
-
-void suspend(void) {
-	commit();
-	suspended = Outfile;
-	susp_acc = Acc;
-	Outfile = NULL;
-}
-
-void resume(void) {
-	Outfile = suspended;
-	clear(1);
-	Acc = susp_acc;
 }
 
 void match(int t, char *what) {

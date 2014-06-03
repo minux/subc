@@ -78,7 +78,7 @@ static void do_stmt(void) {
 	match(WHILE, "'while'");
 	lparen();
 	genlab(lc);
-	rexpr(0);
+	rexpr();
 	genbrtrue(ls);
 	clear(1);
 	genlab(lb);
@@ -106,13 +106,13 @@ static void for_stmt(void) {
 	pushcont(lc = label());
 	lparen();
 	if (Token != SEMI) {
-		rexpr(0);
+		rexpr();
 		clear(1);
 	}
 	semi();
 	genlab(ls);
 	if (Token != SEMI) {
-		rexpr(0);
+		rexpr();
 		genbrfalse(lb);
 		clear(1);
 	}
@@ -120,7 +120,7 @@ static void for_stmt(void) {
 	semi();
 	genlab(lc);
 	if (Token != RPAREN)
-		rexpr(0);
+		rexpr();
 	clear(1);
 	genjump(ls);
 	rparen();
@@ -143,7 +143,7 @@ static void if_stmt(void) {
 
 	Token = scan();
 	lparen();
-	rexpr(0);
+	rexpr();
 	l1 = label();
 	genbrfalse(l1);
 	clear(1);
@@ -171,8 +171,7 @@ static void return_stmt(void) {
 
 	Token = scan();
 	if (Token != SEMI) {
-		if (expr(lv, 1))
-			rvalue(lv);
+		expr(lv, 1);
 		if (!typematch(lv[LVPRIM], Prims[Thisfn]))
 			error("incompatible type in 'return'", NULL);
 	}
@@ -249,7 +248,8 @@ static void switch_block(void) {
 static void switch_stmt(void) {
 	Token = scan();
 	lparen();
-	rexpr(1);
+	rexpr();
+	commit();
 	clear(0);
 	rparen();
 	if (Token != LBRACE)
@@ -269,7 +269,7 @@ static void while_stmt(void) {
 	pushcont(lc = label());
 	genlab(lc);
 	lparen();
-	rexpr(0);
+	rexpr();
 	genbrfalse(lb);
 	clear(1);
 	rparen();

@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011,2012
+ *	NMH's Simple C Compiler, 2011,2012,2014
  *	fputc()
  */
 
@@ -12,6 +12,10 @@ int _fsync(FILE *f);
 int fputc(int c, FILE *f) {
 	char	b[1];
 
+#ifdef __dos
+	if (_faddcr && '\n' == c && (f == stdout || f == stderr))
+		fputc('\r', f);
+#endif
 	if ((f->iom & _FWRITE) == 0)
 		return EOF;
 	if (f->iom & _FERROR)

@@ -9,10 +9,30 @@
 	The SubC compiler can now be cross-compiled for DOS with the
 	following limitations:
 
-	* There is no BSS segment, so static arrays are packed
-	  into the data segment, thereby increasing the size of
-	  the resulting EXE file unnecessarily.
-	  Workaround: use malloc() instead of static arrays.
+	* The I/O functions of the compiler use Unix file format,
+	  i.e. LF instead of CR/LF to separate lines. No automatic
+	  conversion is performed, but some functions printing to
+	  stdout or stderr will translate LF to CRLF.
+
+	  These functions include: printf(), fprintf(), puts(), fputs(),
+	  putc(), fputc(), putchar(). puts() and fputs() convert only
+	  '\n' characters at the end of the buffer.
+	  kprintf() also converts LF on descriptors 1 and 2.
+
+	  Automatic conversion can be disabled by setting the extern
+	  int _faddcr to 0.
+
+	* All compiler and toolchain executables use Unix path names.
+	  Using \ in the place of / will probably confuse them.
+
+	* The compiler expects lower-case file name suffixes. Hence
+	  it will assume that TEST.C is an object file rather than a
+	  C program.
+
+	* There is no BSS segment, so static arrays are packed into the
+	  data segment, thereby increasing the size of the resulting
+	  EXE file unnecessarily. Workaround: use malloc() instead of
+	  static arrays.
 
 	* There are some subtle differences between S86 and popular
 	  DOS assemblers, e.g.: S86 assumes that undefined symbols
@@ -27,25 +47,29 @@
 	* Pipe mode (-), test mode (-t), and debug mode (-d x) currently
 	  do not work.
 
-	* The library path of the compiler is hardwired into the
-	  binary and defaults to ".", i.e.: the compiler works only
-	  in its own base directory. You can re-compile it with a
-	  different path, though.
+	* The library path of the compiler is hardwired into the binary
+	  and defaults to ".", i.e.: the compiler works only in its own
+	  base directory. You can re-compile it with a different path,
+	  though.
 
-	* The I/O functions of the compiler use Unix file format, i.e.
-	  LF instead of CR/LF to separate lines.
+	* time() returns 0.
 
-	* All compiler and toolchain executables use Unix path names.
-	  Using \ the place of / will probably confuse them.
+	* signal() returns SIG_ERR and does nothing.
+
+	* raise() simply aborts program execution.
+
+	* fseek() is limited to +/-32K offsets.
 
 
 	STATUS
 
-	Scc86 currently passes the pointer test suite (tests/ptest.c)
-	and the systest suite except for _fork(), execve(), and _wait().
-	_time() just returns 0 at the moment. argc/argv/environ cannot
-	be tested due to lack of _fork() and _execve(), but they can be
-	checked with the sys tool (also contained in tests/).
+	Scc86 currently passes the pointer test suite (tests/ptest.c),
+	the systest suite (tests/systest.c), and the library test suite
+	(tests/libtest.c), but time() just returns 0 at the moment.
+
+	argc/argv/environ cannot be tested due to lack of _fork() and
+	_execve(), but they can be checked with the sys tool (also
+	contained in tests/).
 
 	Scc86 also passes the triple test, but there is currently no
 	make target or script for this step.
@@ -89,7 +113,7 @@
 
 	BTW, if you plan to compile these programs with a C compiler
 	other than SubC, you will at least have to make sure that the
-	char data type is unsigned.
+	char data type is unsigned. (But there are more issues!)
 
 	Edit the BINDIR variable in Makefile before installing:
 
@@ -101,7 +125,7 @@
 
 		scc86 file.c ...
 
-	The output will be placed in a file named "aout.exe" by default.
+	The output will be placed in "aout.exe" by default.
 
 
 	CROSS-COMPILING AND INSTALLING SUBC FOR DOS
@@ -134,7 +158,7 @@
 	unpack the ZIP archive.
 
 	NOTE: The SCC command can then be used to compile SubC programs,
-	but *only* inside of that directory, because the library and
+	but *only* inside of its own directory, because the library and
 	include paths are hardwired to "./lib" and "./include".
 
 	To change the default paths of the compiler, edit the SCCDIR
@@ -142,7 +166,7 @@
 	*DOS* system, and then run the dosbuild.bat file:
 
 		EDIT SRC\DEFS.H   # change SCCDIR to the CWD
-		DOSBUILD.BAT YES
+		DOSBUILD.BAT GO
 
 	Finally copy the new compiler binary into place (saving the old
 	one in case the build failed):

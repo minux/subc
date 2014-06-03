@@ -4,9 +4,9 @@
  */
 
 #include "defs.h"
-#define _extern
+#define extern_
  #include "data.h"
-#undef _extern
+#undef extern_
 #include "decl.h"
 
 char	*Asmfile;

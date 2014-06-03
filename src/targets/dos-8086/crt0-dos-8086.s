@@ -22,11 +22,12 @@ STKLEN	equ	1000h
 
 	.data
 
-	public	Cenviron
+	public	Cenviron, C_faddcr
 
 Cenviron	dw	0
+C_faddcr	dw	1
 
-argc		dw	0		; internal
+argc		dw	0	; internal
 argv		dw	0
 
 	.code
@@ -194,22 +195,21 @@ scan:	lodsb
 
 ; initialize run time library
 
-	call	near ptr C_init
+	call	near ptr C_init	;INIT
 
 ; call main() and exit
 
-	mov	ax,argc
-	push	ax
 	mov	ax,argv
 	push	ax
-	mov	ax,2			; __argc
+	mov	ax,argc
 	push	ax
 	call	near ptr Cmain
-	add	sp,6
+	add	sp,4
 	push	ax
-	mov	ax,1
-	push	ax
-	call	near ptr Cexit
+x:	call	near ptr Cexit	;EXIT
+	xor	bx,bx
+	div	bx
+	jmp	x
 
 ; swap es,dx
 
@@ -244,14 +244,14 @@ docase:	jmp	bx
 	public	Csetjmp
 Csetjmp:
 	mov	bx,sp
-	mov	bx,[bx+4]
+	mov	bx,[bx+2]	; env
 	mov	ax,sp
 	add	ax,2
 	mov	[bx],ax
 	mov	[bx+2],bp
 	mov	si,sp
 	mov	ax,[si]
-	mov	[bp+4],ax
+	mov	[bx+4],ax
 	xor	ax,ax
 	ret
 
@@ -260,18 +260,18 @@ Csetjmp:
 	public	Clongjmp
 Clongjmp:
 	mov	bx,sp
-	mov	ax,[bx+4]
-	mov	bx,[bx+6]
+	mov	ax,[bx+4]	; v
+	mov	bx,[bx+2]	; env
 	mov	sp,[bx]
 	mov	bp,[bx+2]
-	mov	si,[bp+4]
+	mov	si,[bx+4]
 	jmp	si
 
 ; void *_sbrk(int n);
 
 	public	C_sbrk
 C_sbrk:	mov	bx,sp
-	mov	ax,[bx+4]
+	mov	ax,[bx+2]	; size
 	add	ax,cs:break
 	cmp	ax,cs:maxmem
 	ja	sbfail
@@ -279,7 +279,7 @@ C_sbrk:	mov	bx,sp
 	jb	sbfail
 	mov	ax,cs:break
 	mov	dx,ax
-	add	dx,[bx+4]
+	add	dx,[bx+2]	; size
 	mov	cs:break,dx
 	ret
 sbfail:	xor	ax,ax
@@ -290,7 +290,7 @@ sbfail:	xor	ax,ax
 
 	public	C_exit
 C_exit:	mov	bx,sp
-	mov	ax,[bx+4]
+	mov	ax,[bx+2]	; rc
 	mov	ah,4ch		; terminate program
 	int	DOS
 
@@ -299,7 +299,7 @@ C_exit:	mov	bx,sp
 	public	C_creat
 C_creat:mov	bx,sp
 	mov	cx,0
-	mov	dx,[bx+6]
+	mov	dx,[bx+2]	; name
 	mov	ah,3ch
 	int	DOS
 	jnc	crok
@@ -311,9 +311,9 @@ crok:	ret
 
 	public	C_open
 C_open:	mov	bx,sp
-	mov	ax,[bx+4]
+	mov	ax,[bx+4]	; mode
 	mov	ah,3dh
-	mov	dx,[bx+6]
+	mov	dx,[bx+2]	; name
 	int	DOS
 	jnc	opok
 	xor	ax,ax
@@ -325,7 +325,7 @@ opok:	ret
 	public	C_close
 C_close:
 	mov	bx,sp
-	mov	bx,[bx+4]
+	mov	bx,[bx+2]	; fd
 	mov	ah,3eh
 	int	DOS
 	jnc	clok
@@ -340,9 +340,9 @@ clok:	xor	ax,ax
 	public	C_read
 C_read:
 	mov	bx,sp
-	mov	cx,[bx+4]
-	mov	dx,[bx+6]
-	mov	bx,[bx+8]
+	mov	cx,[bx+6]	; len
+	mov	dx,[bx+4]	; buf
+	mov	bx,[bx+2]	; fd
 	mov	ah,3fh
 	int	DOS
 	jnc	rdok
@@ -355,9 +355,9 @@ rdok:	ret
 	public	C_write
 C_write:
 	mov	bx,sp
-	mov	cx,[bx+4]
-	mov	dx,[bx+6]
-	mov	bx,[bx+8]
+	mov	cx,[bx+6]	; len
+	mov	dx,[bx+4]	; buf
+	mov	bx,[bx+2]	; fd
 	mov	ah,40h
 	int	DOS
 	jnc	wrok
@@ -393,12 +393,12 @@ Csignal:
 	public	C_lseek
 C_lseek:
 	mov	bx,sp
-	mov	ax,[bx+6]
+	mov	ax,[bx+4]	; where
 	cwd
 	mov	cx,dx
 	mov	dx,ax
-	mov	ax,[bx+4]
-	mov	bx,[bx+8]
+	mov	ax,[bx+6]	; how
+	mov	bx,[bx+2]	; fd
 	mov	ah,42h
 	int	DOS
 	jnc	lsok
@@ -411,7 +411,7 @@ lsok:	ret
 	public	C_unlink
 C_unlink:
 	mov	bx,sp
-	mov	dx,[bx+4]
+	mov	dx,[bx+2]	; name
 	mov	ah,41h
 	int	DOS
 	jnc	ulok
@@ -426,8 +426,8 @@ ulok:	xor	ax,ax
 	public	C_rename
 C_rename:
 	mov	bx,sp
-	mov	dx,[bx+6]
-	mov	di,[bx+4]
+	mov	dx,[bx+2]	; old
+	mov	di,[bx+4]	; new
 	mov	ah,56h
 	int	DOS
 	jnc	rnok
@@ -464,8 +464,8 @@ C_execve:
 	public	C_system
 C_system:
 	mov	bx,sp
-	mov	dx,[bx+6]
-	mov	bx,[bx+4]
+	mov	dx,[bx+2]	; shell
+	mov	bx,[bx+4]	; parmb
 	mov	di,ds
 	mov	[bx+4],di
 	mov	[bx+8],di
@@ -492,7 +492,7 @@ break:		dw	0
 minmem:		dw	0
 maxmem:		dw	0
 
-memerror:	db	"crt0: out of memory", 13, 10, '$'
+memerror:	db	"crt0: out of memory.", 13, 10, '$'
 
 	end
 

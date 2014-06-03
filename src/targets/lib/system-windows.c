@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2013
+ *	NMH's Simple C Compiler, 2013,2014
  *	system() for Windows/386
  */
 
@@ -17,22 +17,30 @@ static char system_buf[0x10000];
 int system(char *cmd) {
 	char	*p;
 	int	ret;
+	int	translate = 0;
 	struct _STARTUPINFO		si;
 	struct _PROCESS_INFORMATION	pi;
 
 	memset(&si, 0, sizeof(struct _STARTUPINFO));
 	memset(&pi, 0, sizeof(struct _PROCESS_INFORMATION));
 	si.cb = sizeof(struct _STARTUPINFO);
-	strcpy(system_buf, "cmd.exe /c ");
-	p = system_buf + 11;
+	strcpy(system_buf, "/c ");
+	p = system_buf + 3;
+
+	translate = 1;
 	while (*cmd) {
 		*p = *cmd;
+		if (translate && *p == '/')
+			*p = '\\';
+		else if (*p == ' ')
+			translate = 0;
 		p++;
 		cmd++;
 	}
 	*p = '\0';
-	if (	!CreateProcessA((char*)0, system_buf, (void*)0, (void*)0, 
-		0, 0, (void*)0, (void*)0, &si, &pi))
+	if (	!CreateProcessA("c:\\windows\\system32\\cmd.exe",
+			system_buf, (void*)0, (void*)0,
+			0, 0, (void*)0, (void*)0, &si, &pi))
 	{
 		return -1;
 	}

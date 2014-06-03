@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011,2012
+ *	NMH's Simple C Compiler, 2011,2012,2014
  *	sprintf()
  */
 
@@ -8,14 +8,6 @@
 
 extern int _vformat(int mode, int max, void *dest, char *fmt, void **varg);
 
-int sprintf(void *last, ...) {
-	void	**args;
-	char	*buf;
-	char	*fmt, *p;
-
-	args = &last;
-	args += __argc;
-	buf = *--args;
-	fmt = *--args;
-	return _vformat(0, 0, buf, fmt, --args);
+int sprintf(char *buf, char *fmt, ...) {
+	return _vformat(0, 0, buf, fmt, (void **) &fmt + 1);
 }

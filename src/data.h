@@ -1,75 +1,82 @@
 /*
- *	NMH's Simple C Compiler, 2011--2013
+ *	NMH's Simple C Compiler, 2011--2014
  *	Global variables
  */
 
-#ifndef _extern
- #define _extern extern
+#ifndef extern_
+ #define extern_ extern
 #endif
 
-_extern FILE	*Infile;
-_extern FILE	*Outfile;
-_extern int	Token;
-_extern char	Text[TEXTLEN+1];
-_extern int	Value;
-_extern int	Line;
-_extern int	Errors;
-_extern int	Syntoken;
-_extern int	Putback;
-_extern int	Rejected;
-_extern int	Rejval;
-_extern char	Rejtext[TEXTLEN+1];
-_extern char	*File;
-_extern char	*Basefile;
-_extern char	*Macp[MAXNMAC];
-_extern int	Macc[MAXNMAC];
-_extern int	Mp;
-_extern int	Expandmac;
-_extern int	Ifdefstk[MAXIFDEF], Isp;
-_extern int	Inclev;
-_extern int	Textseg;
+extern_ FILE	*Infile;
+extern_ FILE	*Outfile;
+extern_ int	Token;
+extern_ char	Text[TEXTLEN+1];
+extern_ int	Value;
+extern_ int	Line;
+extern_ int	Errors;
+extern_ int	Syntoken;
+extern_ int	Putback;
+extern_ int	Rejected;
+extern_ int	Rejval;
+extern_ char	Rejtext[TEXTLEN+1];
+extern_ char	*File;
+extern_ char	*Basefile;
+extern_ char	*Macp[MAXNMAC];
+extern_ int	Macc[MAXNMAC];
+extern_ int	Mp;
+extern_ int	Expandmac;
+extern_ int	Ifdefstk[MAXIFDEF], Isp;
+extern_ int	Inclev;
+extern_ int	Textseg;
+extern_ int	Nodes[NODEPOOLSZ];
+extern_ int	Ndtop;
+extern_ int	Ndmax;
 
 /* symbol tabel structure */
-_extern char	*Names[NSYMBOLS];
-_extern int	Prims[NSYMBOLS];
-_extern char	Types[NSYMBOLS];
-_extern char	Stcls[NSYMBOLS];
-_extern int	Sizes[NSYMBOLS];
-_extern int	Vals[NSYMBOLS];
-_extern char	*Mtext[NSYMBOLS];
-_extern int	Globs;
-_extern int	Locs;
+extern_ char	*Names[NSYMBOLS];
+extern_ int	Prims[NSYMBOLS];
+extern_ char	Types[NSYMBOLS];
+extern_ char	Stcls[NSYMBOLS];
+extern_ int	Sizes[NSYMBOLS];
+extern_ int	Vals[NSYMBOLS];
+extern_ char	*Mtext[NSYMBOLS];
+extern_ int	Globs;
+extern_ int	Locs;
 
-_extern int	Thisfn;
+extern_ int	Thisfn;
 
 /* name list */
-_extern char	Nlist[POOLSIZE];
-_extern int	Nbot;
-_extern int	Ntop;
+extern_ char	Nlist[POOLSIZE];
+extern_ int	Nbot;
+extern_ int	Ntop;
 
-_extern int	Breakstk[MAXBREAK], Bsp;
-_extern int	Contstk[MAXBREAK], Csp;
-_extern int	Retlab;
+/* label stacks */
+extern_ int	Breakstk[MAXBREAK], Bsp;
+extern_ int	Contstk[MAXBREAK], Csp;
+extern_ int	Retlab;
 
 /* local init structure */
-_extern int	LIaddr[MAXLOCINIT];
-_extern int	LIval[MAXLOCINIT];
-_extern int	Nli;
+extern_ int	LIaddr[MAXLOCINIT];
+extern_ int	LIval[MAXLOCINIT];
+extern_ int	Nli;
 
 /* synthesizer operand queue */
-_extern int	Q_type;
-_extern int	Q_val;
-_extern char	Q_name[NAMELEN+1];
-_extern int	Q_cmp;
-_extern int	Q_bool;
+extern_ int	Q_type;
+extern_ int	Q_val;
+extern_ char	Q_name[NAMELEN+1];
+extern_ int	Q_cmp;
+extern_ int	Q_bool;
 
-_extern char	*Files[MAXFILES];
-_extern char	Temp[MAXFILES];
-_extern int	Nf;
+/* file collector */
+extern_ char	*Files[MAXFILES];
+extern_ char	Temp[MAXFILES];
+extern_ int	Nf;
 
-_extern int	O_verbose;
-_extern int	O_componly;
-_extern int	O_asmonly;
-_extern int	O_testonly;
-_extern char	*O_outfile;
-_extern int	O_debug;
+/* options */
+extern_ int	O_verbose;
+extern_ int	O_componly;
+extern_ int	O_asmonly;
+extern_ int	O_testonly;
+extern_ int	O_stdio;
+extern_ char	*O_outfile;
+extern_ int	O_debug;
