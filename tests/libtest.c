@@ -298,7 +298,7 @@ void test_str(void) {
 	strncpy(v1, "0123", 5);
 	if (memcmp(v1, "0123\00056789", 10)) fail("strncpy-2");
 	strncpy(v1, "0123", 10);
-	if (memcmp(v1, "0123\00056789", 10)) fail("strncpy-3");
+	if (memcmp(v1, "0123\000\000\000\000\000\000", 10)) fail("strncpy-3");
 
 	pr("strncat");
 	strcpy(v1, "012345");
@@ -467,8 +467,8 @@ void test_math(void) {
 jmp_buf	here;
 int	count;
 
-void jump(void) {
-	longjmp(&here, 1);
+void jump(int v) {
+	longjmp(&here, v);
 	fail("longjmp-1");
 }
 
@@ -480,7 +480,9 @@ void test_ljmp(void) {
 		return;
 	}
 	count++;
-	jump();
+	jump(0);	/* should turn into longjump(..., 1); */
+	count++;
+	jump(1);
 }
 
 void test_proc(void) {
@@ -650,11 +652,11 @@ void test_sio3(void) {
 	clearerr(f);
 	rewind(f);
 	pr("fseek/ftell");
-	if (fseek(f, 0, SEEK_END) != 16384) fail("fseek-1");
+	if (fseek(f, 0, SEEK_END) != 0) fail("fseek-1");
 	if (ftell(f) != 16384) fail("ftell-1");
-	if (fseek(f, 8100, SEEK_SET) != 8100) fail("fseek-2");
+	if (fseek(f, 8100, SEEK_SET) != 0) fail("fseek-2");
 	if (ftell(f) != 8100) fail("fseek-3");
-	if (fseek(f, 1900, SEEK_CUR) != 10000) fail("fseek-4");
+	if (fseek(f, 1900, SEEK_CUR) != 0) fail("fseek-4");
 	if (ftell(f) != 10000) fail("fseek-5");
 
 	fclose(f);

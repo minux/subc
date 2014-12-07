@@ -26,5 +26,5 @@ int fseek(FILE *f, int pos, int how) {
 		errno = EIO;
 		return -1;
 	}
-	return pos;
+	return 0;
 }

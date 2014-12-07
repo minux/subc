@@ -9,16 +9,35 @@ SRC=`echo cg.c decl.c error.c expr.c gen.c main.c misc.c opt.c prep.c \
 ASM=`echo $SRC | sed -e 's/\.c/.s/g'`
 OBJ=`echo $SRC | sed -e 's/\.c/.o/g'`
 
+./scc1 -o $S2-bin $SRC
+./scc  -o $S3-bin $SRC
+
+if cmp $S2-bin $S3-bin; then
+	rm -f $S2-bin $S3-bin
+	exit 0
+fi
+
+echo
+echo Something interesting happend, please stand by ...
+echo
+
 rm -f $ASM
 
 if [ "`echo $S*`" != '_stage*' ]; then
-	echo
-	echo There appear to be some left-over stage files here:
+	
+	cat <<EOT
+***************************************************
+	
+There appear to be some left-over stage files here:
+EOT
 	echo ${S}*
-	echo
-	echo You need to delete or rename them manually before
-	echo running this test. Just in case they are important.
-	echo
+cat <<EOT
+	
+You need to delete or rename them manually before
+running this test. Just in case they are important.
+
+***************************************************
+EOT
 	exit 1
 fi
 
@@ -30,13 +49,13 @@ if ! cmp $S2-dump $S3-dump; then
 		rm -f $S2-asm.tar $S3-asm.tar
 	cat <<EOT
 
-	******* TRIPLE TEST FAILED! THIS IS INTERESTING! *******
+***** TRIPLE TEST FAILED *******************************
 
-	Please mail the following file to  n m h @ t 3 x . o r g
+Please mail the following file to  n m h @ t 3 x . o r g
 
-	${S}dump.tar
+${S}dump.tar
 
-	********************************************************
+********************************************************
 
 EOT
 	rm -f $S2-dump $S3-dump
@@ -56,16 +75,16 @@ if ! cmp $S2-bin $S3-bin ; then
 		rm -f $S2-bin $S2-obj.tar $S3-bin $S3-obj.tar && \
 	cat <<EOT
 
-	***************** THIS IS INTERESTING! *****************
+***** TRIPLE TEST ANOMALY ******************************
 
-	The triple test passed at assembly level, but failed at
-	binary level. This is weird and highly interesting!
+The triple test passed at assembly level, but failed at
+binary level. This is weird and interesting!
 
-	Please mail the following file to  n m h @ t 3 x . o r g
+Please mail the following file to  n m h @ t 3 x . o r g
 
-	${S}dump.tar
+${S}dump.tar
 
-	********************************************************
+********************************************************
 
 EOT
 	exit 1

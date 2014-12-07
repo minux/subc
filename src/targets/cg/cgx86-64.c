@@ -60,15 +60,15 @@ int cgload2(void) {
 	case addr_label:	lgen("%s\t$%c%d,%%rcx", op, n); break;
 	case literal: 		ngen("%s\t$%d,%%rcx", op, n); break;
 	case auto_byte:		cgclear2();
-				ngen("%s\t%d(%%rbp),%%rcl", opb, n);
+				ngen("%s\t%d(%%rbp),%%cl", opb, n);
 				break;
 	case auto_word:		ngen("%s\t%d(%%rbp),%%rcx", op, n); break;
 	case static_byte:	cgclear2();
-				lgen("%s\t%c%d,%%rcl", opb, n); break;
+				lgen("%s\t%c%d,%%cl", opb, n); break;
 				break;
 	case static_word:	lgen("%s\t%c%d,%%rcx", op, n); break;
 	case globl_byte:	cgclear2();
-				sgen("%s\t%s,%%rcl", opb, s); break;
+				sgen("%s\t%s,%%cl", opb, s); break;
 				break;
 	case globl_word:	sgen("%s\t%s,%%rcx", op, s); break;
 	case empty:		cgpop2();

@@ -3,28 +3,28 @@
 	SUBC BUILD STATUS
 
 
-	FreeBSD/386 8.2-RELEASE, gcc 4.2.1, SubC 201450525
+	FreeBSD/386 8.2-RELEASE, gcc 4.2.1, SubC 20140525
 		triple test	passed
 		ptest		passed
 		systest		passed
 		libtest		passed
 		signal()	works
 
-	FreeBSD/armv6 10.0-RC5, clang 3.3, SubC 201450525
+	FreeBSD/armv6 10.0-RC5, clang 3.3, SubC 20140525
 		triple test	passed
 		ptest		passed
 		systest		passed
 		libtest		passed
 		signal()	works
 
-	FreeBSD/x86-64 10.0-RELEASE, clang 3.3, SubC 201450525
+	FreeBSD/x86-64 10.1-RELEASE, clang 3.4.1, SubC 20141207
 		triple test	passed
 		ptest		passed
 		systest		passed
 		libtest		passed
 		signal()	works
 
-	NetBSD/x86-64 6.1.4-RELEASE, gcc 4.5.3, SubC 201450525
+	NetBSD/x86-64 6.1.4-RELEASE, gcc 4.5.3, SubC 20140525
 		triple test	passed
 		ptest		passed
 		systest		passed

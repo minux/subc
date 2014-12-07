@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011,2012
+ *	NMH's Simple C Compiler, 2011,2012,2014
  *	strncpy()
  */
 
@@ -10,6 +10,6 @@ char *strncpy(char *d, char *s, int n) {
 
 	for (p = d; n && *s; n--)
 		*p++ = *s++;
-	if (n) *p = 0;
+	while (n--) *p++ = 0;
 	return d;
 }

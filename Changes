@@ -1,3 +1,8 @@
+2014-12-07 Fix: strncpy() should pad destination. Thanks, Alexey Frunze!
+2014-12-07 Fix: fseek() should return 0 on success. (also by Alexey)
+2014-12-07 Fix: longjmp() may not pass 0 to setjmp(). (also by Alexey)
+2014-12-07 Fixed emitted byte shift code on x86. Thanks, Teran McKinney!
+2014-06-22 Running extended triple test only in case of failure.
 2014-06-03 Fix: syntax errors in constexprs could crash the compiler.
 2014-05-25 Updated and re-organized documentation.
 2014-05-24 Added operation reordering (tree skewing), e.g.: a+b*c --> b*c+a.

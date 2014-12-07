@@ -157,6 +157,8 @@ Csetjmp:
 	.align	2
 Clongjmp:
 	ldr	r0,[sp,#4]	@ v
+	cmp	r0,#0
+	moveq	r0,#1
 	ldr	r1,[sp]		@ env
 	ldr	sp,[r1]
 	ldr	r11,[r1,#4]

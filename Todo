@@ -1,4 +1,6 @@
 
+	? printf() and unsigned representation of octal and hex numbers
+
 	- Rewrite crt0 module to remove GLIBC system call layer:
 		OpenBSD-386
 		Darwin-x86-64

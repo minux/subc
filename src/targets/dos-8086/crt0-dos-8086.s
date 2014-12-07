@@ -261,7 +261,10 @@ Csetjmp:
 Clongjmp:
 	mov	bx,sp
 	mov	ax,[bx+4]	; v
-	mov	bx,[bx+2]	; env
+	or	ax,ax
+	jnz	vok
+	inc	ax
+vok:	mov	bx,[bx+2]	; env
 	mov	sp,[bx]
 	mov	bp,[bx+2]
 	mov	si,[bx+4]

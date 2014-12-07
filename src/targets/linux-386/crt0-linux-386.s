@@ -74,7 +74,10 @@ Csetjmp:
 	.globl	Clongjmp
 Clongjmp:
 	movl	8(%esp),%eax	# v
-	movl	4(%esp),%edx	# env
+	orl	%eax,%eax
+	jne	vok
+	incl	%eax
+vok:	movl	4(%esp),%edx	# env
 	movl	(%edx),%esp
 	movl	4(%edx),%ebp
 	movl	8(%edx),%edx

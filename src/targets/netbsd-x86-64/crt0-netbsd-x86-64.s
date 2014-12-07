@@ -89,7 +89,10 @@ Csetjmp:
 	.globl	Clongjmp
 Clongjmp:
 	movq	16(%rsp),%rax	# v
-	movq	8(%rsp),%rdx	# env
+	orq	%rax,%rax
+	jne	vok
+	incq	%rax
+vok:	movq	8(%rsp),%rdx	# env
 	movq	(%rdx),%rsp
 	movq	8(%rdx),%rbp
 	movq	16(%rdx),%rdx
