@@ -1,5 +1,5 @@
 /*
- *	NMH's Simple C Compiler, 2011--2014
+ *	NMH's Simple C Compiler, 2011--2015
  *	Definitions
  */
 
@@ -10,7 +10,7 @@
 #include "cg.h"
 #include "sys.h"
 
-#define VERSION		"2014-06-03"
+#define VERSION		"2015-02-02"
 
 #ifndef SCCDIR
  #define SCCDIR		"."

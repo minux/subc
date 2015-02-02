@@ -877,6 +877,7 @@ int constexpr(void) {
 	node	*n;
 	int	lv[LV];
 
+	Ndtop = 1;
 	n = binexpr(lv);
 	notvoid(lv[LVPRIM]);
 	n = fold_reduce(n);
