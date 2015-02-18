@@ -173,10 +173,10 @@ void cgscale(void)	{ gen("shlq\t$3,%rax"); }
 void cgscale2(void)	{ gen("shlq\t$3,%rcx"); }
 void cgunscale(void)	{ gen("shrq\t$3,%rax"); }
 void cgscaleby(int v)	{ ngen("%s\t$%d,%%rcx", "movq", v);
-			  gen("mulq\t%rcx,%rax"); }
+			  gen("mulq\t%rcx"); }
 void cgscale2by(int v)	{ gen("pushq\t%rax");
 			  ngen("%s\t$%d,%%rax", "movq", v);
-			  gen("mulq\t%rcx,%rax");
+			  gen("mulq\t%rcx");
 			  gen("movq\t%rax,%rcx");
 			  gen("popq\t%rax"); }
 void cgunscaleby(int v)	{ ngen("%s\t$%d,%%rcx", "movq", v);

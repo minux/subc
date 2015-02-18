@@ -29,7 +29,7 @@
 	* All stdio functions of the SubC library use Unix text file
 	  format, i.e. '\n' translates to LF.
 
-	* The system() functon assumes that your command interpreter is
+	* The system() function assumes that your command interpreter is
 	  "c:\\windows\\system32\\cmd.exe".
 
 	* signal() returns SIG_ERR and does nothing.
