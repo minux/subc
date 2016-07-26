@@ -1,0 +1,18 @@
+# symlinks
+src/cg.c
+src/cg.h
+src/sys.h
+src/include/limits.h
+src/lib/crt0.s
+src/lib/init.c
+src/lib/system.c
+
+# generated
+tests/ptest.c
+
+# built
+*.o
+src/lib/libscc.a
+src/scc
+src/scc0
+src/scc1
