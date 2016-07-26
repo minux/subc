@@ -271,20 +271,14 @@ Craise:
 
 	.globl	Csignal
 Csignal:
-
-#	If your signal handlers segfault, uncomment the below code
-#	and link against /usr/lib/libc.a.
-#
-#	movq	8(%rsp),%rdi	# sig
-#	movq	16(%rsp),%rsi	# fn /act
-#	call	signal
-#	ret
-
 	movq	16(%rsp),%rax	# fn
 	movq	%rax,-32(%rsp)
-	movq	$0x10000000,-24(%rsp)	# SA_RESTART
+	movq	$(0x10000000|0x4000000),-24(%rsp)	# SA_RESTART | SA_RESTORER
+	# although the man page says sa_restorer is "obsolete and shouldn't be used",
+	# the amd64 kernel requires it.
+	leaq	_sigreturn,%rax
+	movq	%rax,-16(%rsp)	# sa_restorer
 	xorq	%rax,%rax
-	movq	%rax,-16(%rsp)
 	movq	%rax,-8(%rsp)
 	movq	8(%rsp),%rdi	# sig
 	leaq	-32(%rsp),%rsi
@@ -300,3 +294,7 @@ Csignal:
 	movq	-64(%rsp),%rax
 	ret
 
+_sigreturn:
+	movl	$15,%eax	# rt_sigreturn
+	syscall
+	int	$0x3	# not reached
