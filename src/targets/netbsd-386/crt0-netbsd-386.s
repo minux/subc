@@ -339,24 +339,38 @@ Csignal:
 	subl	$24,%esp	# struct sigaction act
 	movl	%eax,(%esp)	# act.sa_handler / sa_action
 	movl	$0,%eax
-	movl	%eax,4(%esp)	# act.sa_flags
-	movl	%eax,8(%esp)	# act.sa_mask
+	movl	%eax,4(%esp)	# act.sa_mask
+	movl	%eax,8(%esp)
 	movl	%eax,12(%esp)
 	movl	%eax,16(%esp)
-	movl	%eax,20(%esp)
+	movl	%eax,20(%esp)	# act.sa_flags
 	movl	%esp,%esi
 	movl	%esi,%edi	# oact
 	addl	$24,%edi
+	pushl	$2		# vers
+	leal	_sigtramp,%eax
+	pushl	%eax		# tramp
 	pushl	%edi		# oact
 	pushl	%esi		# act
 	pushl	%ebx		# sig
 	pushl	$0
-	movl	$416,%eax	# SYS_sigaction MINUX: TODO
+	movl	$340,%eax	# SYS___sigaction_sigtramp
 	int	$0x80
 	jnc	sacok
-	addl	$64,%esp
+	addl	$72,%esp
 	mov	$2,%eax		# SIG_ERR
 	ret
-sacok:	movl	40(%esp),%eax	# oact.sa_handler / sa_action
-	addl	$64,%esp
+sacok:	movl	48(%esp),%eax	# oact.sa_handler / sa_action
+	addl	$72,%esp
 	ret
+
+_sigtramp:
+	# Assume the handler doesn't corrupt arguments passed on stack
+	movl	8(%esp),%eax	# address of ucontext
+	pushl	%eax
+	pushl	$0
+	movl	$308,%eax	# SYS_setcontext
+	int	$0x80
+	movl	$42, 4(%esp)	# setcontext should not return
+	movl	$1, %eax	# SYS_exit
+	int	$0x80
